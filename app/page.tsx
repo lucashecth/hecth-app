@@ -1,76 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// ==========================================
-// ESTILOS CSS (Animações de Entrada/Saída)
-// ==========================================
-const estilosGlobais = `
-  @keyframes entradaCaindo {
-    0% { transform: translateY(-30px) scale(0.7); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
-  }
-  @keyframes saidaEscorregando {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(30px); opacity: 0; }
-  }
-  .animacao-entrada {
-    animation: entradaCaindo 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
-  }
-  .animacao-saida {
-    animation: saidaEscorregando 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
-  }
-`;
-
-// ==========================================
-// SISTEMA MIKASA (Explosão de bolas)
-// ==========================================
-const lancarBolasMikasa = (e: React.MouseEvent<HTMLButtonElement>) => {
-  const container = document.body;
-  const numBolas = 15;
-  const duracao = 1800;
-  const originX = e.clientX;
-  const originY = e.clientY;
-
-  for (let i = 0; i < numBolas; i++) {
-    const ball = document.createElement('img');
-    ball.src = '/mikasa-ball.png';
-    ball.className = 'fixed pointer-events-none opacity-0 z-50';
-    const size = Math.random() * 15 + 15;
-    ball.style.width = `${size}px`;
-    ball.style.height = `${size}px`;
-    ball.style.left = `${originX}px`;
-    ball.style.top = `${originY}px`;
-    ball.style.transform = 'translate(-50%, -50%) scale(0.1) rotate(0deg)';
-    container.appendChild(ball);
-
-    ball.style.transition = `all ${duracao}ms cubic-bezier(0.1, 0.8, 0.3, 1)`;
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const angle = Math.random() * 2 * Math.PI;
-        const velocity = Math.random() * 300 + 200;
-        const destX = originX + Math.cos(angle) * velocity;
-        const destY = originY + Math.sin(angle) * velocity - 80;
-        const rotation = Math.random() * 1080 - 540;
-        ball.style.left = `${destX}px`;
-        ball.style.top = `${destY}px`;
-        ball.style.opacity = '1';
-        ball.style.transform = `translate(-50%, -50%) scale(1.2) rotate(${rotation}deg)`;
-        setTimeout(() => {
-          ball.style.opacity = '0';
-          ball.style.transform += ' scale(0.8)';
-        }, duracao * 0.7);
-      });
-    });
-    setTimeout(() => ball.remove(), duracao);
-  }
-};
+import { supabase } from '../lib/supabase';
+import { lancarBolasMikasa } from '../utils/animacoes';
+import { Header } from '../components/Header';
+import { TurmaCard } from '../components/TurmaCard';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -111,21 +45,18 @@ export default function Home() {
 
     carregarArena();
 
-    // ==========================================
-    // A MÁGICA DO TEMPO REAL AQUI!
-    // ==========================================
     const canalRealtime = supabase.channel('atualizacoes_arena')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => {
-        carregarArena(); // Se alguém marcar/desmarcar, atualiza a tela
+        carregarArena();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, () => {
-        carregarArena(); // Se a vaga mudar, atualiza a tela
+        carregarArena();
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(canalRealtime); // Limpa o canal ao sair
+      supabase.removeChannel(canalRealtime);
     };
   }, []);
 
@@ -191,11 +122,9 @@ export default function Home() {
 
     if (jaMarcou) {
       setTimeout(async () => {
-        // Atualiza a tela instantaneamente (otimista)
         setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas - 1 } : t));
         setPresencasDb(prev => prev.filter(p => !(p.turma_id === turmaId && p.aluno_email === session.user.email)));
         
-        // Salva no Supabase
         await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
         await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais - 1 }).eq('id', turmaId);
         
@@ -213,11 +142,9 @@ export default function Home() {
         inicial: alunoDb.nome.charAt(0) 
       };
 
-      // Atualiza a tela instantaneamente (otimista)
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
       
-      // Salva no Supabase
       await supabase.from('presencas').insert([novaPresenca]);
       await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais + 1 }).eq('id', turmaId);
       
@@ -227,6 +154,7 @@ export default function Home() {
 
   if (!mounted) return null;
 
+  // 1. CARREGANDO
   if (session && !alunoDb) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -235,6 +163,7 @@ export default function Home() {
     );
   }
 
+  // 2. BLOQUEIO (PENDENTE)
   if (session && alunoDb?.status === 'pendente') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-5 text-white text-center">
@@ -248,6 +177,7 @@ export default function Home() {
     );
   }
 
+  // 3. FLUXO DE AUTENTICAÇÃO
   if (!session) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 font-sans">
@@ -289,79 +219,25 @@ export default function Home() {
     );
   }
 
+  // 4. APLICATIVO PRINCIPAL LOGADO
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white">
-      <style>{estilosGlobais}</style>
-      
-      <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-40 border-b border-white/10">
-        <img src="/hecth-logo.svg" alt="HECTH." className="h-9 w-auto"/>
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col items-end">
-            <span className="text-sm font-bold leading-none">Olá, {alunoDb?.nome}</span>
-            <button onClick={fazerLogout} className="text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 mt-1 transition-opacity">Sair</button>
-          </div>
-          <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
-            {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-red-600 font-bold">{alunoDb?.nome?.charAt(0)}</span>}
-          </div>
-        </div>
-      </header>
+      <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
       <main className="px-5">
         <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">Próximas Aulas</h3>
-        {turmas?.map((turma) => {
-          const presencasTurma = presencasDb.filter(p => p.turma_id === turma.id);
-          const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
-          const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
-          
-          const lotou = turma.vagas_ocupadas >= turma.vagas_totais;
-          const sumindo = turmaIdClicada === turma.id && acaoClicada === 'desmarcar';
-          const surgindo = turmaIdClicada === turma.id && acaoClicada === 'marcar';
-
-          return (
-            <div key={turma.id} className="bg-[#121212] rounded-3xl p-6 border border-white/5 mb-5 shadow-lg relative">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <span className="bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md border border-green-500/20">{turma.nivel}</span>
-                  <h4 className="text-xl font-bold mt-3 text-white">{turma.nome}</h4>
-                  <p className="text-white/40 text-xs font-medium uppercase tracking-wider">{turma.professor}</p>
-                </div>
-                <div className="text-right">
-                    <span className="text-3xl font-black tracking-tighter text-white">{turma.horario}</span>
-                    <span className="block text-[9px] font-black text-white/30 uppercase">Duração 1h30</span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center border-t border-white/5 pt-5">
-                <div className="flex -space-x-3 items-center">
-                  
-                  {outrasFotos.map((p, idx) => (
-                    <div key={p.aluno_email} style={{ zIndex: 10 + idx }} className="w-9 h-9 rounded-full border-2 border-[#121212] shadow-xl overflow-hidden bg-gray-600 flex items-center justify-center">
-                      {p.foto_url ? <img src={p.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{p.inicial}</span>}
-                    </div>
-                  ))}
-
-                  {(jaMarcou || sumindo) && (
-                    <div style={{ zIndex: 50 }} className={`w-10 h-10 rounded-full border-2 border-white shadow-xl overflow-hidden bg-red-600 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
-                      {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{alunoDb?.nome?.charAt(0)}</span>}
-                    </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className="text-white/30 text-[10px] font-black uppercase block">Vagas</span>
-                  <span className="text-white font-black text-xl tracking-tight"><span className="text-[#ef3340]">{turma.vagas_ocupadas}</span>/{turma.vagas_totais}</span>
-                </div>
-              </div>
-
-              <button 
-                onClick={(e) => alternarPresenca(e, turma.id, turma.vagas_ocupadas, turma.vagas_totais, jaMarcou)}
-                disabled={!jaMarcou && lotou}
-                className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-6 transition-all active:scale-95 group relative overflow-hidden ${jaMarcou ? 'bg-green-600 text-white hover:bg-red-600' : lotou ? 'bg-white/5 text-white/20' : 'bg-white text-black hover:bg-gray-200'}`}
-              >
-                {jaMarcou ? <><span className="group-hover:hidden">Confirmado</span><span className="hidden group-hover:block">Cancelar</span></> : lotou ? 'Turma Lotada' : 'Marcar Presença'}
-              </button>
-            </div>
-          );
-        })}
+        {turmas?.map((turma) => (
+          <TurmaCard 
+            key={turma.id}
+            turma={turma}
+            presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)}
+            session={session}
+            alunoDb={alunoDb}
+            turmaIdClicada={turmaIdClicada}
+            acaoClicada={acaoClicada}
+            onAlternarPresenca={alternarPresenca}
+          />
+        ))}
       </main>
     </div>
   );
