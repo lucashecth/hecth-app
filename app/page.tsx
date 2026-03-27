@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { lancarBolasMikasa } from '../utils/animacoes';
 import { Header } from '../components/Header';
 import { TurmaCard } from '../components/TurmaCard';
+import { MenuCards } from '../components/MenuCards';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -158,7 +159,7 @@ export default function Home() {
   if (session && !alunoDb) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-sm">Carregando a arena...</p>
+        <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-sm">"Será que hoje é dia de físico?"...</p>
       </div>
     );
   }
@@ -225,6 +226,7 @@ export default function Home() {
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
       <main className="px-5">
+        <MenuCards />
         <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">Próximas Aulas</h3>
         {turmas?.map((turma) => (
           <TurmaCard 
@@ -241,4 +243,5 @@ export default function Home() {
       </main>
     </div>
   );
+  
 }
