@@ -160,6 +160,10 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-sm">"Será que hoje é dia de físico?"...</p>
+        {/* BOTÃO DE EMERGÊNCIA */}
+        <button onClick={fazerLogout} className="text-red-500/50 hover:text-red-500 text-[10px] font-black uppercase tracking-widest underline transition-colors">
+          Forçar Saída
+        </button>
       </div>
     );
   }
@@ -220,15 +224,52 @@ export default function Home() {
     );
   }
 
-  // 4. APLICATIVO PRINCIPAL LOGADO
+ // 4. APLICATIVO PRINCIPAL LOGADO
+  
+  const agora = new Date();
+  const horaAtual = agora.getHours();
+  const dataExibicao = new Date(agora);
+  if (horaAtual >= 21) {
+    dataExibicao.setDate(dataExibicao.getDate() + 1);
+  }
+  const dataFormatada = dataExibicao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  const diaDaSemana = dataExibicao.getDay(); // 0: Dom, 1: Seg... 5: Sexta, 6: Sáb
+
+  // ==========================================
+  // FILTRO ESPECIAL DE SEXTA-FEIRA
+  // ==========================================
+  const turmasDoDia = turmas?.map(turma => {
+    const t = { ...turma };
+    if (diaDaSemana === 5) {
+      // Força a turma Intermediário a ser 09:00 na Sexta, caso já não seja no banco
+      const nomeNorm = t.nome?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (nomeNorm === 'intermediario') t.horario = '09:00';
+    }
+    return t;
+  }).filter(turma => {
+    if (diaDaSemana === 5) {
+      // Na Sexta-feira, esconde qualquer turma que seja depois de 12:59
+      const hora = parseInt(turma.horario.split(':')[0]);
+      return hora < 13; 
+    }
+    return true; // Nos outros dias, mostra todas as turmas normalmente
+  });
+
+  const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
+
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
       <main className="px-5">
         <MenuCards />
-        <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">Próximas Aulas</h3>
-        {turmas?.map((turma) => (
+
+        <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
+          Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
+        </h3>
+        
+        {/* Agora renderizamos turmasDoDia em vez de turmas */}
+        {turmasDoDia?.map((turma) => (
           <TurmaCard 
             key={turma.id}
             turma={turma}
@@ -238,10 +279,10 @@ export default function Home() {
             turmaIdClicada={turmaIdClicada}
             acaoClicada={acaoClicada}
             onAlternarPresenca={alternarPresenca}
+            alunoJaMarcouAlguma={alunoJaMarcouAlguma}
           />
         ))}
       </main>
     </div>
   );
-  
 }
