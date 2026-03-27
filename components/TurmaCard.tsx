@@ -9,11 +9,11 @@ interface TurmaCardProps {
   acaoClicada: 'marcar' | 'desmarcar' | null;
   onAlternarPresenca: (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => void;
   alunoJaMarcouAlguma: boolean;
+  isHoje: boolean; 
 }
 
-export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma }: TurmaCardProps) {
+export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje }: TurmaCardProps) {
   
-  // MOTOR DE REGRAS DE NÍVEL
   const nivelAluno = alunoDb?.nivel || 'Aprendiz';
   const nivelTurma = turma.nome || 'Aprendiz';
 
@@ -24,21 +24,14 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
   };
   const acessoLiberado = verificarAcesso(nivelAluno, nivelTurma);
 
-  // MOTOR DE TEMPO (Aula Encerrada)
   const agora = new Date();
-  const horaAtual = agora.getHours();
-  const minutosAtual = agora.getMinutes();
-  const tempoAtualMinutos = horaAtual * 60 + minutosAtual;
+  const tempoAtualMinutos = agora.getHours() * 60 + agora.getMinutes();
   
-  // Proteção: caso falte o horário no banco, assume 00:00
   const [horaAulaStr, minAulaStr] = (turma.horario || "00:00").split(':');
   const tempoAulaMinutos = parseInt(horaAulaStr) * 60 + parseInt(minAulaStr);
   
-  // Se já passou das 21h, estamos mostrando as aulas de amanhã, então NENHUMA encerrou ainda!
-  const isExibindoAmanha = horaAtual >= 21;
-  const aulaEncerrada = !isExibindoAmanha && (tempoAtualMinutos >= tempoAulaMinutos);
+  const aulaEncerrada = isHoje && (tempoAtualMinutos >= tempoAulaMinutos);
 
-  // ESTADOS DO ALUNO E TURMA
   const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
   const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
   const lotou = turma.vagas_ocupadas >= turma.vagas_totais;
@@ -50,14 +43,15 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       
       <div className="flex justify-between items-start mb-6">
         <div>
-          <span className="bg-green-500/10 text-green-400 text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-md border border-green-500/20">
+          {/* MUDANÇA VISUAL AQUI: Verde trocado por Vermelho Neon da HECTH */}
+          <span className="bg-[#ef3340]/10 text-[#ef3340] text-sm font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-[#ef3340]/20">
             {turma.nome}
           </span>
-          <p className="text-white/40 text-xs font-medium uppercase tracking-wider mt-4">{turma.professor}</p>
+          <p className="text-white/40 text-sm font-medium uppercase tracking-wider mt-5">{turma.professor}</p>
         </div>
         <div className="text-right">
-            <span className="text-3xl font-black tracking-tighter text-white">{turma.horario}</span>
-            <span className="block text-[9px] font-black text-white/30 uppercase">Duração 1h30</span>
+            <span className="text-4xl font-black tracking-tighter text-white">{turma.horario}</span>
+            <span className="block text-[10px] font-black text-white/30 uppercase mt-1">Duração 1h</span>
         </div>
       </div>
 
@@ -70,7 +64,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           ))}
 
           {(jaMarcou || sumindo) && (
-            <div style={{ zIndex: 50 }} className={`w-10 h-10 rounded-full border-2 border-white shadow-xl overflow-hidden bg-red-600 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
+            <div style={{ zIndex: 30 }} className={`w-10 h-10 rounded-full border-2 border-white shadow-xl overflow-hidden bg-red-600 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
               {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{alunoDb?.nome?.charAt(0)}</span>}
             </div>
           )}
@@ -81,7 +75,6 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
         </div>
       </div>
 
-      {/* RENDERIZAÇÃO DO BOTÃO COM AS CONDIÇÕES */}
       {aulaEncerrada ? (
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-6 bg-white/5 text-white/30 flex items-center justify-center gap-2 cursor-not-allowed border border-white/5">
           Aula Encerrada

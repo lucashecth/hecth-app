@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ alunoDb, onLogout }: HeaderProps) {
   return (
-    <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-40 border-b border-white/10">
+    <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-50 border-b border-white/10">
       
       {/* LADO ESQUERDO: Logo + Barra + Nome/Nível */}
       <div className="flex items-center gap-4">

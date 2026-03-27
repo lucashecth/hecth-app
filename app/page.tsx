@@ -228,12 +228,31 @@ export default function Home() {
   
   const agora = new Date();
   const horaAtual = agora.getHours();
-  const dataExibicao = new Date(agora);
+  let dataExibicao = new Date(agora);
+  
+  // Regra base: A partir das 21h, vira para o dia seguinte
   if (horaAtual >= 21) {
     dataExibicao.setDate(dataExibicao.getDate() + 1);
   }
+
+  // MÁQUINA DO TEMPO: Fim de semana e Sexta a partir das 10h
+  if (agora.getDay() === 5 && horaAtual >= 10) {
+    // É Sexta-feira depois das 10h -> pula para Segunda-feira (+3 dias)
+    dataExibicao = new Date(agora); // Reseta a data para não acumular com a regra das 21h
+    dataExibicao.setDate(dataExibicao.getDate() + 3);
+  } else if (dataExibicao.getDay() === 6) {
+    // Caiu no Sábado -> pula para Segunda-feira (+2 dias)
+    dataExibicao.setDate(dataExibicao.getDate() + 2);
+  } else if (dataExibicao.getDay() === 0) {
+    // Caiu no Domingo -> pula para Segunda-feira (+1 dia)
+    dataExibicao.setDate(dataExibicao.getDate() + 1);
+  }
+
   const dataFormatada = dataExibicao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  const diaDaSemana = dataExibicao.getDay(); // 0: Dom, 1: Seg... 5: Sexta, 6: Sáb
+  const diaDaSemana = dataExibicao.getDay(); // 0: Dom ... 5: Sex ...
+
+  // Descobre se estamos exibindo as aulas de HOJE ou do FUTURO
+  const isHoje = dataExibicao.getDate() === agora.getDate() && dataExibicao.getMonth() === agora.getMonth();
 
   // ==========================================
   // FILTRO ESPECIAL DE SEXTA-FEIRA
@@ -252,7 +271,7 @@ export default function Home() {
       const hora = parseInt(turma.horario.split(':')[0]);
       return hora < 13; 
     }
-    return true; // Nos outros dias, mostra todas as turmas normalmente
+    return true; // Nos outros dias, mostra todas as turmas
   });
 
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
@@ -264,11 +283,10 @@ export default function Home() {
       <main className="px-5">
         <MenuCards />
 
-        <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
+        <h2 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
           Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
-        </h3>
+        </h2>
         
-        {/* Agora renderizamos turmasDoDia em vez de turmas */}
         {turmasDoDia?.map((turma) => (
           <TurmaCard 
             key={turma.id}
@@ -280,6 +298,7 @@ export default function Home() {
             acaoClicada={acaoClicada}
             onAlternarPresenca={alternarPresenca}
             alunoJaMarcouAlguma={alunoJaMarcouAlguma}
+            isHoje={isHoje} /* PASSANDO A NOVA INFORMAÇÃO PRO CARD */
           />
         ))}
       </main>
