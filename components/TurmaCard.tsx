@@ -1,4 +1,3 @@
-// src/components/TurmaCard.tsx
 "use client";
 
 interface TurmaCardProps {
@@ -12,6 +11,31 @@ interface TurmaCardProps {
 }
 
 export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca }: TurmaCardProps) {
+// ==========================================
+  // MOTOR DE REGRAS DE NÍVEL (AGORA VAI!)
+  // ==========================================
+  const nivelAluno = alunoDb?.nivel || 'Aprendiz';
+  const nivelTurma = turma.nome || 'Aprendiz'; // <--- O SEGREDO MUDOU AQUI!
+
+  const verificarAcesso = (aluno: string, aula: string) => {
+    const norm = (str: string) => 
+      str?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    const pesos: { [key: string]: number } = {
+      'aprendiz': 1,
+      'iniciante': 2,
+      'intermediario': 3
+    };
+    
+    const pesoAluno = pesos[norm(aluno)] || 1;
+    const pesoAula = pesos[norm(aula)] || 1;
+    
+    return pesoAluno >= pesoAula;
+  };
+
+  const acessoLiberado = verificarAcesso(nivelAluno, nivelTurma);
+  // ==========================================
+  
   const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
   const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
   
@@ -20,10 +44,14 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
   const surgindo = turmaIdClicada === turma.id && acaoClicada === 'marcar';
 
   return (
-    <div className="bg-[#121212] rounded-3xl p-6 border border-white/5 mb-5 shadow-lg relative">
+    <div className={`bg-[#121212] rounded-3xl p-6 border mb-5 relative transition-all duration-300 
+      ${acessoLiberado ? 'border-white/5 shadow-lg' : 'border-white/5 opacity-40 grayscale'}`}>
+      
       <div className="flex justify-between items-start mb-6">
         <div>
-          <span className="bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md border border-green-500/20">{turma.nivel}</span>
+          <span className="bg-green-500/10 text-green-400 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md border border-green-500/20">
+            {turma.nivel}
+          </span>
           <h4 className="text-xl font-bold mt-3 text-white">{turma.nome}</h4>
           <p className="text-white/40 text-xs font-medium uppercase tracking-wider">{turma.professor}</p>
         </div>
@@ -53,13 +81,24 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
         </div>
       </div>
 
-      <button 
-        onClick={(e) => onAlternarPresenca(e, turma.id, turma.vagas_ocupadas, turma.vagas_totais, jaMarcou)}
-        disabled={!jaMarcou && lotou}
-        className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-6 transition-all active:scale-95 group relative overflow-hidden ${jaMarcou ? 'bg-green-600 text-white hover:bg-red-600' : lotou ? 'bg-white/5 text-white/20' : 'bg-white text-black hover:bg-gray-200'}`}
-      >
-        {jaMarcou ? <><span className="group-hover:hidden">Confirmado</span><span className="hidden group-hover:block">Cancelar</span></> : lotou ? 'Turma Lotada' : 'Marcar Presença'}
-      </button>
+      {/* RENDERIZAÇÃO CONDICIONAL DO BOTÃO (Liberado vs Bloqueado) */}
+      {acessoLiberado ? (
+        <button 
+          onClick={(e) => onAlternarPresenca(e, turma.id, turma.vagas_ocupadas, turma.vagas_totais, jaMarcou)}
+          disabled={!jaMarcou && lotou}
+          className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-6 transition-all active:scale-95 group relative overflow-hidden ${jaMarcou ? 'bg-green-600 text-white hover:bg-red-600' : lotou ? 'bg-white/5 text-white/20' : 'bg-white text-black hover:bg-gray-200'}`}
+        >
+          {jaMarcou ? <><span className="group-hover:hidden">Confirmado</span><span className="hidden group-hover:block">Cancelar</span></> : lotou ? 'Turma Lotada' : 'Marcar Presença'}
+        </button>
+      ) : (
+        <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs mt-6 bg-white/5 text-white/30 flex items-center justify-center gap-2 cursor-not-allowed border border-white/5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Nível Incompatível
+        </div>
+      )}
     </div>
   );
 }
