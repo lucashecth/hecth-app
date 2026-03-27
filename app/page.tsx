@@ -86,20 +86,15 @@ export default function Home() {
   const [sobrenome, setSobrenome] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
 
-  // Estados App
+  // Estados App Principal (Agora 100% no Banco)
   const [turmas, setTurmas] = useState<any[]>([]);
-  const [aulasMarcadas, setAulasMarcadas] = useState<number[]>([]);
-  const [fotosConfirmadas, setFotosConfirmadas] = useState<{ [turmaId: number]: any[] }>({});
+  const [presencasDb, setPresencasDb] = useState<any[]>([]);
   const [turmaIdClicada, setTurmaIdClicada] = useState<number | null>(null);
   const [acaoClicada, setAcaoClicada] = useState<'marcar' | 'desmarcar' | null>(null);
 
   useEffect(() => {
     setMounted(true);
     
-    // Carrega as fotos de quem já marcou do navegador
-    const fotosGlobais = localStorage.getItem('hecth_fotos_globais');
-    if (fotosGlobais) setFotosConfirmadas(JSON.parse(fotosGlobais));
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) carregarPerfil(session.user.email);
@@ -109,38 +104,32 @@ export default function Home() {
       setSession(newSession);
       if (newSession) {
         carregarPerfil(newSession.user.email);
+      } else {
+        setAlunoDb(null);
       }
     });
 
-    carregarTurmas();
+    carregarArena();
     return () => subscription.unsubscribe();
   }, []);
+
+  // Puxa as turmas e QUEM está em cada turma do banco de dados
+  const carregarArena = async () => {
+    const { data: tData } = await supabase.from('turmas').select('*').order('id', { ascending: true });
+    if (tData) setTurmas(tData);
+
+    const { data: pData } = await supabase.from('presencas').select('*');
+    if (pData) setPresencasDb(pData);
+  };
 
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
     const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
-    if (data) {
-      setAlunoDb(data);
-      const marcadasSalvas = localStorage.getItem(`hecth_marcadas_${emailUsuario}`);
-      if (marcadasSalvas) {
-        setAulasMarcadas(JSON.parse(marcadasSalvas));
-      } else {
-        setAulasMarcadas([]); 
-      }
-    }
+    if (data) setAlunoDb(data);
   };
 
-  const carregarTurmas = async () => {
-    const { data } = await supabase.from('turmas').select('*').order('id', { ascending: true });
-    if (data) setTurmas(data);
-  };
-
-  // ==========================================
-  // LOGOUT (Limpeza Total da Memória)
-  // ==========================================
   const fazerLogout = async () => {
     setAlunoDb(null);
-    setAulasMarcadas([]); // Zera o botão verde imediatamente
     setSession(null);
     await supabase.auth.signOut();
     setTelaAtiva('inicio');
@@ -181,28 +170,20 @@ export default function Home() {
 
   const alternarPresenca = async (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => {
     if (!session || alunoDb?.status !== 'aprovado') return;
+    
     setTurmaIdClicada(turmaId);
     setAcaoClicada(jaMarcou ? 'desmarcar' : 'marcar');
 
     if (jaMarcou) {
       setTimeout(async () => {
+        // Atualiza a tela instantaneamente
         setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas - 1 } : t));
+        setPresencasDb(prev => prev.filter(p => !(p.turma_id === turmaId && p.aluno_email === session.user.email)));
         
-        const novasMarcadas = aulasMarcadas.filter(id => id !== turmaId);
-        setAulasMarcadas(novasMarcadas);
-        localStorage.setItem(`hecth_marcadas_${session.user.email}`, JSON.stringify(novasMarcadas));
-        
-        // Remove a foto da banca global
-        setFotosConfirmadas(prev => {
-          const novas = { ...prev };
-          if (novas[turmaId]) {
-            novas[turmaId] = novas[turmaId].filter(f => f.email !== session.user.email);
-          }
-          localStorage.setItem('hecth_fotos_globais', JSON.stringify(novas));
-          return novas;
-        });
-
+        // Salva no Supabase Oficial
+        await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
         await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais - 1 }).eq('id', turmaId);
+        
         setTurmaIdClicada(null); 
         setAcaoClicada(null);
       }, 400);
@@ -210,33 +191,27 @@ export default function Home() {
       if (vagasAtuais >= vagasTotais) return alert("Esta turma já está lotada!");
       lancarBolasMikasa(e);
       
-      setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
-      
-      const novasMarcadas = [...aulasMarcadas, turmaId];
-      setAulasMarcadas(novasMarcadas);
-      localStorage.setItem(`hecth_marcadas_${session.user.email}`, JSON.stringify(novasMarcadas));
-      
-      // Adiciona a foto na banca global
-      setFotosConfirmadas(prev => {
-        const novas = { ...prev };
-        if (!novas[turmaId]) novas[turmaId] = [];
-        if (!novas[turmaId].some(f => f.email === session.user.email)) {
-          novas[turmaId] = [...novas[turmaId], { email: session.user.email, foto: alunoDb.foto_url, inicial: alunoDb.nome.charAt(0) }];
-        }
-        localStorage.setItem('hecth_fotos_globais', JSON.stringify(novas));
-        return novas;
-      });
+      const novaPresenca = { 
+        turma_id: turmaId, 
+        aluno_email: session.user.email, 
+        foto_url: alunoDb.foto_url, 
+        inicial: alunoDb.nome.charAt(0) 
+      };
 
+      // Atualiza a tela instantaneamente
+      setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
+      setPresencasDb(prev => [...prev, novaPresenca]);
+      
+      // Salva no Supabase Oficial
+      await supabase.from('presencas').insert([novaPresenca]);
       await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais + 1 }).eq('id', turmaId);
+      
       setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
     }
   };
 
   if (!mounted) return null;
 
-  // ==========================================
-  // TRAVA DE SEGURANÇA (CARREGANDO)
-  // ==========================================
   if (session && !alunoDb) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -245,9 +220,6 @@ export default function Home() {
     );
   }
 
-  // ==========================================
-  // RENDER: ANÁLISE (BLOQUEIO)
-  // ==========================================
   if (session && alunoDb?.status === 'pendente') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-5 text-white text-center">
@@ -261,9 +233,6 @@ export default function Home() {
     );
   }
 
-  // ==========================================
-  // RENDER: DESLOGADO
-  // ==========================================
   if (!session) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 font-sans">
@@ -305,9 +274,6 @@ export default function Home() {
     );
   }
 
-  // ==========================================
-  // RENDER: LOGADO E APROVADO
-  // ==========================================
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white">
       <style>{estilosGlobais}</style>
@@ -328,13 +294,14 @@ export default function Home() {
       <main className="px-5">
         <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">Próximas Aulas</h3>
         {turmas?.map((turma) => {
-          const jaMarcou = aulasMarcadas.includes(turma.id);
+          // Filtra quem está REALMENTE no banco para esta turma
+          const presencasTurma = presencasDb.filter(p => p.turma_id === turma.id);
+          const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
+          const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
+          
           const lotou = turma.vagas_ocupadas >= turma.vagas_totais;
           const sumindo = turmaIdClicada === turma.id && acaoClicada === 'desmarcar';
           const surgindo = turmaIdClicada === turma.id && acaoClicada === 'marcar';
-          
-          // Filtra a banca de fotos para não duplicar a sua foto atual
-          const outrasFotos = (fotosConfirmadas[turma.id] || []).filter(f => f.email !== session?.user?.email);
 
           return (
             <div key={turma.id} className="bg-[#121212] rounded-3xl p-6 border border-white/5 mb-5 shadow-lg relative">
@@ -352,18 +319,15 @@ export default function Home() {
 
               <div className="flex justify-between items-center border-t border-white/5 pt-5">
                 <div className="flex -space-x-3 items-center">
-                  {/* FOTOS FIXAS PRIMEIRO */}
-                  <img src="https://randomuser.me/api/portraits/men/32.jpg" className="w-9 h-9 rounded-full border-2 border-[#121212] z-10"/>
-                  <img src="https://randomuser.me/api/portraits/women/44.jpg" className="w-9 h-9 rounded-full border-2 border-[#121212] z-20"/>
                   
-                  {/* FOTOS DA GALERA (dinâmico) */}
-                  {outrasFotos.map((f, idx) => (
-                    <div key={f.email} style={{ zIndex: 21 + idx }} className="w-9 h-9 rounded-full border-2 border-[#121212] shadow-xl overflow-hidden bg-gray-600 flex items-center justify-center">
-                      {f.foto ? <img src={f.foto} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{f.inicial}</span>}
+                  {/* FOTOS REAIS DOS OUTROS ALUNOS DO BANCO DE DADOS */}
+                  {outrasFotos.map((p, idx) => (
+                    <div key={p.aluno_email} style={{ zIndex: 10 + idx }} className="w-9 h-9 rounded-full border-2 border-[#121212] shadow-xl overflow-hidden bg-gray-600 flex items-center justify-center">
+                      {p.foto_url ? <img src={p.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{p.inicial}</span>}
                     </div>
                   ))}
 
-                  {/* SUA FOTO POR ÚLTIMO (À DIREITA, COM ANIMAÇÃO) */}
+                  {/* SUA FOTO SEMPRE APARECE POR ÚLTIMO COM A ANIMAÇÃO */}
                   {(jaMarcou || sumindo) && (
                     <div style={{ zIndex: 50 }} className={`w-10 h-10 rounded-full border-2 border-white shadow-xl overflow-hidden bg-red-600 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
                       {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{alunoDb?.nome?.charAt(0)}</span>}
