@@ -6,6 +6,7 @@ import { lancarBolasMikasa } from '../utils/animacoes';
 import { Header } from '../components/Header';
 import { TurmaCard } from '../components/TurmaCard';
 import { MenuCards } from '../components/MenuCards';
+import { MensalidadeView } from '../components/MensalidadeView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -13,6 +14,7 @@ export default function Home() {
   const [alunoDb, setAlunoDb] = useState<any>(null);
   const [telaAtiva, setTelaAtiva] = useState<'inicio' | 'login' | 'cadastro'>('inicio');
   const [loading, setLoading] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil'>('arena');
 
   // Estados Formulários
   const [email, setEmail] = useState('');
@@ -69,7 +71,7 @@ export default function Home() {
     if (pData) setPresencasDb(pData);
   };
 
-  const carregarPerfil = async (emailUsuario: string | undefined) => {
+const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
     const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
     if (data) setAlunoDb(data);
@@ -281,26 +283,44 @@ export default function Home() {
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
       <main className="px-5">
-        <MenuCards />
+        {/* SE A ABA FOR A ARENA (AULAS), MOSTRA OS CARDS E A LISTA */}
+        {abaAtiva === 'arena' && (
+          <div className="animacao-entrada">
+            <MenuCards onNavegar={setAbaAtiva} />
 
-        <h2 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
-          Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
-        </h2>
-        
-        {turmasDoDia?.map((turma) => (
-          <TurmaCard 
-            key={turma.id}
-            turma={turma}
-            presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)}
-            session={session}
-            alunoDb={alunoDb}
-            turmaIdClicada={turmaIdClicada}
-            acaoClicada={acaoClicada}
-            onAlternarPresenca={alternarPresenca}
-            alunoJaMarcouAlguma={alunoJaMarcouAlguma}
-            isHoje={isHoje} /* PASSANDO A NOVA INFORMAÇÃO PRO CARD */
-          />
-        ))}
+            <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
+              Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
+            </h3>
+            
+            {turmasDoDia?.map((turma) => (
+              <TurmaCard 
+                key={turma.id}
+                turma={turma}
+                presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)}
+                session={session}
+                alunoDb={alunoDb}
+                turmaIdClicada={turmaIdClicada}
+                acaoClicada={acaoClicada}
+                onAlternarPresenca={alternarPresenca}
+                alunoJaMarcouAlguma={alunoJaMarcouAlguma}
+                isHoje={isHoje}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* SE A ABA FOR MENSALIDADE, MOSTRA A NOVA VIEW */}
+        {abaAtiva === 'mensalidade' && (
+  <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+)}
+
+        {/* OUTRAS TELAS FUTURAS */}
+        {(abaAtiva === 'uniformes' || abaAtiva === 'perfil') && (
+          <div className="animacao-entrada text-center py-20">
+            <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
+            <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
+          </div>
+        )}
       </main>
     </div>
   );
