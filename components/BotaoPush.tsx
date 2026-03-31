@@ -6,7 +6,18 @@ export function BotaoPush() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
+      // Define o status inicial
       setPermissao(Notification.permission);
+
+      // Fica "escutando" a mudança de permissão em tempo real
+      const OneSignalDeferred = (window as any).OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OneSignal: any) {
+        if (OneSignal.Notifications) {
+          OneSignal.Notifications.addEventListener("permissionChange", () => {
+            setPermissao(Notification.permission);
+          });
+        }
+      });
     }
   }, []);
 
@@ -14,14 +25,16 @@ export function BotaoPush() {
     if (typeof window !== "undefined") {
       const OneSignalDeferred = (window as any).OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal: any) {
+        // Abre o pop-up do OneSignal
         await OneSignal.Slidedown.promptPush({ force: true });
-        setTimeout(() => {
-          setPermissao(Notification.permission);
-        }, 3000);
+        
+        // Fallback: Atualiza o status logo após a janela fechar
+        setPermissao(Notification.permission);
       });
     }
   };
 
+  // Se já aceitou ou negou, o componente some da tela na mesma hora
   if (permissao === 'granted' || permissao === 'denied') return null;
 
   return (

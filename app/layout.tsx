@@ -54,25 +54,9 @@ export default function RootLayout({
                 notifyButton: {
                   enable: false,
                 },
-                // ==========================================
-                // NOTIFICAÇÃO DE BOAS-VINDAS CUSTOMIZADA
-                // ==========================================
                 welcomeNotification: {
-                  title: "HECTH.",
-                  message: "Obrigado por baixar o nosso app."
-                },
-                promptOptions: {
-                  slidedown: {
-                    prompts: [{
-                      type: "push",
-                      autoPrompt: true,
-                      text: {
-                        actionMessage: "Ative para receber avisos de vagas e comunicados da HECTH!",
-                        acceptButton: "Permitir",
-                        cancelButton: "Depois"
-                      }
-                    }]
-                  }
+                  title: "HECTH",
+                  message: "Tudo certo! Você agora receberá nossos avisos."
                 }
               });
             });
