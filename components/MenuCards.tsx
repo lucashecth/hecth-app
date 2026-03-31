@@ -7,6 +7,21 @@ interface MenuCardsProps {
 }
 
 export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
+  
+  // Função para forçar a atualização do PWA
+  const atualizarApp = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  };
+
   const acoes = [
     {
       nome: 'Mensalidade',
@@ -45,7 +60,7 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
 
   return (
     <div className="grid grid-cols-3 gap-2 mb-8">
-      {/* Cards dos Alunos */}
+      {/* Primeira Linha: Ações do Aluno */}
       {acoes.map((acao) => (
         <button 
           key={acao.nome}
@@ -61,30 +76,42 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
         </button>
       ))}
 
-      {/* Botão Gestão Ocupando tudo abaixo */}
+      {/* Segunda Linha: Gestão e Atualização */}
       {isAdmin && (
         <button 
           onClick={() => onNavegar('admin')}
-          className="col-span-3 mt-1 bg-[#1a1a1a] p-4 rounded-2xl border border-[#ef3340]/30 flex items-center justify-between active:scale-95 transition-all group"
+          className="bg-[#1a1a1a] border border-[#ef3340]/20 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
-               <span className="text-xl animate-pulse">☢️</span>
-            </div>
-            <div className="text-left">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#ef3340] block">Acesso Restrito</span>
-              <span className="font-black text-xs text-white italic tracking-tighter">PAINEL DE GESTÃO ADMIN</span>
-            </div>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ef3340]/10 text-[#ef3340]">
+            <span className="text-lg">☢️</span>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-[#ef3340] rounded-full animate-ping" />
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef3340" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-[#ef3340]">
+            Gestão
+          </span>
         </button>
       )}
+
+      <button 
+        onClick={atualizarApp}
+        className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+      >
+        <div className="w-9 h-9 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 21v-5h5" />
+          </svg>
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
+          Atualizar
+        </span>
+      </button>
+
+      {/* Terceiro espaço vazio (opcional) para manter o grid alinhado */}
+      <div className="rounded-2xl border border-white/[0.02] flex items-center justify-center">
+         <span className="text-[8px] font-black text-white/[0.05] tracking-widest italic uppercase">Hecth.</span>
+      </div>
     </div>
   );
 }
