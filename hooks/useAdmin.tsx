@@ -13,7 +13,7 @@ export function useAdmin() {
         const { data } = await supabase
           .from('alunos')
           .select('is_admin')
-          .eq('id', user.id)
+          .eq('email', user.email)
           .single();
         
         setIsAdmin(data?.is_admin || false);
