@@ -11,7 +11,7 @@ export function useAdmin() {
       
       if (user) {
         const { data } = await supabase
-          .from('profiles')
+          .from('alunos')
           .select('is_admin')
           .eq('id', user.id)
           .single();
