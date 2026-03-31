@@ -9,6 +9,8 @@ import { MenuCards } from '../components/MenuCards';
 import { MensalidadeView } from '../components/MensalidadeView';
 import { InstallAppCard } from '../components/InstallAppCard';
 import { BotaoPush } from '../components/BotaoPush';
+import { useAdmin } from '../hooks/useAdmin';
+
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -16,7 +18,8 @@ export default function Home() {
   const [alunoDb, setAlunoDb] = useState<any>(null);
   const [telaAtiva, setTelaAtiva] = useState<'inicio' | 'login' | 'cadastro'>('inicio');
   const [loading, setLoading] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil'>('arena');
+  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil'|'admin'>('arena');
+  const { isAdmin } = useAdmin();
 
   // Estados Formulários
   const [email, setEmail] = useState('');
@@ -289,7 +292,7 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
         {/* SE A ABA FOR A ARENA (AULAS), MOSTRA OS CARDS E A LISTA */}
         {abaAtiva === 'arena' && (
           <div className="animacao-entrada">
-            <MenuCards onNavegar={setAbaAtiva} />
+            <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
 
             <InstallAppCard />
 
@@ -326,6 +329,25 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
           <div className="animacao-entrada text-center py-20">
             <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
             <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
+          </div>
+        )}
+        {abaAtiva === 'admin' && isAdmin && (
+          <div className="animacao-entrada pb-20 text-center">
+             <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-4 text-[#ef3340]">Painel de Gestão</h2>
+             <p className="text-white/50 text-sm mb-10">Bem-vindo ao comando, HECTH.</p>
+             
+             {/* Aqui você vai começar a criar suas ferramentas de admin daqui a pouco */}
+             <div className="bg-[#1a1a1a] p-10 rounded-3xl border border-white/5">
+                <p className="text-xs uppercase font-black tracking-widest text-white/20">Próximo Passo</p>
+                <h4 className="font-bold mt-2">Criar Lista de Aprovação de Alunos</h4>
+             </div>
+
+             <button 
+               onClick={() => setAbaAtiva('arena')} 
+               className="mt-8 text-xs font-black uppercase tracking-widest text-white/30 underline"
+             >
+               Voltar para Arena
+             </button>
           </div>
         )}
       </main>

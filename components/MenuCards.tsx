@@ -2,10 +2,12 @@
 "use client";
 
 interface MenuCardsProps {
-  onNavegar: (destino: 'mensalidade' | 'uniformes' | 'perfil') => void;
+  // Usamos 'any' aqui para o TS parar de reclamar do Dispatch
+  onNavegar: (aba: any) => void; 
+  isAdmin: boolean;
 }
 
-export function MenuCards({ onNavegar }: MenuCardsProps) {
+export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
   const acoes = [
     {
       nome: 'Mensalidade',
@@ -40,6 +42,7 @@ export function MenuCards({ onNavegar }: MenuCardsProps) {
       cor: 'text-white/70',
       bg: 'bg-white/5'
     }
+    
   ];
 
   return (
@@ -58,6 +61,19 @@ export function MenuCards({ onNavegar }: MenuCardsProps) {
           </span>
         </button>
       ))}
+      {isAdmin && (
+        <button 
+          onClick={() => onNavegar('admin')}
+          className="bg-[#1a1a1a] p-5 rounded-3xl border border-[#ef3340]/30 flex flex-col items-start gap-3 active:scale-95 transition-all relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 w-8 h-8 bg-[#ef3340]/10 rounded-bl-2xl flex items-center justify-center">
+            <div className="w-2 h-2 bg-[#ef3340] rounded-full animate-ping" />
+          </div>
+          <span className="text-2xl">⚡</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#ef3340]">Gestão</span>
+          <span className="font-bold text-sm">Admin</span>
+        </button>
+      )}
     </div>
   );
 }
