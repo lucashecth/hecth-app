@@ -21,8 +21,8 @@ export const viewport: Viewport = {
 // CONFIGURAÇÃO DOS ÍCONES E MANIFEST (PWA)
 // ==========================================
 export const metadata: Metadata = {
-  title: "HECTH.",
-  description: "CT Hecth Futevôlei.",
+  title: "HECTH",
+  description: "CT Hecth Futevôlei",
   manifest: "/manifest.json", 
   icons: {
     icon: "/icon.png", 
