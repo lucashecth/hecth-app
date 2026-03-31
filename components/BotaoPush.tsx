@@ -25,11 +25,14 @@ export function BotaoPush() {
     if (typeof window !== "undefined") {
       const OneSignalDeferred = (window as any).OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal: any) {
-        // Abre o pop-up do OneSignal
-        await OneSignal.Slidedown.promptPush({ force: true });
-        
-        // Fallback: Atualiza o status logo após a janela fechar
-        setPermissao(Notification.permission);
+        // TROCAMOS Slidedown POR Notifications.requestPermission
+        // Isso chama direto o "Deseja enviar notificações" do iOS/Android
+        try {
+          await OneSignal.Notifications.requestPermission();
+          setPermissao(Notification.permission);
+        } catch (e) {
+          console.error("Erro ao pedir permissão nativa", e);
+        }
       });
     }
   };

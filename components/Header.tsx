@@ -12,6 +12,9 @@ export function Header({ alunoDb, onLogout }: HeaderProps) {
       {/* LADO ESQUERDO: Logo + Barra + Nome/Nível */}
       <div className="flex items-center gap-4">
         <img src="/hecth-logo.svg" alt="HECTH." className="h-8 w-auto"/>
+        <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
+    v1.0.5
+  </span>
         <div className="h-8 w-[1px] bg-white/30 rounded-full"></div>
         <div className="flex flex-col">
           <span className="text-sm font-bold leading-none text-white">Olá, {alunoDb?.nome?.split(' ')[0]}</span>
