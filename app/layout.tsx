@@ -52,12 +52,22 @@ export default function RootLayout({
                 appId: "8a2576f5-33b1-4791-be60-2c0a5444b633",
                 safari_web_id: "web.onesignal.auto.246fdfe2-a404-4d40-aa8a-d2b211d431d5",
                 notifyButton: {
-                  enable: false, // <-- 1. ISSO AQUI MATA O SINO VERMELHO
+                  enable: false, // Mantém o sino vermelho desligado
                 },
+                promptOptions: {
+                  slidedown: {
+                    prompts: [{
+                      type: "push",
+                      autoPrompt: true,
+                      text: {
+                        actionMessage: "Ative para receber notificações e aviso sobre as aulas",
+                        acceptButton: "Permitir",
+                        cancelButton: "Depois"
+                      }
+                    }]
+                  }
+                }
               });
-              
-              // <-- 2. ISSO AQUI CHAMA O POP-UP AUTOMATICAMENTE
-              OneSignal.Slidedown.promptPush({force: true}); 
             });
           `}
         </Script>
