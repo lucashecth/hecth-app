@@ -9,16 +9,13 @@ export function InstallAppCard() {
   const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    // 1. Verifica se já está instalado
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     setIsInstalled(isStandalone);
 
-    // 2. Descobre qual é o sistema do aluno
     const userAgent = window.navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(userAgent));
     setIsAndroid(/android/.test(userAgent));
 
-    // 3. Captura o evento nativo do Android (se o manifest existir)
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault(); 
       setDeferredPrompt(e); 
@@ -30,7 +27,6 @@ export function InstallAppCard() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
-  // Se já está instalado, some. Se for PC (não é iOS nem Android), some também.
   if (isInstalled) return null;
   if (!isIOS && !isAndroid) return null;
 
@@ -44,7 +40,6 @@ export function InstallAppCard() {
         if (outcome === 'accepted') setIsInstalled(true);
         setDeferredPrompt(null);
       } else {
-        // Fallback temporário até criarmos o manifest.json
         alert("O Android precisa do arquivo manifest.json configurado para liberar o download. Faremos isso em seguida!");
       }
     }
@@ -72,10 +67,10 @@ export function InstallAppCard() {
         </div>
       </button>
 
-      {/* MODAL DE TUTORIAL PARA iPHONE (Agora centralizado e sem scroll infinito) */}
+      {/* MODAL DE TUTORIAL PARA iPHONE (Agora colado no topo: items-start pt-16) */}
       {showTutorial && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-5 animacao-entrada">
-          <div className="bg-[#121212] w-full max-w-sm rounded-3xl p-6 border border-white/10 shadow-2xl relative">
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-start justify-center p-5 pt-16 overflow-y-auto animacao-entrada">
+          <div className="bg-[#121212] w-full max-w-sm rounded-3xl p-6 border border-white/10 shadow-2xl relative mb-10">
             
             <button onClick={() => setShowTutorial(false)} className="absolute top-4 right-4 text-white/40 hover:text-white p-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -85,7 +80,6 @@ export function InstallAppCard() {
             
             <div className="space-y-5">
               
-              {/* PASSO 1: Reticências */}
               <div className="flex gap-4 items-start">
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[#ef3340] font-black flex-shrink-0 border border-[#ef3340]/20">1</div>
                 <p className="text-sm text-white/70 leading-relaxed font-medium">
@@ -93,7 +87,6 @@ export function InstallAppCard() {
                 </p>
               </div>
 
-              {/* PASSO 2: Compartilhar */}
               <div className="flex gap-4 items-start">
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[#ef3340] font-black flex-shrink-0 border border-[#ef3340]/20">2</div>
                 <p className="text-sm text-white/70 leading-relaxed font-medium">
@@ -101,7 +94,6 @@ export function InstallAppCard() {
                 </p>
               </div>
 
-              {/* PASSO 3: Ver mais > Adicionar */}
               <div className="flex gap-4 items-start">
                 <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-[#ef3340] font-black flex-shrink-0 border border-[#ef3340]/20">3</div>
                 <p className="text-sm text-white/70 leading-relaxed font-medium">
