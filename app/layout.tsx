@@ -44,7 +44,7 @@ export default function RootLayout({
         {/* CÓDIGO OFICIAL DO ONESIGNAL */}
         {/* ========================================== */}
         <Script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" strategy="afterInteractive" />
-        <Script id="onesignal-init" strategy="afterInteractive">
+       <Script id="onesignal-init" strategy="afterInteractive">
           {`
             window.OneSignalDeferred = window.OneSignalDeferred || [];
             OneSignalDeferred.push(async function(OneSignal) {
@@ -52,9 +52,12 @@ export default function RootLayout({
                 appId: "8a2576f5-33b1-4791-be60-2c0a5444b633",
                 safari_web_id: "web.onesignal.auto.246fdfe2-a404-4d40-aa8a-d2b211d431d5",
                 notifyButton: {
-                  enable: true,
+                  enable: false, // <-- 1. ISSO AQUI MATA O SINO VERMELHO
                 },
               });
+              
+              // <-- 2. ISSO AQUI CHAMA O POP-UP AUTOMATICAMENTE
+              OneSignal.Slidedown.promptPush({force: true}); 
             });
           `}
         </Script>
