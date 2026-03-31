@@ -52,7 +52,14 @@ export default function RootLayout({
                 appId: "8a2576f5-33b1-4791-be60-2c0a5444b633",
                 safari_web_id: "web.onesignal.auto.246fdfe2-a404-4d40-aa8a-d2b211d431d5",
                 notifyButton: {
-                  enable: false, // Mantém o sino vermelho desligado
+                  enable: false,
+                },
+                // ==========================================
+                // NOTIFICAÇÃO DE BOAS-VINDAS CUSTOMIZADA
+                // ==========================================
+                welcomeNotification: {
+                  title: "HECTH.",
+                  message: "Obrigado por baixar o nosso app."
                 },
                 promptOptions: {
                   slidedown: {
@@ -60,7 +67,7 @@ export default function RootLayout({
                       type: "push",
                       autoPrompt: true,
                       text: {
-                        actionMessage: "Ative para receber notificações e aviso sobre as aulas",
+                        actionMessage: "Ative para receber avisos de vagas e comunicados da HECTH!",
                         acceptButton: "Permitir",
                         cancelButton: "Depois"
                       }
