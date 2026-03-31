@@ -20,6 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil'|'admin'>('arena');
   const { isAdmin } = useAdmin();
+  console.log("Eu sou admin?", isAdmin);
 
   // Estados Formulários
   const [email, setEmail] = useState('');
@@ -293,7 +294,7 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
         {abaAtiva === 'arena' && (
           <div className="animacao-entrada">
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
-
+console.log("Eu sou admin?", isAdmin);
             <InstallAppCard />
 
             <BotaoPush />
