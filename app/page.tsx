@@ -8,6 +8,7 @@ import { TurmaCard } from '../components/TurmaCard';
 import { MenuCards } from '../components/MenuCards';
 import { MensalidadeView } from '../components/MensalidadeView';
 import { InstallAppCard } from '../components/InstallAppCard';
+import { BotaoPush } from '../components/BotaoPush';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -291,6 +292,8 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
             <MenuCards onNavegar={setAbaAtiva} />
 
             <InstallAppCard />
+
+            <BotaoPush />
 
             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
               Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
