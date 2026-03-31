@@ -194,6 +194,7 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
              <img src="/hecth-logo.svg" alt="HECTH." className="h-14 w-auto"/>
           </div>
 
+          <InstallAppCard />
           {telaAtiva === 'inicio' ? (
             <div className="flex flex-col gap-4">
               <button onClick={() => setTelaAtiva('login')} className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-gray-200 transition-all">Já sou aluno</button>
