@@ -8,7 +8,7 @@ interface MenuCardsProps {
 
 export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
   
-  // Função para forçar a atualização do PWA
+  // Função para forçar a atualização do PWA e limpar cache
   const atualizarApp = () => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -60,7 +60,7 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
 
   return (
     <div className="grid grid-cols-3 gap-2 mb-8">
-      {/* Primeira Linha: Ações do Aluno */}
+      {/* 1, 2 e 3: Mensalidade, Uniformes e Perfil */}
       {acoes.map((acao) => (
         <button 
           key={acao.nome}
@@ -76,21 +76,7 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
         </button>
       ))}
 
-      {/* Segunda Linha: Gestão e Atualização */}
-      {isAdmin && (
-        <button 
-          onClick={() => onNavegar('admin')}
-          className="bg-[#1a1a1a] border border-[#ef3340]/20 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
-        >
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ef3340]/10 text-[#ef3340]">
-            <span className="text-lg">☢️</span>
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter text-[#ef3340]">
-            Gestão
-          </span>
-        </button>
-      )}
-
+      {/* 4: Atualizar (Sempre na segunda linha, primeira posição) */}
       <button 
         onClick={atualizarApp}
         className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
@@ -108,10 +94,25 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
         </span>
       </button>
 
-      {/* Terceiro espaço vazio (opcional) para manter o grid alinhado */}
+      {/* 5: Espaço Reservado / Futuro Recurso */}
       <div className="rounded-2xl border border-white/[0.02] flex items-center justify-center">
          <span className="text-[8px] font-black text-white/[0.05] tracking-widest italic uppercase">Hecth.</span>
       </div>
+
+      {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
+      {isAdmin && (
+        <button 
+          onClick={() => onNavegar('admin')}
+          className="bg-[#1a1a1a] border border-[#ef3340]/20 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+        >
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ef3340]/10 text-[#ef3340]">
+            <span className="text-lg">☢️</span>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-[#ef3340]">
+            Gestão
+          </span>
+        </button>
+      )}
     </div>
   );
 }
