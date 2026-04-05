@@ -22,8 +22,13 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setLoading(false);
   }
 
-  // Troca a frequência (2 -> 3 -> 5 -> 2)
+  // Altera a frequência apenas se NÃO estiver pago
   async function alterarFrequencia(aluno: any) {
+    if (aluno.mensalidade_paga) {
+      alert("⚠️ PAGAMENTO CONFIRMADO: A frequência está travada para este mês.");
+      return;
+    }
+
     const frequencias = [2, 3, 5];
     const indexAtual = frequencias.indexOf(aluno.frequencia_semanal || 2);
     const novaFreq = frequencias[(indexAtual + 1) % frequencias.length];
@@ -35,7 +40,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   }
 
   async function confirmarPagamento(aluno: any) {
-    const confirmar = window.confirm(`Confirmar pagamento de ${aluno.nome} ${aluno.frequencia_semanal}x na semana?`);
+    const freq = `${aluno.frequencia_semanal || 2}x`;
+    const acao = aluno.mensalidade_paga ? "ESTORNAR" : "CONFIRMAR";
+    
+    const confirmar = window.confirm(`${acao} pagamento de ${aluno.nome} (${freq} na semana)?`);
+    
     if (confirmar) {
       const novoStatus = !aluno.mensalidade_paga;
       const { error } = await supabase.from('alunos').update({ mensalidade_paga: novoStatus }).eq('id', aluno.id);
@@ -50,7 +59,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
     return (
-      <div className="w-full bg-[#121212] border border-white/5 rounded-3xl p-4 flex items-center justify-between active:scale-[0.98] transition-all">
+      <div className={`w-full bg-[#121212] border rounded-3xl p-4 flex items-center justify-between transition-all ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}>
         <div className="flex items-center gap-4 flex-1">
           <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
             <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
@@ -60,20 +69,23 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             <h4 className="font-black text-sm uppercase tracking-tighter text-white/90 leading-tight">
               {aluno.nome} {aluno.sobrenome}
             </h4>
-            {/* Troca "Atleta Hecth" pelo Nível ou Dia */}
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#ef3340] block mt-0.5 italic">
+            <span className={`text-[9px] font-black uppercase tracking-widest block mt-0.5 italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-[#ef3340]'}`}>
               {mostrarDia ? `Vencimento dia ${aluno.dia_vencimento}` : (aluno.nivel || 'Iniciante')}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Botão de Frequência Clicável */}
+          {/* Botão de Frequência - Fica VERDE e TRAVADO se pago */}
           <button 
             onClick={() => alterarFrequencia(aluno)}
-            className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl active:scale-90 transition-all"
+            className={`px-3 py-2 rounded-xl transition-all border ${
+              aluno.mensalidade_paga 
+              ? 'bg-green-500/10 border-green-500/50 cursor-not-allowed' 
+              : 'bg-white/5 border-white/10 active:scale-90'
+            }`}
           >
-             <span className="text-[10px] font-black text-white/60 italic">
+             <span className={`text-[10px] font-black italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-white/60'}`}>
                {aluno.frequencia_semanal || 2}x
              </span>
           </button>
@@ -82,7 +94,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           <button 
             onClick={() => confirmarPagamento(aluno)}
             className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${
-              aluno.mensalidade_paga ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'
+              aluno.mensalidade_paga ? 'bg-green-500 text-black shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-[#1a1a1a] text-white/10 border border-white/5'
             }`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -92,8 +104,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     );
   }
 
+  // ... (Restante do render do componente igual ao anterior)
   return (
-    <div className="animacao-entrada min-h-screen pb-20">
+    <div className="animacao-entrada min-h-screen pb-20 px-1">
+      {/* Header, Input e Filtros permanecem os mesmos */}
       <div className="flex items-center gap-4 mb-6">
         <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
         <h2 className="text-xl font-black uppercase italic tracking-tighter">Base de Atletas</h2>
