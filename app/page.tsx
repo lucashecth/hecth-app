@@ -329,24 +329,49 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
             <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
           </div>
         )}
-        {abaAtiva === 'admin' && isAdmin && (
-          <div className="animacao-entrada pb-20 text-center">
-             <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-4 text-[#ef3340]">Painel de Gestão</h2>
-             <p className="text-white/50 text-sm mb-10">Bem-vindo ao comando, HECTH.</p>
-             
-             {/* Aqui você vai começar a criar suas ferramentas de admin daqui a pouco */}
-             <div className="bg-[#1a1a1a] p-10 rounded-3xl border border-white/5">
-                <p className="text-xs uppercase font-black tracking-widest text-white/20">Próximo Passo</p>
-                <h4 className="font-bold mt-2">Criar Lista de Aprovação de Alunos</h4>
-             </div>
+        {/* SE A ABA FOR ADMIN, MOSTRA O PAINEL DE GESTÃO */}
+{abaAtiva === 'admin' && isAdmin && (
+  <div className="animacao-entrada pb-20">
+    {/* Cabeçalho Interno da Aba Admin */}
+    <div className="flex items-center justify-between mb-8">
+      <div>
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">Painel Operacional</p>
+      </div>
+      <button 
+        onClick={() => setAbaAtiva('arena')}
+        className="bg-white/5 border border-white/10 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+      >
+        Sair
+      </button>
+    </div>
 
-             <button 
-               onClick={() => setAbaAtiva('arena')} 
-               className="mt-8 text-xs font-black uppercase tracking-widest text-white/30 underline"
-             >
-               Voltar para Arena
-             </button>
-          </div>
+    {/* Grid de Ferramentas Admin - Mesma estrutura do MenuCards */}
+    <div className="grid grid-cols-2 gap-3">
+      
+      {/* CARD 01: ALUNOS (Ainda sem função, apenas visual) */}
+      <button 
+        className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex flex-col items-start gap-4 transition-all active:scale-95 text-left"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
+          <span className="font-black text-lg uppercase tracking-tighter">Alunos</span>
+          <p className="text-[10px] text-white/40 leading-tight mt-1">Gerenciar os 300 atletas do CT</p>
+        </div>
+      </button>
+
+      {/* Espaço para o próximo card (ex: Financeiro, Presença, etc) */}
+      <div className="border border-dashed border-white/5 rounded-3xl flex items-center justify-center">
+         <span className="text-[9px] font-black uppercase text-white/10 tracking-widest italic">Próximo Módulo...</span>
+      </div>
+
+    </div>
+  </div>
         )}
       </main>
     </div>
