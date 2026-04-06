@@ -106,16 +106,16 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     );
   }
 
- return (
-  <div className="animacao-entrada min-h-screen pb-20 w-full pt-4 px-3">
+  return (
+    <div className="animacao-entrada min-h-screen pb-20 w-full pt-4"> 
       
-      {/* Header e Busca sem padding extra para não somar com o do page.tsx */}
-      <div className="flex items-center gap-4 mb-8">
+      {/* HEADER E BUSCA: Mantemos o px-5 para ficarem perfeitamente alinhados */}
+      <div className="flex items-center gap-4 mb-8 px-5">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
         <h2 className="text-2xl font-black uppercase italic tracking-tighter">BASE DE ATLETAS</h2>
       </div>
 
-      <div className="mb-6">
+      <div className="px-5 mb-6">
         <input 
           type="text" placeholder="PESQUISAR NOME..." 
           className="w-full bg-[#121212] border border-white/10 rounded-2xl px-6 py-5 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50"
@@ -123,25 +123,36 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         />
       </div>
 
-      <div className="flex gap-3 mb-10">
+      <div className="flex gap-3 mb-10 px-5">
         <button onClick={() => setFiltro('todos')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>TODOS A-Z</button>
         <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>POR VENCIMENTO</button>
       </div>
 
-      {/* A BAZUCA CSS: margin: '0 -20px' anula completamente o px-5 do seu app na força bruta. padding: '0 8px' dá aquele respiro mínimo. */}
-      <div className="flex flex-col gap-4 px-2">
+      {/* A SOLUÇÃO BRUTA: Style Inline calculando 94% da tela física e centralizando na marra. */}
+      {/* Isso quebra qualquer parede que o aplicativo tenha criado. */}
+      <div 
+        className="flex flex-col gap-4"
+        style={{ 
+          width: '94vw', 
+          position: 'relative', 
+          left: '50%', 
+          transform: 'translateX(-50%)' 
+        }}
+      > 
         {loading ? <p className="text-center py-10 animate-pulse font-black uppercase text-xs text-white/20 italic tracking-widest">Sincronizando...</p> : 
           filtro === 'todos' ? alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />) :
           [10, 15, 20].map(dia => {
             const alunosDoDia = alunosFiltrados.filter(a => a.dia_vencimento === dia);
             if (alunosDoDia.length === 0) return null;
             return (
-              <div key={dia} className="mb-10">
-                <div className="flex items-center gap-3 mb-6 px-2">
+              <div key={dia} className="mb-10 w-full">
+                <div className="flex items-center gap-3 mb-6 px-1">
                   <span className="bg-[#ef3340] text-white text-xs font-black px-4 py-1.5 rounded-full uppercase italic shadow-lg">Dia {dia}</span>
                   <div className="h-[1px] flex-1 bg-white/10"></div>
                 </div>
-                <div className="flex flex-col gap-4">{alunosDoDia.map(aluno => <CardAluno key={aluno.id} aluno={aluno} mostrarDia />)}</div>
+                <div className="flex flex-col gap-4 w-full">
+                  {alunosDoDia.map(aluno => <CardAluno key={aluno.id} aluno={aluno} mostrarDia />)}
+                </div>
               </div>
             );
           })
