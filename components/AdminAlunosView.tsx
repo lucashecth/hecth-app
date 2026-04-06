@@ -29,13 +29,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setLoading(false);
   }
 
-  // Lógica de Filtro Interativa (letra por letra)
   const alunosFiltrados = alunos.filter(aluno => 
     aluno.nome.toLowerCase().includes(busca.toLowerCase()) || 
     aluno.sobrenome.toLowerCase().includes(busca.toLowerCase())
   );
 
-  // Componente de Card Reutilizável
   function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
     return (
       <button 
@@ -51,7 +49,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               {aluno.nome} {aluno.sobrenome}
             </h4>
             <span className="text-[9px] font-black uppercase tracking-widest text-[#ef3340] italic block mt-0.5">
-              {mostrarDia ? `Vencimento dia ${aluno.dia_vencimento}` : (aluno.nivel || 'Iniciante')}
+              {mostrarDia ? `Vencimento dia ${aluno.dia_vencimento}` : (aluno.nivel || 'Atleta HECTH')}
             </span>
           </div>
         </div>
@@ -64,44 +62,52 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   }
 
   return (
-    /* Removi paddings horizontais aqui para o conteúdo "respirar" até a borda se necessário */
-    <div className="animacao-entrada min-h-screen pb-20 px-1">
+    /* A JUSTIÇA DO TAILWIND V4:
+       -mx-5: Anula o padding do container pai (page.tsx)
+       px-5: Devolve o respiro interno para o Header e Busca não colarem no vidro
+    */
+    <div className="animacao-entrada min-h-screen pb-20 pt-4 -mx-5 px-5 overflow-x-hidden">
+      
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6 ml-1">
-        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-        <h2 className="text-xl font-black uppercase italic tracking-tighter">Base de Atletas</h2>
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50 active:bg-white/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h2 className="text-xl font-black uppercase italic tracking-tighter text-white">Base de Atletas</h2>
       </div>
 
       {/* Barra de Pesquisa */}
       <input 
         type="text" 
         placeholder="PESQUISAR NOME..." 
-        className="w-full bg-[#121212] border border-white/10 rounded-2xl px-6 py-4 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50 mb-6"
+        className="w-full bg-[#121212] border border-white/10 rounded-2xl px-6 py-4 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50 mb-6 text-white"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
       />
 
       {/* Filtros */}
       <div className="flex gap-2 mb-8">
-        <button onClick={() => setFiltro('todos')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>Todos A-Z</button>
-        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>Por Vencimento</button>
+        <button onClick={() => setFiltro('todos')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>Todos A-Z</button>
+        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>Por Vencimento</button>
       </div>
 
-      {/* Renderização Dinâmica da Lista */}
-      <div className="flex flex-col">
+      {/* LISTA DE ALUNOS:
+          Usamos px-2 aqui para os botões esticarem MAIS que a barra de busca, 
+          encostando quase na borda lateral como você desenhou.
+      */}
+      <div className="flex flex-col -mx-3 px-3">
         {loading ? (
           <p className="text-center py-10 animate-pulse font-black uppercase text-[10px] text-white/20 italic">Sincronizando...</p>
         ) : filtro === 'todos' ? (
           alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />)
         ) : (
-          /* Lógica de Grupos de Vencimento: 10, 15, 20 */
           [10, 15, 20].map(dia => {
             const alunosDoDia = alunosFiltrados.filter(a => a.dia_vencimento === dia);
             if (alunosDoDia.length === 0) return null;
 
             return (
               <div key={dia} className="mb-8">
-                <div className="flex items-center gap-2 mb-4 ml-1">
+                <div className="flex items-center gap-2 mb-4">
                   <span className="bg-[#ef3340] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest italic">Dia {dia}</span>
                   <div className="h-[1px] flex-1 bg-white/5"></div>
                 </div>
