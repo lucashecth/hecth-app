@@ -251,32 +251,34 @@ export default function Home() {
           </div>
         )}
 
-        {abaAtiva === 'admin' && isAdmin && (
-          <div className="animacao-entrada pb-20"> 
-            {viewAdmin === 'menu' ? (
-              <div>
-                <div className="ext-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
-                   <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
-                   <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setViewAdmin('alunos')} className="teste">
-                    <div className="teste2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
-                      <span className="font-black text-lg uppercase tracking-tighter text-white/90">Atletas</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
-            )}
-          </div>
-        )}
+{abaAtiva === 'admin' && isAdmin && (
+  /* Se a visão for 'alunos', aplicamos -mx-5 para ignorar o px-5 do <main> */
+  <div className={`animacao-entrada pb-20 ${viewAdmin === 'alunos' ? '-mx-5 w-auto' : ''}`}> 
+    {viewAdmin === 'menu' ? (
+      <div>
+        <div className="flex items-center justify-between mb-8">
+           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
+           <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex flex-col items-start gap-4 transition-all active:scale-95 text-left group hover:border-[#ef3340]/30">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90">Atletas</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    ) : (
+      /* O componente agora está livre para encostar nas bordas */
+      <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
+    )}
+  </div>
+)}
       </main>
     </div>
   );
