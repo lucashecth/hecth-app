@@ -227,7 +227,7 @@ export default function Home() {
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
       {/* AQUI ESTÁ O PULO DO GATO DO PAGE.TSX PARA O LAYOUT FUNCIONAR */}
-      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "w-full" : "px-5"}>
+      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "px-2" : "px-5"}>
         
         {abaAtiva === 'arena' && (
           <div className="animacao-entrada">
