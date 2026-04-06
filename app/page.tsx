@@ -226,10 +226,10 @@ export default function Home() {
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
-      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "px-2" : "px-5"}>
+      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "w-full":"w:full"}>
         
         {abaAtiva === 'arena' && (
-          <div className="animacao-entrada">
+          <div className="px-5">
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
             <InstallAppCard />
             <BotaoPush />
@@ -253,10 +253,10 @@ export default function Home() {
 
 {abaAtiva === 'admin' && isAdmin && (
   /* Se a visão for 'alunos', aplicamos -mx-5 para ignorar o px-5 do <main> */
-  <div className={`animacao-entrada pb-20 ${viewAdmin === 'alunos' ? '-mx-5 w-auto' : ''}`}> 
+  <div className="w-full"> 
     {viewAdmin === 'menu' ? (
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="px-5">
            <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
            <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
         </div>
