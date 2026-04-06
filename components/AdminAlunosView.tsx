@@ -106,8 +106,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     );
   }
 
-  return (
-    <div className="animacao-entrada min-h-screen pb-20 w-full pt-4"> 
+ return (
+  <div className="animacao-entrada min-h-screen pb-20 w-full pt-4 px-3">
       
       {/* Header e Busca sem padding extra para não somar com o do page.tsx */}
       <div className="flex items-center gap-4 mb-8">
@@ -129,7 +129,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       </div>
 
       {/* A BAZUCA CSS: margin: '0 -20px' anula completamente o px-5 do seu app na força bruta. padding: '0 8px' dá aquele respiro mínimo. */}
-      <div style={{ margin: '0 -20px', padding: '0 8px' }} className="flex flex-col gap-4"> 
+      <div className="flex flex-col gap-4 px-2">
         {loading ? <p className="text-center py-10 animate-pulse font-black uppercase text-xs text-white/20 italic tracking-widest">Sincronizando...</p> : 
           filtro === 'todos' ? alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />) :
           [10, 15, 20].map(dia => {
