@@ -12,8 +12,6 @@ import { BotaoPush } from '../components/BotaoPush';
 import { useAdmin } from '../hooks/useAdmin';
 import { AdminAlunosView } from '../components/AdminAlunosView';
 
-
-
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [session, setSession] = useState<any>(null);
@@ -23,6 +21,7 @@ export default function Home() {
   const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil'|'admin'>('arena');
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'>('menu');
+  
   // Estados Formulários
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -78,7 +77,7 @@ export default function Home() {
     if (pData) setPresencasDb(pData);
   };
 
-const carregarPerfil = async (emailUsuario: string | undefined) => {
+  const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
     const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
     if (data) setAlunoDb(data);
@@ -164,20 +163,15 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
 
   if (!mounted) return null;
 
-  // 1. CARREGANDO
   if (session && !alunoDb) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-sm">"Será que hoje é dia de físico?"...</p>
-        {/* BOTÃO DE EMERGÊNCIA */}
-        <button onClick={fazerLogout} className="text-red-500/50 hover:text-red-500 text-[10px] font-black uppercase tracking-widest underline transition-colors">
-          Forçar Saída
-        </button>
+        <button onClick={fazerLogout} className="text-red-500/50 hover:text-red-500 text-[10px] font-black uppercase tracking-widest underline transition-colors">Forçar Saída</button>
       </div>
     );
   }
 
-  // 2. BLOQUEIO (PENDENTE)
   if (session && alunoDb?.status === 'pendente') {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-5 text-white text-center">
@@ -191,7 +185,6 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
     );
   }
 
-  // 3. FLUXO DE AUTENTICAÇÃO
   if (!session) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 font-sans">
@@ -234,142 +227,112 @@ const carregarPerfil = async (emailUsuario: string | undefined) => {
     );
   }
 
- // 4. APLICATIVO PRINCIPAL LOGADO
-  
   const agora = new Date();
   const horaAtual = agora.getHours();
   let dataExibicao = new Date(agora);
   
-  // Regra base: A partir das 21h, vira para o dia seguinte
   if (horaAtual >= 21) {
     dataExibicao.setDate(dataExibicao.getDate() + 1);
   }
 
-  // MÁQUINA DO TEMPO: Fim de semana e Sexta a partir das 10h
   if (agora.getDay() === 5 && horaAtual >= 10) {
-    // É Sexta-feira depois das 10h -> pula para Segunda-feira (+3 dias)
-    dataExibicao = new Date(agora); // Reseta a data para não acumular com a regra das 21h
+    dataExibicao = new Date(agora);
     dataExibicao.setDate(dataExibicao.getDate() + 3);
   } else if (dataExibicao.getDay() === 6) {
-    // Caiu no Sábado -> pula para Segunda-feira (+2 dias)
     dataExibicao.setDate(dataExibicao.getDate() + 2);
   } else if (dataExibicao.getDay() === 0) {
-    // Caiu no Domingo -> pula para Segunda-feira (+1 dia)
     dataExibicao.setDate(dataExibicao.getDate() + 1);
   }
 
   const dataFormatada = dataExibicao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  const diaDaSemana = dataExibicao.getDay(); // 0: Dom ... 5: Sex ...
-
-  // Descobre se estamos exibindo as aulas de HOJE ou do FUTURO
+  const diaDaSemana = dataExibicao.getDay();
   const isHoje = dataExibicao.getDate() === agora.getDate() && dataExibicao.getMonth() === agora.getMonth();
 
-  // ==========================================
-  // FILTRO ESPECIAL DE SEXTA-FEIRA
-  // ==========================================
   const turmasDoDia = turmas?.map(turma => {
     const t = { ...turma };
     if (diaDaSemana === 5) {
-      // Força a turma Intermediário a ser 09:00 na Sexta, caso já não seja no banco
       const nomeNorm = t.nome?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (nomeNorm === 'intermediario') t.horario = '09:00';
     }
     return t;
   }).filter(turma => {
     if (diaDaSemana === 5) {
-      // Na Sexta-feira, esconde qualquer turma que seja depois de 12:59
       const hora = parseInt(turma.horario.split(':')[0]);
       return hora < 13; 
     }
-    return true; // Nos outros dias, mostra todas as turmas
+    return true;
   });
 
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
 
   return (
-    <div className="min-h-screen bg-black font-sans pb-10 text-white">
+    <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
-      <main className="px-5">
-        {/* SE A ABA FOR A ARENA (AULAS), MOSTRA OS CARDS E A LISTA */}
+      {/* A SOLUÇÃO: O <main> zera a margem quando estivermos na view de alunos, libertando os cards! */}
+      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "w-full" : "px-5"}>
+        
         {abaAtiva === 'arena' && (
           <div className="animacao-entrada">
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
             <InstallAppCard />
-
             <BotaoPush />
-
             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
               Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
             </h3>
-            
             {turmasDoDia?.map((turma) => (
-              <TurmaCard 
-                key={turma.id}
-                turma={turma}
-                presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)}
-                session={session}
-                alunoDb={alunoDb}
-                turmaIdClicada={turmaIdClicada}
-                acaoClicada={acaoClicada}
-                onAlternarPresenca={alternarPresenca}
-                alunoJaMarcouAlguma={alunoJaMarcouAlguma}
-                isHoje={isHoje}
-              />
+              <TurmaCard key={turma.id} turma={turma} presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)} session={session} alunoDb={alunoDb} turmaIdClicada={turmaIdClicada} acaoClicada={acaoClicada} onAlternarPresenca={alternarPresenca} alunoJaMarcouAlguma={alunoJaMarcouAlguma} isHoje={isHoje} />
             ))}
           </div>
         )}
 
-        {/* SE A ABA FOR MENSALIDADE, MOSTRA A NOVA VIEW */}
         {abaAtiva === 'mensalidade' && (
-  <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
-)}
+          <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+        )}
 
-        {/* OUTRAS TELAS FUTURAS */}
         {(abaAtiva === 'uniformes' || abaAtiva === 'perfil') && (
           <div className="animacao-entrada text-center py-20">
             <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
             <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
           </div>
         )}
-       {/* SE A ABA FOR ADMIN, MOSTRA O PAINEL DE GESTÃO */}
-{abaAtiva === 'admin' && isAdmin && (
-  /* MÁGICA AQUI: Se estiver na lista de alunos, aplica -mx-5 para anular o padding do <main> */
-  <div className={`animacao-entrada pb-20 ${viewAdmin === 'alunos' ? '-mx-5' : ''}`}> 
-    {viewAdmin === 'menu' ? (
-      <div> {/* Sem px aqui, porque o <main> já está dando o respiro */}
-        <div className="flex items-center justify-between mb-8">
-           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
-           <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <button 
-            onClick={() => setViewAdmin('alunos')}
-            className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex flex-col items-start gap-4 transition-all active:scale-95 text-left group hover:border-[#ef3340]/30"
-          >
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90">Atletas</span>
-              <p className="text-[10px] text-white/40 leading-tight mt-1 font-medium">Gerenciar os 300 alunos do CT</p>
-            </div>
-          </button>
 
-          <div className="border border-dashed border-white/10 rounded-3xl flex items-center justify-center bg-white/[0.01]">
-             <span className="text-[9px] font-black uppercase text-white/10 tracking-widest italic">Em breve...</span>
+        {abaAtiva === 'admin' && isAdmin && (
+          <div className="animacao-entrada pb-20"> 
+            {viewAdmin === 'menu' ? (
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                   <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
+                   <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => setViewAdmin('alunos')}
+                    className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex flex-col items-start gap-4 transition-all active:scale-95 text-left group hover:border-[#ef3340]/30"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
+                      <span className="font-black text-lg uppercase tracking-tighter text-white/90">Atletas</span>
+                      <p className="text-[10px] text-white/40 leading-tight mt-1 font-medium">Gerenciar os 300 alunos</p>
+                    </div>
+                  </button>
+
+                  <div className="border border-dashed border-white/10 rounded-3xl flex items-center justify-center bg-white/[0.01]">
+                     <span className="text-[9px] font-black uppercase text-white/10 tracking-widest italic">Em breve...</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
+            )}
           </div>
-        </div>
-      </div>
-    ) : (
-      <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
-    )}
-  </div>
-)}
+        )}
       </main>
     </div>
   );
