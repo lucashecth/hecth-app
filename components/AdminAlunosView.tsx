@@ -58,14 +58,12 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   async function confirmarPagamento(aluno: any) {
     const acao = aluno.mensalidade_paga ? "ESTORNAR" : "CONFIRMAR";
-
     const confirmar = window.confirm(
       `${acao} pagamento de ${aluno.nome} (${aluno.frequencia_semanal || 2}x)?`
     );
 
     if (confirmar) {
       const novoStatus = !aluno.mensalidade_paga;
-
       const { error } = await supabase
         .from('alunos')
         .update({ mensalidade_paga: novoStatus })
@@ -130,7 +128,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             onClick={() => confirmarPagamento(aluno)}
             className={`w-10 h-10 rounded-xl flex items-center justify-center ${aluno.mensalidade_paga ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'}`}
           >
-            ✓
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </button>
         </div>
       </div>
@@ -138,12 +136,12 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   }
 
   return (
-    <div className="animacao-entrada min-h-screen w-screen pb-20 pt-4">
+    <div className="animacao-entrada min-h-screen pb-20 pt-4 w-full">
       
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-6 px-4">
         <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50">
-          ←
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <h2 className="text-xl font-black uppercase italic tracking-tight">
           BASE DE ATLETAS
@@ -169,20 +167,19 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         >
           TODOS
         </button>
-
         <button 
           onClick={() => setFiltro('vencimento')}
-          className={`flex-1 py-3 rounded-xl text-xs font-black uppercase ${filtro === 'vencimento' ? 'bg-[#ef3340]' : 'bg-white/5 text-white/40'}`}
+          className={`flex-1 py-3 rounded-xl text-xs font-black uppercase ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40'}`}
         >
           VENCIMENTO
         </button>
       </div>
 
-      {/* LISTA */}
+      {/* LISTA DE ALUNOS COM O ESPAÇAMENTO SEGURO */}
       <div className="flex flex-col gap-3 px-3">
         {loading ? (
-          <p className="text-center py-10 text-white/20 text-xs uppercase">
-            Carregando...
+          <p className="text-center py-10 text-white/20 text-xs font-black uppercase tracking-widest">
+            Sincronizando...
           </p>
         ) : filtro === 'todos' ? (
           alunosFiltrados.map(aluno => (
@@ -196,7 +193,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             return (
               <div key={dia}>
                 <div className="flex items-center gap-2 mb-3 px-1">
-                  <span className="bg-[#ef3340] text-xs px-3 py-1 rounded-full">
+                  <span className="bg-[#ef3340] text-white text-xs font-black px-3 py-1 rounded-full italic">
                     Dia {dia}
                   </span>
                   <div className="h-[1px] flex-1 bg-white/10"></div>
