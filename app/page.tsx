@@ -269,11 +269,11 @@ export default function Home() {
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
-      {/* A SOLUÇÃO: O <main> zera a margem quando estivermos na view de alunos, libertando os cards! */}
-      <main className={abaAtiva === 'admin' && viewAdmin === 'alunos' ? "w-full" : "px-5"}>
+      {/* A SOLUÇÃO: A tag <main> NUNCA MAIS terá px-5 cravado nela. Ela agora é w-full sempre. */}
+      <main className="w-full">
         
         {abaAtiva === 'arena' && (
-          <div className="animacao-entrada">
+          <div className="animacao-entrada w-full px-5"> {/* O px-5 desceu para cá */}
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
             <InstallAppCard />
             <BotaoPush />
@@ -287,20 +287,22 @@ export default function Home() {
         )}
 
         {abaAtiva === 'mensalidade' && (
-          <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+          <div className="w-full px-5"> {/* O px-5 desceu para cá também */}
+            <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+          </div>
         )}
 
         {(abaAtiva === 'uniformes' || abaAtiva === 'perfil') && (
-          <div className="animacao-entrada text-center py-20">
+          <div className="animacao-entrada text-center py-20 w-full px-5">
             <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
             <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
           </div>
         )}
 
         {abaAtiva === 'admin' && isAdmin && (
-          <div className="animacao-entrada pb-20"> 
+          <div className="animacao-entrada pb-20 w-full"> 
             {viewAdmin === 'menu' ? (
-              <div>
+              <div className="w-full px-5"> {/* O menu de admin continua protegido pelo px-5 */}
                 <div className="flex items-center justify-between mb-8">
                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
                    <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
