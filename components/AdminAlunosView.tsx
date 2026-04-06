@@ -109,27 +109,30 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   return (
     <div className="animacao-entrada min-h-screen pb-20 w-full"> 
       
-      {/* Header, Busca e Filtros mantêm um px-5 para ficarem alinhados ao centro da tela */}
-      <div className="flex items-center gap-4 mb-8 px-5">
+      {/* Header, Busca e Filtros - SEM margem extra, herdam a margem correta do app principal */}
+      <div className="flex items-center gap-4 mb-8">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
         <h2 className="text-2xl font-black uppercase italic tracking-tighter">BASE DE ATLETAS</h2>
       </div>
 
-      <div className="px-5">
+      <div className="mb-6">
         <input 
           type="text" placeholder="PESQUISAR NOME..." 
-          className="w-full bg-[#121212] border border-white/10 rounded-2xl px-6 py-5 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50 mb-6"
+          className="w-full bg-[#121212] border border-white/10 rounded-2xl px-6 py-5 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50"
           value={busca} onChange={(e) => setBusca(e.target.value)}
         />
-
-        <div className="flex gap-3 mb-10">
-          <button onClick={() => setFiltro('todos')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>TODOS A-Z</button>
-          <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>POR VENCIMENTO</button>
-        </div>
       </div>
 
-      {/* A LISTA DE CARDS: Usa apenas px-2, permitindo que os cards estiquem e ocupem todo aquele espaço amarelo! */}
-      <div className="flex flex-col gap-4 px-2"> 
+      <div className="flex gap-3 mb-10">
+        <button onClick={() => setFiltro('todos')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>TODOS A-Z</button>
+        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-5 rounded-2xl text-xs font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>POR VENCIMENTO</button>
+      </div>
+
+      {/* A MÁGICA ESTÁ AQUI: 
+          w-screen = força a largura da tela inteira (ignorando o que prende ele)
+          relative left-1/2 -translate-x-1/2 = centraliza perfeitamente no celular
+          px-3 = deixa só aquele respirinho mínimo de 12px da borda para não grudar no vidro do iPhone/Android */}
+      <div className="w-screen relative left-1/2 -translate-x-1/2 px-3 flex flex-col gap-4"> 
         {loading ? <p className="text-center py-10 animate-pulse font-black uppercase text-xs text-white/20 italic tracking-widest">Sincronizando...</p> : 
           filtro === 'todos' ? alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />) :
           [10, 15, 20].map(dia => {
@@ -137,7 +140,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             if (alunosDoDia.length === 0) return null;
             return (
               <div key={dia} className="mb-10">
-                <div className="flex items-center gap-3 mb-6 px-4">
+                <div className="flex items-center gap-3 mb-6 px-2">
                   <span className="bg-[#ef3340] text-white text-xs font-black px-4 py-1.5 rounded-full uppercase italic shadow-lg">Dia {dia}</span>
                   <div className="h-[1px] flex-1 bg-white/10"></div>
                 </div>
