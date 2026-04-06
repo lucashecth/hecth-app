@@ -269,11 +269,12 @@ export default function Home() {
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} />
 
-      {/* A SOLUÇÃO: A tag <main> NUNCA MAIS terá px-5 cravado nela. Ela agora é w-full sempre. */}
+      {/* AQUI ESTAVA O VILÃO! Mudamos de className="px-5" para className="w-full" */}
       <main className="w-full">
         
+        {/* ABA ARENA: Adicionamos o px-5 apenas aqui para manter ela alinhada */}
         {abaAtiva === 'arena' && (
-          <div className="animacao-entrada w-full px-5"> {/* O px-5 desceu para cá */}
+          <div className="animacao-entrada px-5">
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
             <InstallAppCard />
             <BotaoPush />
@@ -286,23 +287,25 @@ export default function Home() {
           </div>
         )}
 
+        {/* ABA MENSALIDADE: Adicionamos o px-5 aqui também */}
         {abaAtiva === 'mensalidade' && (
-          <div className="w-full px-5"> {/* O px-5 desceu para cá também */}
+          <div className="w-full px-5">
             <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
           </div>
         )}
 
         {(abaAtiva === 'uniformes' || abaAtiva === 'perfil') && (
-          <div className="animacao-entrada text-center py-20 w-full px-5">
+          <div className="animacao-entrada text-center py-20 px-5">
             <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
             <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
           </div>
         )}
 
+        {/* ABA ADMIN: Container w-full, permitindo que a lista estique livremente */}
         {abaAtiva === 'admin' && isAdmin && (
           <div className="animacao-entrada pb-20 w-full"> 
             {viewAdmin === 'menu' ? (
-              <div className="w-full px-5"> {/* O menu de admin continua protegido pelo px-5 */}
+              <div className="w-full px-5"> {/* O px-5 desceu para proteger o Menu Admin */}
                 <div className="flex items-center justify-between mb-8">
                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
                    <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
@@ -331,6 +334,7 @@ export default function Home() {
                 </div>
               </div>
             ) : (
+              /* AQUI A MÁGICA ACONTECE: Como o <main> não tem mais margem, isso aqui vai ocupar a tela toda! */
               <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
             )}
           </div>
