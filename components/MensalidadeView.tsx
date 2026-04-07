@@ -15,50 +15,44 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
   const [copiado, setCopiado] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // MEMÓRIA: Assim que a tela abre, checa se o aluno já tem um envio pendente no banco
+  const planos = [
+    { freq: 2, nome: "2x na Semana", preco: "180,00", corBase: "text-cyan-400", bgGradiente: "from-blue-600 to-cyan-400", sombraNeon: "shadow-[0_0_30px_rgba(34,211,238,0.5)]", brilhoFundo: "bg-cyan-900/20", posicao: "0%", pixCopiaECola: "COLE_O_PIX_AQUI_DE_180" },
+    { freq: 3, nome: "3x na Semana", preco: "220,00", corBase: "text-fuchsia-400", bgGradiente: "from-purple-600 to-fuchsia-500", sombraNeon: "shadow-[0_0_30px_rgba(232,121,249,0.5)]", brilhoFundo: "bg-fuchsia-900/20", posicao: "50%", pixCopiaECola: "COLE_O_PIX_AQUI_DE_220" },
+    { freq: 5, nome: "Passe Livre (5x)", preco: "280,00", corBase: "text-[#ef3340]", bgGradiente: "from-orange-500 to-[#ef3340]", sombraNeon: "shadow-[0_0_40px_rgba(239,51,64,0.6)]", brilhoFundo: "bg-[#ef3340]/20", posicao: "100%", pixCopiaECola: "COLE_O_PIX_AQUI_DE_280" }
+  ];
+
+  // 1. CARREGAR ESTADO INICIAL DO BANCO
   useEffect(() => {
-    if (alunoDb?.pagamento_enviado) {
-      setEtapa('analise');
+    if (alunoDb) {
+      // Se já enviou, pula pra análise
+      if (alunoDb.pagamento_enviado) setEtapa('analise');
+      
+      // Seta o slider na posição correta baseada na frequencia_semanal gravada
+      const freqSalva = alunoDb.frequencia_semanal || 2;
+      const idx = planos.findIndex(p => p.freq === freqSalva);
+      if (idx !== -1) setPlanoIdx(idx);
     }
   }, [alunoDb]);
 
-  const planos = [
-    {
-      freq: 2,
-      nome: "2x na Semana",
-      preco: "180,00",
-      corBase: "text-cyan-400",
-      bgGradiente: "from-blue-600 to-cyan-400",
-      sombraNeon: "shadow-[0_0_30px_rgba(34,211,238,0.5)]",
-      brilhoFundo: "bg-cyan-900/20",
-      posicao: "0%",
-      pixCopiaECola: "COLE_O_PIX_AQUI_DE_180" 
-    },
-    {
-      freq: 3,
-      nome: "3x na Semana",
-      preco: "220,00",
-      corBase: "text-fuchsia-400",
-      bgGradiente: "from-purple-600 to-fuchsia-500",
-      sombraNeon: "shadow-[0_0_30px_rgba(232,121,249,0.5)]",
-      brilhoFundo: "bg-fuchsia-900/20",
-      posicao: "50%",
-      pixCopiaECola: "COLE_O_PIX_AQUI_DE_220"
-    },
-    {
-      freq: 5,
-      nome: "Passe Livre (5x)",
-      preco: "280,00",
-      corBase: "text-[#ef3340]",
-      bgGradiente: "from-orange-500 to-[#ef3340]",
-      sombraNeon: "shadow-[0_0_40px_rgba(239,51,64,0.6)]",
-      brilhoFundo: "bg-[#ef3340]/20",
-      posicao: "100%",
-      pixCopiaECola: "COLE_O_PIX_AQUI_DE_280"
-    }
-  ];
-
   const planoAtivo = planos[planoIdx];
+
+  // 2. SALVAR PLANO ANTES DE IR PRO PAGAMENTO
+  const avancarParaPagamento = async () => {
+    try {
+      setUploading(true);
+      const { error } = await supabase
+        .from('alunos')
+        .update({ frequencia_semanal: planoAtivo.freq })
+        .eq('id', alunoDb.id);
+      
+      if (error) throw error;
+      setEtapa('pagamento');
+    } catch (e: any) {
+      alert("Erro ao salvar plano: " + e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleCopiarPix = () => {
     navigator.clipboard.writeText(planoAtivo.pixCopiaECola);
@@ -66,30 +60,26 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
     setTimeout(() => setCopiado(false), 3000);
   };
 
+  // 3. UPLOAD E TRAVA DE TELA IMEDIATA
   const handleUploadComprovante = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0];
       if (!file) return;
-      
       setUploading(true);
       
       const fileExt = file.name.split('.').pop();
       const fileName = `comprovante-${alunoDb.id}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file);
-      
       if (uploadError) throw uploadError;
 
-      // ATUALIZAÇÃO NO BANCO: Marca que o comprovante foi enviado
       const { error: dbError } = await supabase
         .from('alunos')
-        .update({ 
-          pagamento_enviado: true,
-          mensalidade_paga: false // Garante que continua desativado até você conferir
-        })
+        .update({ pagamento_enviado: true, mensalidade_paga: false })
         .eq('id', alunoDb.id);
 
       if (dbError) throw dbError;
 
+      // Forçamos a mudança de etapa localmente para o aluno ver o checklist na hora
       setEtapa('analise');
       
     } catch (error: any) {
@@ -109,7 +99,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
 
       <div className="flex items-center gap-4 mb-6 px-5 z-10 relative">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform backdrop-blur-sm">
-          <svg xmlns="http://www.w3.org/2000/center" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div>
           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">Mensalidade</h2>
@@ -142,19 +132,26 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
                 </div>
               </div>
             </div>
-            <button onClick={() => setEtapa('pagamento')} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>Avançar</button>
+            <button onClick={avancarParaPagamento} disabled={uploading} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
+               {uploading ? 'Salvando...' : 'Avançar para Pagamento'}
+            </button>
           </div>
         )}
 
         {etapa === 'pagamento' && (
           <div className="w-full animacao-entrada flex flex-col gap-4">
-            <button onClick={handleCopiarPix} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs border ${copiado ? 'bg-green-600 text-white border-green-500' : 'bg-[#1a1a1a] text-white border-white/10'}`}>
+             <div className="bg-white/5 rounded-2xl p-4 mb-2 text-center border border-white/5">
+                <span className="text-[10px] font-black uppercase text-white/30 block mb-1">Plano Selecionado</span>
+                <span className={`text-sm font-black uppercase ${planoAtivo.corBase}`}>{planoAtivo.nome}</span>
+             </div>
+            <button onClick={handleCopiarPix} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs border ${copiado ? 'bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'bg-[#1a1a1a] text-white border-white/10'}`}>
               {copiado ? '✓ Código Copiado!' : 'Copiar Código PIX'}
             </button>
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleUploadComprovante} />
-            <button onClick={() => fileInputRef.current?.click()} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
+            <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
               {uploading ? 'Enviando...' : 'Paguei, enviar Comprovante'}
             </button>
+            <button onClick={() => setEtapa('selecao')} className="text-[10px] font-black uppercase text-white/20 underline">Alterar Plano</button>
           </div>
         )}
 
@@ -167,7 +164,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
             </div>
             <div className="flex flex-col gap-3">
               <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black">✓</div>
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black font-black italic">✓</div>
                 <span className="text-xs font-black uppercase text-green-400 italic">Comprovante Enviado</span>
               </div>
               <div className="bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center gap-4 opacity-40">
