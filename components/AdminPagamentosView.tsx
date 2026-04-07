@@ -17,14 +17,12 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
     setLoading(false);
   }
 
-  async function confirmarPagamento(aluno: any, tipo: 'pix' | 'dinheiro') {
-    const mensagem = tipo === 'dinheiro' ? `Confirmar recebimento em DINHEIRO de ${aluno.nome}?` : `Confirmar PIX de ${aluno.nome}?`;
-    if (!window.confirm(mensagem)) return;
+  async function confirmarPagamento(aluno: any) {
+    if (!window.confirm(`Confirmar recebimento do PIX de ${aluno.nome}?`)) return;
 
     const { error } = await supabase.from('alunos').update({ 
       mensalidade_paga: true, 
-      pagamento_enviado: false,
-      comprovante_url: tipo === 'dinheiro' ? 'dinheiro' : aluno.comprovante_url 
+      pagamento_enviado: false 
     }).eq('id', aluno.id);
 
     if (!error) {
@@ -59,40 +57,38 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
       <div className="flex flex-col gap-4 px-2">
         {loading ? (
           <p className="text-center py-20 text-white/20 text-[10px] font-black uppercase italic">Buscando...</p>
-        ) : alunos.map(aluno => (
-          <div key={aluno.id} className="bg-[#121212] border border-white/5 rounded-[2rem] p-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="text-left">
-                <h4 className="font-black text-lg uppercase tracking-tighter text-white">{aluno.nome}</h4>
-                <span className="text-[10px] font-black uppercase text-[#ef3340] italic">Plano {aluno.frequencia_semanal}x</span>
+        ) : alunos.length === 0 ? (
+          <div className="text-center py-20 opacity-20"><span className="text-5xl block mb-4">✅</span><p className="text-xs font-black uppercase tracking-widest">Tudo em dia!</p></div>
+        ) : (
+          alunos.map(aluno => (
+            <div key={aluno.id} className="bg-[#121212] border border-white/5 rounded-[2rem] p-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <h4 className="font-black text-lg uppercase tracking-tighter text-white leading-none mb-1">{aluno.nome}</h4>
+                  <span className="text-[10px] font-black uppercase text-[#ef3340] italic">Plano {aluno.frequencia_semanal}x na semana</span>
+                </div>
+                <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shrink-0">
+                  <img src={aluno.foto_url} className="w-full h-full object-cover" />
+                </div>
               </div>
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shrink-0">
-                <img src={aluno.foto_url} className="w-full h-full object-cover" />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => aluno.comprovante_url && setImgZoom(aluno.comprovante_url)}
-                className="py-4 bg-white/5 rounded-xl text-[9px] font-black uppercase text-white/70 border border-white/5"
-              >
-                Ver Comprovante
-              </button>
-              <button 
-                onClick={() => confirmarPagamento(aluno, 'dinheiro')}
-                className="py-4 bg-blue-600 rounded-xl text-[9px] font-black uppercase text-white shadow-lg"
-              >
-                Recebi Dinheiro
-              </button>
-              <button 
-                onClick={() => confirmarPagamento(aluno, 'pix')}
-                className="col-span-2 py-4 bg-green-600 rounded-xl text-[10px] font-black uppercase text-white shadow-lg"
-              >
-                Confirmar PIX
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button 
+                  onClick={() => aluno.comprovante_url && setImgZoom(aluno.comprovante_url)}
+                  className="py-4 bg-white/5 rounded-xl text-[10px] font-black uppercase text-white/70 border border-white/5 active:scale-95"
+                >
+                  Ver Arquivo
+                </button>
+                <button 
+                  onClick={() => confirmarPagamento(aluno)}
+                  className="py-4 bg-green-600 rounded-xl text-[10px] font-black uppercase text-white shadow-lg active:scale-95"
+                >
+                  Confirmar PIX
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

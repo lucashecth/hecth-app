@@ -16,7 +16,7 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
   const [copiado, setCopiado] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Aqui você cola as strings completas do PIX Copia e Cola de cada valor
+  // Strings completas do PIX Copia e Cola
   const planos = [
     { 
       freq: 2, 
@@ -72,7 +72,6 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
   };
 
   const handleCopiarPix = () => {
-    // Agora ele puxa a string completa e exata que você definiu no array
     navigator.clipboard.writeText(planoAtivo.pixCopiaECola);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 3000);
@@ -171,7 +170,7 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
           </div>
         )}
 
-        {/* ANÁLISE / ATIVO */}
+        {/* ANÁLISE / ATIVO - COM O CHECKLIST RESTAURADO */}
         {(etapa === 'analise' || etapa === 'ativo') && (
           <div className="w-full animacao-entrada flex flex-col gap-4">
             <div className="bg-[#1a1a1a] border border-white/5 rounded-3xl p-6 text-center">
@@ -179,10 +178,24 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
               <p className="text-white/40 text-[10px] font-black uppercase tracking-widest italic">Válido até:</p>
               <div className="text-green-400 text-3xl font-black mt-2 italic tracking-tighter">{dataFormatada}</div>
             </div>
-            <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black font-black">✓</div>
-              <span className="text-xs font-black uppercase text-green-400">Pago & Confirmado</span>
+            
+            <div className="flex flex-col gap-3 mt-2">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black font-black italic shadow-[0_0_10px_rgba(34,197,94,0.5)]">✓</div>
+                <span className="text-xs font-black uppercase text-green-400 italic">Comprovante Enviado</span>
+              </div>
+              
+              <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${etapa === 'ativo' ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'bg-[#121212] border-white/5 opacity-30'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${etapa === 'ativo' ? 'bg-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'border-2 border-white/20 text-white/40'}`}>
+                   {etapa === 'ativo' ? '✓' : '...'}
+                </div>
+                <span className={`text-xs font-black uppercase italic ${etapa === 'ativo' ? 'text-green-400' : 'text-white/40'}`}>Conferido pela HECTH</span>
+              </div>
             </div>
+
+            {etapa === 'ativo' && (
+              <button onClick={() => setEtapa('selecao')} className="w-full mt-6 py-3 text-white/20 text-[10px] font-black uppercase tracking-widest underline">Alterar Plano Futuro</button>
+            )}
           </div>
         )}
       </div>
