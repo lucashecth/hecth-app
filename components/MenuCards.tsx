@@ -101,17 +101,9 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
 
       {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
       {isAdmin && (
-        <button 
-          onClick={() => onNavegar('admin')}
-          className="bg-[#1a1a1a] border border-[#ef3340]/20 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
-        >
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-[#ef3340]/10 text-[#ef3340]">
-            <span className="text-lg">☢️</span>
-          </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter text-[#ef3340]">
-            Gestão
-          </span>
-        </button>
+<button onClick={() => alert("Módulo em reestruturação!")}>
+  Gestão
+</button>
       )}
     </div>
   );
