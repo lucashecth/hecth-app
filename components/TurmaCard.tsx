@@ -11,9 +11,10 @@ interface TurmaCardProps {
   onAlternarPresenca: (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => void;
   alunoJaMarcouAlguma: boolean;
   isHoje: boolean; 
+  onVerAlunos?: (turma: any) => void; // Adicionamos a prop aqui
 }
 
-export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje }: TurmaCardProps) {
+export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje, onVerAlunos }: TurmaCardProps) {
   
   const nivelAluno = alunoDb?.nivel || 'Aprendiz';
   
@@ -60,7 +61,6 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col gap-2">
-          {/* MAP DAS TAGS: Remove o "Equipe CT Hecth" e gera as tags vermelhas baseadas no nome da turma no banco */}
           <div className="flex flex-wrap gap-2">
             {niveisTurmaArray.map((nivel: string) => (
               <span key={nivel} className="bg-[#ef3340]/10 text-[#ef3340] text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border border-[#ef3340]/20 italic">
@@ -77,7 +77,11 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       </div>
 
       <div className="flex justify-between items-center border-t border-white/5 pt-5">
-        <div className="flex -space-x-3 items-center">
+        {/* AQUI ESTÁ A MÁGICA: Transformamos a div das fotos em um botão interativo */}
+        <div 
+          onClick={() => onVerAlunos && onVerAlunos(turma)}
+          className="flex -space-x-3 items-center cursor-pointer active:scale-95 hover:opacity-80 transition-all"
+        >
           {outrasFotos.map((p, idx) => (
             <div key={p.aluno_email} style={{ zIndex: 10 + idx }} className="w-9 h-9 rounded-full border-2 border-[#121212] shadow-xl overflow-hidden bg-gray-800 flex items-center justify-center">
               {p.foto_url ? <img src={p.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-black text-[10px]">{p.inicial}</span>}
@@ -90,6 +94,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             </div>
           )}
         </div>
+
         <div className="text-right">
           <span className="text-white/20 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>
           <span className="text-white font-black text-xl tracking-tighter italic">
