@@ -82,7 +82,7 @@ export default function Home() {
     const { data: alunosPagamento } = await supabase.from('alunos').select('id').eq('pagamento_enviado', true).limit(1);
     setTemNovoPagamento((alunosPagamento?.length ?? 0) > 0);
   };
-  
+
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
     const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
@@ -244,24 +244,49 @@ export default function Home() {
             <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
             <InstallAppCard />
             <BotaoPush />
+            
             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
               Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
             </h3>
-            {turmasDoDia?.map((turma) => (
-              <TurmaCard 
-                key={turma.id} 
-                turma={turma} 
-                presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)} 
-                session={session} 
-                alunoDb={alunoDb} 
-                turmaIdClicada={turmaIdClicada} 
-                acaoClicada={acaoClicada} 
-                onAlternarPresenca={alternarPresenca} 
-                alunoJaMarcouAlguma={alunoJaMarcouAlguma} 
-                isHoje={isHoje}
-                onVerAlunos={(t) => { setTurmaDetalhe(t); setAbaAtiva('turma_alunos'); }} 
-              />
-            ))}
+
+            {/* TRAVA DE MENSALIDADE: Só mapeia os cards se o aluno pagou */}
+            {alunoDb?.mensalidade_paga ? (
+              turmasDoDia?.map((turma) => (
+                <TurmaCard 
+                  key={turma.id} 
+                  turma={turma} 
+                  presencasTurma={presencasDb.filter(p => p.turma_id === turma.id)} 
+                  session={session} 
+                  alunoDb={alunoDb} 
+                  turmaIdClicada={turmaIdClicada} 
+                  acaoClicada={acaoClicada} 
+                  onAlternarPresenca={alternarPresenca} 
+                  alunoJaMarcouAlguma={alunoJaMarcouAlguma} 
+                  isHoje={isHoje}
+                  onVerAlunos={(t) => { setTurmaDetalhe(t); setAbaAtiva('turma_alunos'); }} 
+                />
+              ))
+            ) : (
+              /* TELA DE BLOQUEIO PARA ALUNOS INADIMPLENTES OU NOVOS */
+              <div className="bg-[#121212] border border-[#ef3340]/20 rounded-[2rem] p-8 text-center flex flex-col items-center justify-center animacao-entrada shadow-[0_0_30px_rgba(239,51,64,0.05)] mt-4 mb-10">
+                <div className="w-16 h-16 rounded-full bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340] mb-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <h4 className="text-white font-black uppercase tracking-tighter text-xl mb-2">Acesso Bloqueado</h4>
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest leading-relaxed mb-6 italic">
+                  Por favor, escolha um plano de aulas para ter acesso às turmas.
+                </p>
+                <button 
+                  onClick={() => setAbaAtiva('mensalidade')}
+                  className="w-full bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.4)]"
+                >
+                  Ver Planos
+                </button>
+              </div>
+            )}
           </div>
         )}
 
