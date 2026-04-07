@@ -59,12 +59,30 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       if (!file) return;
       setUploading(true);
       
-      const fileName = `comprovante-${alunoDb.id}-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file);
+      // 1. Pega a extensão original do arquivo (ex: .jpg, .png, .pdf)
+      const fileExt = file.name.split('.').pop();
+      
+      // 2. Pega o mês e o ano atuais para organizar
+      const dataAtual = new Date();
+      const mesNome = dataAtual.toLocaleString('pt-BR', { month: 'long' }).toUpperCase();
+      const anoAtual = dataAtual.getFullYear();
+      
+      // 3. Limpa o nome do aluno (substitui espaços por underline para não quebrar a URL)
+      const nomeLimpo = `${alunoDb.nome}_${alunoDb.sobrenome}`.replace(/\s+/g, '_');
+      
+      // 4. Monta o nome final: comprovante_NOME_SOBRENOME_MES_ANO.extensao
+      const fileName = `comprovante_${nomeLimpo}_${mesNome}_${anoAtual}.${fileExt}`;
+
+      // 5. Faz o upload com "upsert: true" (sobrescreve se o aluno mandar 2x no mesmo mês)
+      const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file, {
+        upsert: true
+      });
       if (uploadError) throw uploadError;
 
+      // 6. Pega a URL pública
       const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(fileName);
 
+      // 7. Atualiza o banco do aluno
       await supabase.from('alunos').update({ 
         pagamento_enviado: true, 
         mensalidade_paga: false,
@@ -73,9 +91,13 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
 
       setEtapa('analise');
       onAtualizarPerfil();
-    } catch (error: any) { alert(error.message); } finally { setUploading(false); }
+    } catch (error: any) { 
+      alert(error.message); 
+    } finally { 
+      setUploading(false); 
+    }
   };
-
+  
   // Cálculo da data (Vencimento)
   const dataVenc = new Date();
   dataVenc.setMonth(dataVenc.getMonth() + 1);
