@@ -260,7 +260,11 @@ export default function Home() {
         )}
 
 {abaAtiva === 'mensalidade' && (
-  <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+  <MensalidadeView 
+    onVoltar={() => setAbaAtiva('arena')} 
+    alunoDb={alunoDb} 
+    onAtualizarPerfil={() => carregarPerfil(session?.user?.email)} // <--- ADICIONE ISSO
+  />
 )}
 
         {abaAtiva === 'uniformes' && (

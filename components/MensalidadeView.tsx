@@ -6,9 +6,10 @@ import { supabase } from '../lib/supabase';
 interface MensalidadeViewProps {
   onVoltar: () => void;
   alunoDb: any;
+  onAtualizarPerfil: () => void;
 }
 
-export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
+export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: MensalidadeViewProps) {
   const [etapa, setEtapa] = useState<'selecao' | 'pagamento' | 'analise'>('selecao');
   const [planoIdx, setPlanoIdx] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -81,6 +82,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
 
       // Forçamos a mudança de etapa localmente para o aluno ver o checklist na hora
       setEtapa('analise');
+      onAtualizarPerfil();
       
     } catch (error: any) {
       alert("Erro ao enviar: " + error.message);
@@ -100,7 +102,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
       <div className="flex items-center gap-4 mb-6 px-5 z-10 relative">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform backdrop-blur-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
+          </button>
         <div>
           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">Mensalidade</h2>
           <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Gestão de Acesso</span>
