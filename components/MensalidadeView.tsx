@@ -83,9 +83,6 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
       const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file);
       
       if (uploadError) throw uploadError;
-      
-      // Opcional: Atualizar o banco para o status de análise (se você tiver esse campo depois)
-      // await supabase.from('alunos').update({ status_pagamento: 'em_analise' }).eq('id', alunoDb.id);
 
       setEtapa('analise');
       
@@ -97,14 +94,14 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
   };
 
   return (
-    /* fixed inset-0 z-50 bg-black: Isso mata a borda preta em cima e sobrepõe a tela inteira */
-    <div className={`fixed inset-0 z-50 bg-[#0a0a0a] animacao-entrada w-full min-h-screen pb-20 transition-colors duration-700 ${planoAtivo.brilhoFundo} overflow-y-auto overflow-x-hidden`}>
+    /* A MÁGICA ESTÁ AQUI: -mt-6 engole a margem do Header e pt-6 devolve o espaço interno */
+    <div className={`animacao-entrada w-full min-h-screen -mt-6 pt-6 pb-20 transition-colors duration-700 ${planoAtivo.brilhoFundo} relative overflow-x-hidden`}>
       
       {/* Brilho Radial no Fundo da Tela */}
       <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] h-[500px] rounded-full blur-[100px] transition-colors duration-700 -z-10 bg-gradient-to-b ${planoAtivo.bgGradiente} opacity-20`}></div>
 
       {/* HEADER DA TELA NOVA */}
-      <div className="flex items-center gap-4 mb-6 pt-6 px-5 z-10 relative">
+      <div className="flex items-center gap-4 mb-6 px-5 z-10 relative">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform backdrop-blur-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
@@ -168,7 +165,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
 
             <button 
               onClick={handleCopiarPix}
-              className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-500 active:scale-95 flex items-center justify-center gap-3 border ${copiado ? 'bg-green-600 text-white border-green-500' : 'bg-[#1a1a1a] text-white border-white/10 hover:bg-white/5'}`}
+              className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-500 active:scale-95 flex items-center justify-center gap-3 border ${copiado ? 'bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-[#1a1a1a] text-white border-white/10 hover:bg-white/5'}`}
             >
               {copiado ? (
                 <>✓ Código Copiado!</>
@@ -210,8 +207,8 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4 shadow-[0_0_15px_rgba(22,163,74,0.1)]">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black shadow-lg">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest text-green-400">Comprovante Enviado</span>
