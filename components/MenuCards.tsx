@@ -99,14 +99,23 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
          <span className="text-[8px] font-black text-white/[0.05] tracking-widest italic uppercase">Hecth.</span>
       </div>
 
-      {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
+      {/* 6: ADMIN (Sempre o último) */}
 {isAdmin && (
   <button 
     onClick={() => onNavegar('admin')}
-    className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+    className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group hover:border-[#ef3340]/30"
   >
-    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-blue-500/10 text-blue-400">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-yellow-500/10 text-yellow-500 group-hover:bg-yellow-500/20">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+        <path d="M7.5 8.9L5.6 5.5" />
+        <path d="M16.5 8.9l1.9-3.4" />
+        <path d="M12 15v4" />
+        <path d="M10 12H6" />
+        <path d="M18 12h-4" />
+        <path d="M15 17.3l2.5 4.3" />
+        <path d="M9 17.3L6.5 21.6" />
+      </svg>
     </div>
     <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
       Gestão

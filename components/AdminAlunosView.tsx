@@ -1,4 +1,3 @@
-// src/components/AdminAlunosView.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -17,7 +16,6 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   async function carregarAlunos() {
     setLoading(true);
-    // O Supabase já traz em ordem alfabética (A-Z) nativamente
     const { data } = await supabase
       .from('alunos')
       .select('*')
@@ -28,16 +26,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setLoading(false);
   }
 
-  function getTagsNivel(horario: string) {
-    if (!horario) return ['INICIANTE'];
-    const h = parseInt(horario.replace('h', ''));
-    if (h === 8 || h === 18) return ['INICIANTE AVANÇADO'];
-    if ([7, 17, 19, 20].includes(h)) return ['APRENDIZ', 'INICIANTE'];
-    return ['INICIANTE'];
-  }
-
   async function alterarFrequencia(e: React.MouseEvent, aluno: any) {
-    e.stopPropagation(); // Evita clicar no card inteiro
+    e.stopPropagation();
     if (aluno.mensalidade_paga) {
       alert("⚠️ FINANCEIRO TRAVADO: O pagamento já foi confirmado.");
       return;
@@ -52,7 +42,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   }
 
   async function confirmarPagamento(e: React.MouseEvent, aluno: any) {
-    e.stopPropagation(); // Evita clicar no card inteiro
+    e.stopPropagation();
     const acao = aluno.mensalidade_paga ? "ESTORNAR" : "CONFIRMAR";
     const confirmar = window.confirm(`${acao} pagamento de ${aluno.nome} (${aluno.frequencia_semanal || 2}x)?`);
     if (confirmar) {
@@ -64,17 +54,17 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     }
   }
 
-  // A Mágica da Busca Dinâmica A-Z
   const alunosFiltrados = alunos.filter(aluno =>
     `${aluno.nome} ${aluno.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
   );
 
   function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
-    const tags = getTagsNivel(aluno.horario);
+    // Pegamos o nível direto do banco. Se estiver vazio, mostramos INICIANTE por segurança.
+    const nivelDoBanco = aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE';
     
     return (
       <button 
-        onClick={() => alert(`Abrir perfil detalhado de ${aluno.nome} (Em breve)`)}
+        onClick={() => alert(`Perfil detalhado de ${aluno.nome} em breve`)}
         className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
@@ -91,11 +81,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                   Vencimento dia {aluno.dia_vencimento}
                 </span>
               ) : (
-                tags.map(tag => (
-                  <span key={tag} className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'text-green-400 border-green-400/30' : 'text-[#ef3340] border-[#ef3340]/20'}`}>
-                    {tag}
-                  </span>
-                ))
+                /* EXIBIÇÃO DO NÍVEL DO BANCO DE DADOS */
+                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'text-green-400 border-green-400/30' : 'text-[#ef3340] border-[#ef3340]/20'}`}>
+                  {nivelDoBanco}
+                </span>
               )}
             </div>
           </div>
@@ -123,55 +112,43 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4">
-      
-      {/* HEADER: px-5 para manter o alinhamento com a barra */}
       <div className="flex items-center gap-4 mb-6 px-5">
-        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
+        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
         <h2 className="text-xl font-black uppercase italic tracking-tight">BASE DE ATLETAS</h2>
       </div>
 
-      {/* BUSCA INTERATIVA */}
       <div className="px-5 mb-4">
         <input 
           type="text"
           placeholder="PESQUISAR NOME..."
-          className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50 transition-colors"
+          className="w-full bg-[#121212] border border-white/10 rounded-xl px-4 py-4 text-sm font-black uppercase tracking-widest outline-none focus:border-[#ef3340]/50"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
       </div>
 
-      {/* FILTROS */}
       <div className="flex gap-2 mb-6 px-5">
-        <button onClick={() => setFiltro('todos')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>
+        <button onClick={() => setFiltro('todos')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>
           TODOS A-Z
         </button>
-        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>
+        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>
           VENCIMENTO
         </button>
       </div>
 
-      {/* LISTA DE ALUNOS (Com o px-2 matador para esticar os botões) */}
       <div className="flex flex-col gap-3 px-2">
         {loading ? (
-          <p className="text-center py-10 text-white/20 text-[10px] font-black uppercase tracking-widest animate-pulse italic">
-            Sincronizando...
-          </p>
+          <p className="text-center py-10 text-white/20 text-[10px] font-black uppercase tracking-widest animate-pulse italic">Sincronizando...</p>
         ) : filtro === 'todos' ? (
           alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />)
         ) : (
           [10, 15, 20].map(dia => {
             const alunosDoDia = alunosFiltrados.filter(a => a.dia_vencimento === dia);
             if (!alunosDoDia.length) return null;
-
             return (
-              <div key={dia} className="mb-4">
+              <div key={dia}>
                 <div className="flex items-center gap-2 mb-3 px-3">
-                  <span className="bg-[#ef3340] text-white text-[10px] font-black px-3 py-1 rounded-full italic tracking-widest">
-                    DIA {dia}
-                  </span>
+                  <span className="bg-[#ef3340] text-white text-[10px] font-black px-3 py-1 rounded-full italic tracking-widest">DIA {dia}</span>
                   <div className="h-[1px] flex-1 bg-white/10"></div>
                 </div>
                 <div className="flex flex-col gap-3">
