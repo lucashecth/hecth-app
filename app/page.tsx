@@ -11,6 +11,7 @@ import { InstallAppCard } from '../components/InstallAppCard';
 import { BotaoPush } from '../components/BotaoPush';
 import { useAdmin } from '../hooks/useAdmin';
 import { AdminAlunosView } from '../components/AdminAlunosView';
+import { PerfilView } from '../components/PerfilView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -248,12 +249,17 @@ export default function Home() {
           </div>
         )}
 
-        {(abaAtiva === 'uniformes' || abaAtiva === 'perfil') && (
-          <div className="animacao-entrada text-center py-20 px-5">
-            <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
-            <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
-          </div>
-        )}
+{abaAtiva === 'uniformes' && (
+  <div className="animacao-entrada text-center py-20 px-5">
+    <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
+    <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
+  </div>
+)}
+
+{/* O PERFIL AGORA CHAMA O COMPONENTE NOVO */}
+{abaAtiva === 'perfil' && (
+  <PerfilView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+)}
 
         {/* ADMIN RESTAURADO COM A LÓGICA CORRETA */}
         {abaAtiva === 'admin' && isAdmin && (
