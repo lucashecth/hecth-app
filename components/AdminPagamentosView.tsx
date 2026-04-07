@@ -94,18 +94,27 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
                     Plano {aluno.frequencia_semanal || 2}x na semana
                   </span>
                 </div>
+                {/* A foto de perfil do aluno continua aqui no cantinho, bonitona */}
                 <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shrink-0 shadow-xl">
                   <img src={aluno.foto_url} className="w-full h-full object-cover" />
                 </div>
               </div>
 
               <div className="flex gap-2">
+                {/* O BOTÃO QUE FOI CORRIGIDO */}
                 <button 
-                  onClick={() => setImgZoom(aluno.foto_url)} // Aqui você pode buscar a URL do comprovante no storage se preferir
+                  onClick={() => {
+                    if (aluno.comprovante_url) {
+                      setImgZoom(aluno.comprovante_url);
+                    } else {
+                      alert('Nenhum comprovante encontrado para este aluno.');
+                    }
+                  }}
                   className="flex-1 py-4 bg-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/70 border border-white/5 active:scale-95 transition-all"
                 >
                   Ver Comprovante
                 </button>
+
                 <button 
                   onClick={() => confirmarPagamento(aluno)}
                   className="flex-1 py-4 bg-green-600 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-[0_5px_15px_rgba(22,163,74,0.3)]"

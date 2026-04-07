@@ -22,13 +22,9 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
     { freq: 5, nome: "Passe Livre (5x)", preco: "280,00", corBase: "text-[#ef3340]", bgGradiente: "from-orange-500 to-[#ef3340]", sombraNeon: "shadow-[0_0_40px_rgba(239,51,64,0.6)]", brilhoFundo: "bg-[#ef3340]/20", posicao: "100%", pixCopiaECola: "COLE_O_PIX_AQUI_DE_280" }
   ];
 
-  // 1. CARREGAR ESTADO INICIAL DO BANCO
   useEffect(() => {
     if (alunoDb) {
-      // Se já enviou, pula pra análise
       if (alunoDb.pagamento_enviado) setEtapa('analise');
-      
-      // Seta o slider na posição correta baseada na frequencia_semanal gravada
       const freqSalva = alunoDb.frequencia_semanal || 2;
       const idx = planos.findIndex(p => p.freq === freqSalva);
       if (idx !== -1) setPlanoIdx(idx);
@@ -37,7 +33,6 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
 
   const planoAtivo = planos[planoIdx];
 
-  // 2. SALVAR PLANO ANTES DE IR PRO PAGAMENTO
   const avancarParaPagamento = async () => {
     try {
       setUploading(true);
@@ -61,7 +56,6 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
     setTimeout(() => setCopiado(false), 3000);
   };
 
-  // 3. UPLOAD E TRAVA DE TELA IMEDIATA
   const handleUploadComprovante = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = event.target.files?.[0];
@@ -73,14 +67,21 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file);
       if (uploadError) throw uploadError;
 
+      // Pega a URL pública gerada no bucket de comprovantes
+      const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(fileName);
+
+      // Salva no banco o status E a URL
       const { error: dbError } = await supabase
         .from('alunos')
-        .update({ pagamento_enviado: true, mensalidade_paga: false })
+        .update({ 
+          pagamento_enviado: true, 
+          mensalidade_paga: false,
+          comprovante_url: urlData.publicUrl
+        })
         .eq('id', alunoDb.id);
 
       if (dbError) throw dbError;
 
-      // Forçamos a mudança de etapa localmente para o aluno ver o checklist na hora
       setEtapa('analise');
       onAtualizarPerfil();
       
@@ -102,7 +103,7 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       <div className="flex items-center gap-4 mb-6 px-5 z-10 relative">
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform backdrop-blur-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
+        </button>
         <div>
           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">Mensalidade</h2>
           <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Gestão de Acesso</span>
@@ -122,7 +123,8 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
 
         {etapa === 'selecao' && (
           <div className="w-full animacao-entrada">
-            <div className="w-full mb-10">
+            {/* AQUI ESTÁ A MÁGICA DO ESPAÇAMENTO: mb-16 afasta o texto do botão */}
+            <div className="w-full mb-16">
               <div className="relative w-full h-4 bg-[#121212] rounded-full shadow-inner border border-white/10 flex items-center">
                 <div className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${planoAtivo.bgGradiente} transition-all duration-300`} style={{ width: planoAtivo.posicao }}></div>
                 <div className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all duration-300 z-20 pointer-events-none" style={{ left: planoAtivo.posicao, transform: `translate(-50%, -50%)`, boxShadow: `0 0 25px ${planoIdx === 0 ? '#22d3ee' : planoIdx === 1 ? '#e879f9' : '#ef3340'}` }}>
@@ -134,7 +136,8 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
                 </div>
               </div>
             </div>
-            <button onClick={avancarParaPagamento} disabled={uploading} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
+            {/* mt-4 dá mais um fôlegozinho em cima do botão */}
+            <button onClick={avancarParaPagamento} disabled={uploading} className={`w-full mt-4 py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
                {uploading ? 'Salvando...' : 'Avançar para Pagamento'}
             </button>
           </div>
