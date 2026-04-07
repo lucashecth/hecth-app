@@ -10,7 +10,7 @@ interface MensalidadeViewProps {
 }
 
 export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: MensalidadeViewProps) {
-  const [etapa, setEtapa] = useState<'selecao' | 'pagamento' | 'analise'>('selecao');
+  const [etapa, setEtapa] = useState<'selecao' | 'pagamento' | 'analise' | 'ativo'>('selecao');
   const [planoIdx, setPlanoIdx] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [copiado, setCopiado] = useState(false);
@@ -24,7 +24,13 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
 
   useEffect(() => {
     if (alunoDb) {
-      if (alunoDb.pagamento_enviado) setEtapa('analise');
+      // ORDEM DE PRIORIDADE DOS ESTADOS:
+      if (alunoDb.mensalidade_paga) {
+        setEtapa('ativo');
+      } else if (alunoDb.pagamento_enviado) {
+        setEtapa('analise');
+      }
+      
       const freqSalva = alunoDb.frequencia_semanal || 2;
       const idx = planos.findIndex(p => p.freq === freqSalva);
       if (idx !== -1) setPlanoIdx(idx);
@@ -36,18 +42,9 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
   const avancarParaPagamento = async () => {
     try {
       setUploading(true);
-      const { error } = await supabase
-        .from('alunos')
-        .update({ frequencia_semanal: planoAtivo.freq })
-        .eq('id', alunoDb.id);
-      
-      if (error) throw error;
+      await supabase.from('alunos').update({ frequencia_semanal: planoAtivo.freq }).eq('id', alunoDb.id);
       setEtapa('pagamento');
-    } catch (e: any) {
-      alert("Erro ao salvar plano: " + e.message);
-    } finally {
-      setUploading(false);
-    }
+    } catch (e) { console.error(e); } finally { setUploading(false); }
   };
 
   const handleCopiarPix = () => {
@@ -62,39 +59,27 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       if (!file) return;
       setUploading(true);
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `comprovante-${alunoDb.id}-${Date.now()}.${fileExt}`;
+      const fileName = `comprovante-${alunoDb.id}-${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage.from('comprovantes').upload(fileName, file);
       if (uploadError) throw uploadError;
 
-      // Pega a URL pública gerada no bucket de comprovantes
       const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(fileName);
 
-      // Salva no banco o status E a URL
-      const { error: dbError } = await supabase
-        .from('alunos')
-        .update({ 
-          pagamento_enviado: true, 
-          mensalidade_paga: false,
-          comprovante_url: urlData.publicUrl
-        })
-        .eq('id', alunoDb.id);
-
-      if (dbError) throw dbError;
+      await supabase.from('alunos').update({ 
+        pagamento_enviado: true, 
+        mensalidade_paga: false,
+        comprovante_url: urlData.publicUrl
+      }).eq('id', alunoDb.id);
 
       setEtapa('analise');
       onAtualizarPerfil();
-      
-    } catch (error: any) {
-      alert("Erro ao enviar: " + error.message);
-    } finally {
-      setUploading(false);
-    }
+    } catch (error: any) { alert(error.message); } finally { setUploading(false); }
   };
 
-  const dataHoje = new Date();
-  const dataVencimento = new Date(dataHoje.setMonth(dataHoje.getMonth() + 1));
-  const vencimentoFormatado = dataVencimento.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  // Cálculo da data (Vencimento)
+  const dataVenc = new Date();
+  dataVenc.setMonth(dataVenc.getMonth() + 1);
+  const dataFormatada = dataVenc.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
   return (
     <div className={`animacao-entrada w-full min-h-screen -mt-6 pt-6 pb-20 transition-colors duration-700 ${planoAtivo.brilhoFundo} relative overflow-x-hidden`}>
@@ -104,79 +89,83 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
         <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform backdrop-blur-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <div>
-          <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">Mensalidade</h2>
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Gestão de Acesso</span>
-        </div>
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white leading-none">Mensalidade</h2>
       </div>
 
       <div className="px-5 z-10 relative flex flex-col items-center">
-        <div className={`w-full bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 text-center transition-all duration-500 ${etapa === 'analise' ? 'opacity-40 grayscale scale-[0.98]' : planoAtivo.sombraNeon} mb-12`}>
-          <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Mensalidade</p>
+        
+        {/* CARD DO PLANO */}
+        <div className={`w-full bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 text-center transition-all duration-500 ${etapa === 'ativo' ? 'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.2)]' : planoAtivo.sombraNeon} mb-12`}>
+          <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mb-2">
+            {etapa === 'ativo' ? 'Plano Ativo' : 'Escolha seu Plano'}
+          </p>
           <div className="flex items-start justify-center gap-1">
-            <span className={`text-xl font-bold mt-2 ${planoAtivo.corBase}`}>R$</span>
+            <span className={`text-xl font-bold mt-2 ${etapa === 'ativo' ? 'text-green-400' : planoAtivo.corBase}`}>R$</span>
             <span className="text-7xl font-black italic tracking-tighter text-white">{planoAtivo.preco.split(',')[0]}</span>
             <span className="text-xl font-bold mt-2 text-white/40">,{planoAtivo.preco.split(',')[1]}</span>
           </div>
-          <h3 className={`text-lg font-black uppercase tracking-widest mt-4 ${planoAtivo.corBase}`}>{planoAtivo.nome}</h3>
+          <h3 className={`text-lg font-black uppercase tracking-widest mt-4 ${etapa === 'ativo' ? 'text-green-400' : planoAtivo.corBase}`}>{planoAtivo.nome}</h3>
         </div>
 
+        {/* ETAPA: SELEÇÃO */}
         {etapa === 'selecao' && (
           <div className="w-full animacao-entrada">
-            {/* AQUI ESTÁ A MÁGICA DO ESPAÇAMENTO: mb-16 afasta o texto do botão */}
-            <div className="w-full mb-16">
+            <div className="w-full mb-20"> {/* Aumentado o espaço aqui de 10 para 20 */}
               <div className="relative w-full h-4 bg-[#121212] rounded-full shadow-inner border border-white/10 flex items-center">
                 <div className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${planoAtivo.bgGradiente} transition-all duration-300`} style={{ width: planoAtivo.posicao }}></div>
-                <div className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all duration-300 z-20 pointer-events-none" style={{ left: planoAtivo.posicao, transform: `translate(-50%, -50%)`, boxShadow: `0 0 25px ${planoIdx === 0 ? '#22d3ee' : planoIdx === 1 ? '#e879f9' : '#ef3340'}` }}>
+                <div className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all duration-300 z-20" style={{ left: planoAtivo.posicao, transform: `translate(-50%, -50%)`, boxShadow: `0 0 25px ${planoAtivo.posicao === '0%' ? '#22d3ee' : planoAtivo.posicao === '50%' ? '#e879f9' : '#ef3340'}` }}>
                   <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${planoAtivo.bgGradiente}`}></div>
                 </div>
                 <input type="range" min="0" max="2" step="1" value={planoIdx} onChange={(e) => setPlanoIdx(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" />
-                <div className="absolute top-10 left-0 w-full flex justify-between px-2 text-white/30 font-black text-xs uppercase italic">
+                <div className="absolute top-12 left-0 w-full flex justify-between px-2 text-white/30 font-black text-xs uppercase italic">
                   <span>2x</span><span>3x</span><span>5x</span>
                 </div>
               </div>
             </div>
-            {/* mt-4 dá mais um fôlegozinho em cima do botão */}
-            <button onClick={avancarParaPagamento} disabled={uploading} className={`w-full mt-4 py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
-               {uploading ? 'Salvando...' : 'Avançar para Pagamento'}
+            <button onClick={avancarParaPagamento} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
+               Avançar para Pagamento
             </button>
           </div>
         )}
 
+        {/* ETAPA: PAGAMENTO */}
         {etapa === 'pagamento' && (
           <div className="w-full animacao-entrada flex flex-col gap-4">
-             <div className="bg-white/5 rounded-2xl p-4 mb-2 text-center border border-white/5">
-                <span className="text-[10px] font-black uppercase text-white/30 block mb-1">Plano Selecionado</span>
-                <span className={`text-sm font-black uppercase ${planoAtivo.corBase}`}>{planoAtivo.nome}</span>
-             </div>
-            <button onClick={handleCopiarPix} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs border ${copiado ? 'bg-green-600 text-white border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'bg-[#1a1a1a] text-white border-white/10'}`}>
+            <button onClick={handleCopiarPix} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs border ${copiado ? 'bg-green-600 text-white border-green-500' : 'bg-[#1a1a1a] text-white border-white/10'}`}>
               {copiado ? '✓ Código Copiado!' : 'Copiar Código PIX'}
             </button>
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleUploadComprovante} />
-            <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}>
-              {uploading ? 'Enviando...' : 'Paguei, enviar Comprovante'}
+            <button onClick={() => fileInputRef.current?.click()} className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm text-white bg-gradient-to-r ${planoAtivo.bgGradiente} shadow-lg`}>
+              {uploading ? 'Enviando...' : 'Enviar Comprovante'}
             </button>
-            <button onClick={() => setEtapa('selecao')} className="text-[10px] font-black uppercase text-white/20 underline">Alterar Plano</button>
           </div>
         )}
 
-        {etapa === 'analise' && (
+        {/* ETAPA: ANÁLISE OU ATIVO */}
+        {(etapa === 'analise' || etapa === 'ativo') && (
           <div className="w-full animacao-entrada">
             <div className="bg-[#1a1a1a] border border-white/5 rounded-3xl p-6 text-center mb-6">
-              <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-1">Análise em curso</h3>
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest italic">Próxima renovação:</p>
-              <div className="text-[#ef3340] text-3xl font-black mt-2 italic tracking-tighter">{vencimentoFormatado}</div>
+              <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-1">
+                {etapa === 'ativo' ? 'Pagamento Confirmado' : 'Análise em curso'}
+              </h3>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest italic">Renovação em:</p>
+              <div className="text-green-400 text-3xl font-black mt-2 italic tracking-tighter">{dataFormatada}</div>
             </div>
             <div className="flex flex-col gap-3">
               <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-black font-black italic">✓</div>
                 <span className="text-xs font-black uppercase text-green-400 italic">Comprovante Enviado</span>
               </div>
-              <div className="bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center gap-4 opacity-40">
-                <div className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center text-white/40 italic text-[10px]">...</div>
-                <span className="text-xs font-black uppercase text-white/40 italic">Visto pela HECTH</span>
+              <div className={`border rounded-2xl p-4 flex items-center gap-4 transition-all ${etapa === 'ativo' ? 'bg-green-500/10 border-green-500/30' : 'bg-[#121212] border-white/5 opacity-40'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${etapa === 'ativo' ? 'bg-green-500 text-black' : 'border-2 border-white/20 text-white/40'}`}>
+                   {etapa === 'ativo' ? '✓' : '...'}
+                </div>
+                <span className={`text-xs font-black uppercase italic ${etapa === 'ativo' ? 'text-green-400' : 'text-white/40'}`}>Visto pela HECTH</span>
               </div>
             </div>
+            {etapa === 'ativo' && (
+              <button onClick={() => setEtapa('selecao')} className="w-full mt-10 py-3 text-white/20 text-[10px] font-black uppercase tracking-widest underline">Alterar Plano Futuro</button>
+            )}
           </div>
         )}
       </div>
