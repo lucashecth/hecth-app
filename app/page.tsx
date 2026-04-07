@@ -259,11 +259,9 @@ export default function Home() {
           </div>
         )}
 
-        {abaAtiva === 'mensalidade' && (
-          <div className="px-5">
-            <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
-          </div>
-        )}
+{abaAtiva === 'mensalidade' && (
+  <MensalidadeView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+)}
 
         {abaAtiva === 'uniformes' && (
           <div className="animacao-entrada text-center py-20 px-5">

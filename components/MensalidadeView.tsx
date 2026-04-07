@@ -8,10 +8,9 @@ interface MensalidadeViewProps {
 }
 
 export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
-  // 0 = 2x, 1 = 3x, 2 = 5x
   const [planoIdx, setPlanoIdx] = useState(0);
+  const [autoRenovar, setAutoRenovar] = useState(true);
 
-  // Configuração mestre dos planos (Você pode alterar os valores aqui)
   const planos = [
     {
       freq: 2,
@@ -20,7 +19,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
       corBase: "text-cyan-400",
       bgGradiente: "from-blue-600 to-cyan-400",
       sombraNeon: "shadow-[0_0_30px_rgba(34,211,238,0.5)]",
-      brilhoFundo: "bg-cyan-500/10",
+      brilhoFundo: "bg-cyan-900/20",
       posicao: "0%"
     },
     {
@@ -30,7 +29,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
       corBase: "text-fuchsia-400",
       bgGradiente: "from-purple-600 to-fuchsia-500",
       sombraNeon: "shadow-[0_0_30px_rgba(232,121,249,0.5)]",
-      brilhoFundo: "bg-fuchsia-500/10",
+      brilhoFundo: "bg-fuchsia-900/20",
       posicao: "50%"
     },
     {
@@ -40,7 +39,7 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
       corBase: "text-[#ef3340]",
       bgGradiente: "from-orange-500 to-[#ef3340]",
       sombraNeon: "shadow-[0_0_40px_rgba(239,51,64,0.6)]",
-      brilhoFundo: "bg-[#ef3340]/10",
+      brilhoFundo: "bg-[#ef3340]/20",
       posicao: "100%"
     }
   ];
@@ -48,11 +47,11 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
   const planoAtivo = planos[planoIdx];
 
   return (
-    <div className={`animacao-entrada w-full min-h-screen pb-20 pt-4 transition-colors duration-700 ${planoAtivo.brilhoFundo} relative overflow-hidden`}>
+    <div className={`animacao-entrada w-full min-h-screen pb-20 pt-4 transition-colors duration-700 ${planoAtivo.brilhoFundo} relative overflow-x-hidden`}>
       
-      {/* Brilho Radial no Fundo da Tela */}
+      {/* Brilho Radial no Fundo da Tela (Vazando para as bordas) */}
       <div 
-        className={`absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[500px] rounded-full blur-[100px] transition-colors duration-700 -z-10 bg-gradient-to-b ${planoAtivo.bgGradiente} opacity-20`}
+        className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] h-[500px] rounded-full blur-[100px] transition-colors duration-700 -z-10 bg-gradient-to-b ${planoAtivo.bgGradiente} opacity-20`}
       ></div>
 
       {/* HEADER */}
@@ -83,19 +82,19 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
           </h3>
         </div>
 
-        {/* SLIDER NEON CUSTOMIZADO */}
-        <div className="w-full px-4 mb-16">
-          <div className="relative w-full h-3 bg-white/5 rounded-full shadow-inner border border-white/5">
+        {/* SLIDER NEON ARRASTÁVEL */}
+        <div className="w-full px-4 mb-10">
+          <div className="relative w-full h-4 bg-[#121212] rounded-full shadow-inner border border-white/10 flex items-center">
             
             {/* Barra Preenchida Colorida */}
             <div 
-              className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${planoAtivo.bgGradiente} transition-all duration-500 ease-out`}
+              className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${planoAtivo.bgGradiente} transition-all duration-300 ease-out`}
               style={{ width: planoAtivo.posicao }}
             ></div>
 
-            {/* A Esfera Neon (Thumb) */}
+            {/* A Esfera Neon (Thumb visual) */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all duration-500 ease-out z-20"
+              className="absolute top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all duration-300 ease-out z-20 pointer-events-none"
               style={{ 
                 left: planoAtivo.posicao, 
                 transform: `translate(-50%, -50%)`,
@@ -105,35 +104,52 @@ export function MensalidadeView({ onVoltar, alunoDb }: MensalidadeViewProps) {
               <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${planoAtivo.bgGradiente}`}></div>
             </div>
 
-            {/* Áreas de Clique (Botões Invisíveis sobrepostos) */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full flex justify-between z-30">
-              <button 
-                onClick={() => setPlanoIdx(0)} 
-                className="w-12 h-12 -ml-6 flex items-end justify-center pb-12 cursor-pointer outline-none"
-              >
-                <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 0 ? 'text-white' : 'text-white/30'}`}>2x</span>
-              </button>
-              
-              <button 
-                onClick={() => setPlanoIdx(1)} 
-                className="w-12 h-12 flex items-end justify-center pb-12 cursor-pointer outline-none"
-              >
-                <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 1 ? 'text-white' : 'text-white/30'}`}>3x</span>
-              </button>
-              
-              <button 
-                onClick={() => setPlanoIdx(2)} 
-                className="w-12 h-12 -mr-6 flex items-end justify-center pb-12 cursor-pointer outline-none"
-              >
-                <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 2 ? 'text-white' : 'text-white/30'}`}>5x</span>
-              </button>
+            {/* O SEGREDO DO ARRASTO: Input Range NATIVO invisível por cima de tudo */}
+            <input 
+              type="range" 
+              min="0" 
+              max="2" 
+              step="1" 
+              value={planoIdx}
+              onChange={(e) => setPlanoIdx(Number(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30 m-0"
+            />
+
+            {/* Textos fixos na barra (Ficam atrás do slider) */}
+            <div className="absolute top-10 left-0 w-full flex justify-between px-2 z-10 pointer-events-none">
+              <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 0 ? 'text-white' : 'text-white/30'}`}>2x</span>
+              <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 1 ? 'text-white' : 'text-white/30'}`}>3x</span>
+              <span className={`text-xs font-black uppercase transition-colors duration-500 ${planoIdx === 2 ? 'text-white' : 'text-white/30'}`}>5x</span>
             </div>
           </div>
         </div>
 
+        {/* RENOVACÃO AUTOMÁTICA */}
+        <div className="w-full bg-[#1a1a1a] border border-white/5 rounded-2xl p-5 flex items-center justify-between mb-8 transition-all">
+          <div className="flex flex-col">
+            <span className="text-sm font-black uppercase tracking-tighter text-white/90">
+              Renovação Auto
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-white/40 mt-1">
+              Cobrança mensal fixa
+            </span>
+          </div>
+
+          {/* Toggle Switch */}
+          <button 
+            onClick={() => setAutoRenovar(!autoRenovar)}
+            className={`w-14 h-7 rounded-full p-1 relative transition-colors duration-500 ease-in-out ${autoRenovar ? `bg-gradient-to-r ${planoAtivo.bgGradiente}` : 'bg-white/10'}`}
+          >
+            <div 
+              className={`w-5 h-5 bg-white rounded-full transition-all duration-500 ease-in-out shadow-md`}
+              style={{ transform: autoRenovar ? 'translateX(28px)' : 'translateX(0)' }}
+            ></div>
+          </button>
+        </div>
+
         {/* BOTÃO CONFIRMAR */}
         <button 
-          onClick={() => alert(`Ação de checkout/mudança para o plano ${planoAtivo.nome} em breve!`)}
+          onClick={() => alert(`Plano selecionado: ${planoAtivo.nome} | Renova Auto: ${autoRenovar ? 'Sim' : 'Não'}`)}
           className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all duration-500 active:scale-95 text-white bg-gradient-to-r ${planoAtivo.bgGradiente} ${planoAtivo.sombraNeon}`}
         >
           Confirmar Plano
