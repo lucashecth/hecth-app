@@ -24,7 +24,8 @@ export default function Home() {
   
   // AQUI ESTAVA O ERRO: Adicionei o 'turma_alunos' na lista de abas permitidas
   const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' >('arena');
-  
+  const [temNovoPagamento, setTemNovoPagamento] = useState(false);
+
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos'>('menu');
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
@@ -76,8 +77,12 @@ export default function Home() {
 
     const { data: pData } = await supabase.from('presencas').select('*');
     if (pData) setPresencasDb(pData);
-  };
 
+    // NOVA CHECAGEM PARA A BOLINHA VERMELHA (Com proteção do TypeScript):
+    const { data: alunosPagamento } = await supabase.from('alunos').select('id').eq('pagamento_enviado', true).limit(1);
+    setTemNovoPagamento((alunosPagamento?.length ?? 0) > 0);
+  };
+  
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
     const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
@@ -304,14 +309,14 @@ export default function Home() {
             </div>
           </button>
 
-          {/* CARD 2: NOVOS PAGAMENTOS (COM NOTIFICAÇÃO) */}
+          {/* CARD 2: NOVOS PAGAMENTOS */}
           <button 
             onClick={() => setViewAdmin('pagamentos')} 
             className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative"
           >
-            {/* Bolinha de Notificação: Só aparece se houver alguém com pagamento_enviado: true */}
-            {turmas.some(t => false) || true && ( // Aqui você pode usar uma contagem real vinda do banco
-               <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ef3340] rounded-full border-4 border-black animate-pulse"></div>
+            {/* AGORA A BOLINHA É INTELIGENTE */}
+            {temNovoPagamento && (
+               <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ef3340] rounded-full border-4 border-[#121212] shadow-[0_0_15px_rgba(239,51,64,0.8)] animate-pulse"></div>
             )}
             
             <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">

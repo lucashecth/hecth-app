@@ -40,17 +40,30 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4">
+      {/* MODAL DE ZOOM TELA CHEIA CORRIGIDO */}
       {imgZoom && (
         <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animacao-entrada">
-          <button onClick={() => setImgZoom(null)} className="absolute top-10 right-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white text-2xl font-bold backdrop-blur-md z-[110]">✕</button>
-          <div className="w-full h-full p-4 flex items-center justify-center overflow-auto">
+          <button 
+            onClick={() => setImgZoom(null)}
+            className="absolute top-10 right-6 w-12 h-12 bg-[#ef3340] rounded-full flex items-center justify-center text-white text-xl font-black shadow-lg z-[110] active:scale-95"
+          >
+            ✕
+          </button>
+          
+          <div className="w-full h-full overflow-auto flex items-center justify-center">
             <img 
               src={imgZoom} 
-              className="max-w-none min-w-full h-auto object-contain transition-transform duration-300" 
-              style={{ transform: 'scale(1.2)' }}
+              className="w-full h-full object-contain cursor-zoom-in transition-transform duration-300"
               onClick={(e) => {
                 const target = e.currentTarget;
-                target.style.transform = target.style.transform === 'scale(1.2)' ? 'scale(2.5)' : 'scale(1.2)';
+                // Alterna entre tamanho normal e zoom de 2.5x para ler os números
+                if (target.style.transform === 'scale(2.5)') {
+                  target.style.transform = 'scale(1)';
+                  target.style.cursor = 'zoom-in';
+                } else {
+                  target.style.transform = 'scale(2.5)';
+                  target.style.cursor = 'zoom-out';
+                }
               }}
             />
           </div>

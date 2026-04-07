@@ -27,14 +27,12 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   }
 
   async function alterarFrequencia(e: React.MouseEvent, aluno: any) {
-    e.stopPropagation();
-    if (aluno.mensalidade_paga) {
-      alert("⚠️ FINANCEIRO TRAVADO: O pagamento já foi confirmado.");
-      return;
-    }
+    e.stopPropagation(); 
+    // Removi a trava que impedia a mudança! Agora você muda a hora que quiser.
     const frequencias = [2, 3, 5];
     const indexAtual = frequencias.indexOf(aluno.frequencia_semanal || 2);
     const novaFreq = frequencias[(indexAtual + 1) % frequencias.length];
+    
     const { error } = await supabase.from('alunos').update({ frequencia_semanal: novaFreq }).eq('id', aluno.id);
     if (!error) {
       setAlunos(alunos.map(a => a.id === aluno.id ? { ...a, frequencia_semanal: novaFreq } : a));
