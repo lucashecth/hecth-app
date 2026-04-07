@@ -261,34 +261,34 @@ export default function Home() {
   <PerfilView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
 )}
 
-        {/* ADMIN RESTAURADO COM A LÓGICA CORRETA */}
-        {abaAtiva === 'admin' && isAdmin && (
-          <div className="animacao-entrada pb-20 w-full"> 
-            {viewAdmin === 'menu' ? (
-              <div className="px-5"> {/* O Menu do Admin tem o padding padrão */}
-                <div className="flex items-center justify-between mb-8">
-                   <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
-                   <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex flex-col items-start gap-4 transition-all active:scale-95 text-left group hover:border-[#ef3340]/30">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30 block mb-1">Base de Dados</span>
-                      <span className="font-black text-lg uppercase tracking-tighter text-white/90">Atletas</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* A View de Alunos fica livre para encostar nas bordas */
-              <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
-            )}
-          </div>
-        )}
+        {/* ADMIN RESTAURADO */}
+{abaAtiva === 'admin' && isAdmin && (
+  <div className="w-full"> 
+    {viewAdmin === 'menu' ? (
+      <div className="animacao-entrada px-5 pb-20"> {/* O Menu do Admin tem o padding padrão */}
+        <div className="flex items-center justify-between mb-8 pt-4">
+           <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
+           <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-3">
+          <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group hover:border-[#ef3340]/30">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Base de Atletas</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest leading-tight mt-0.5">Gerenciar Alunos</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    ) : (
+      /* A View de Alunos fica livre para encostar nas bordas */
+      <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
+    )}
+  </div>
+)}
       </main>
     </div>
   );
