@@ -14,6 +14,7 @@ import { AdminAlunosView } from '../components/AdminAlunosView';
 import { PerfilView } from '../components/PerfilView';
 import { TurmaAlunosView } from '../components/TurmaAlunosView';
 import { AdminPagamentosView } from '../components/AdminPagamentosView';
+import { AdminAprovarView } from '../components/AdminAprovarView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -27,7 +28,7 @@ export default function Home() {
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar'>('menu');
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
   
   const [email, setEmail] = useState('');
@@ -344,27 +345,33 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-1 gap-4">
-          {/* CARD 1: BASE DE ATLETAS */}
+          {/* BOTÃO NOVO: APROVAR ALUNOS */}
+          <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Aprovar Alunos</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Novos Cadastros</p>
+            </div>
+          </button>
+
+          {/* BASE DE ATLETAS */}
           <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
             <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div>
               <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Base de Atletas</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Gerenciar Alunos</p>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Gerenciar Ativos</p>
             </div>
           </button>
 
-          {/* CARD 2: NOVOS PAGAMENTOS */}
-          <button 
-            onClick={() => setViewAdmin('pagamentos')} 
-            className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative"
-          >
-            {/* AGORA A BOLINHA É INTELIGENTE */}
+          {/* NOVOS PAGAMENTOS */}
+          <button onClick={() => setViewAdmin('pagamentos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative">
             {temNovoPagamento && (
                <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ef3340] rounded-full border-4 border-[#121212] shadow-[0_0_15px_rgba(239,51,64,0.8)] animate-pulse"></div>
             )}
-            
             <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
@@ -377,8 +384,10 @@ export default function Home() {
       </div>
     ) : viewAdmin === 'alunos' ? (
       <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
-    ) : (
+    ) : viewAdmin === 'pagamentos' ? (
       <AdminPagamentosView onVoltar={() => setViewAdmin('menu')} />
+    ) : (
+      <AdminAprovarView onVoltar={() => setViewAdmin('menu')} /> // <--- NOVA VIEW AQUI
     )}
   </div>
 )}
