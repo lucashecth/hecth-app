@@ -226,22 +226,30 @@ export default function Home() {
   const isHoje = dataExibicao.getDate() === agora.getDate() && dataExibicao.getMonth() === agora.getMonth();
 
   const turmasDoDia = turmas?.filter(turma => {
-    // Se a turma no banco tiver a coluna "dia_exclusivo" preenchida...
+    const diaAtual = dataExibicao.getDay(); // 5 = Sexta
+    const horarioTurma = turma.horario;
+
+    // 1. TRAVA DA SEXTA: Esconde turmas das 17h, 18h, 19h e 20h
+    if (diaAtual === 5) {
+      const horariosNoturnos = ['17:00', '18:00', '19:00', '20:00'];
+      if (horariosNoturnos.includes(horarioTurma)) {
+        return false;
+      }
+    }
+
+    // 2. REGRA DE DIA EXCLUSIVO (Para a turma de 09:00 aparecer só na sexta)
     if (turma.dia_exclusivo) {
-      // Cria um mapa para converter o nome do dia do banco para o número do JavaScript (Domingo = 0, Sexta = 5)
       const diasMap: Record<string, number> = { 
         'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Terca': 2, 
         'Quarta': 3, 'Quinta': 4, 'Sexta': 5, 'Sábado': 6, 'Sabado': 6 
       };
       
       const diaDesejado = diasMap[turma.dia_exclusivo];
-      
-      // Se for diferente do dia de hoje (exibição), essa turma "some" da tela
-      if (dataExibicao.getDay() !== diaDesejado) {
+      if (diaAtual !== diaDesejado) {
         return false;
       }
     }
-    // Se a turma não for exclusiva (é de todos os dias), ou se for o dia certo, ela passa no filtro.
+
     return true;
   });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
