@@ -225,12 +225,25 @@ export default function Home() {
   const dataFormatada = dataExibicao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   const isHoje = dataExibicao.getDate() === agora.getDate() && dataExibicao.getMonth() === agora.getMonth();
 
-  const turmasDoDia = turmas?.map(turma => {
-    const t = { ...turma };
-    if (dataExibicao.getDay() === 5 && t.nome?.toLowerCase().includes('intermediario')) t.horario = '09:00';
-    return t;
-  }).filter(turma => dataExibicao.getDay() === 5 ? parseInt(turma.horario.split(':')[0]) < 13 : true);
-
+  const turmasDoDia = turmas?.filter(turma => {
+    // Se a turma no banco tiver a coluna "dia_exclusivo" preenchida...
+    if (turma.dia_exclusivo) {
+      // Cria um mapa para converter o nome do dia do banco para o número do JavaScript (Domingo = 0, Sexta = 5)
+      const diasMap: Record<string, number> = { 
+        'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Terca': 2, 
+        'Quarta': 3, 'Quinta': 4, 'Sexta': 5, 'Sábado': 6, 'Sabado': 6 
+      };
+      
+      const diaDesejado = diasMap[turma.dia_exclusivo];
+      
+      // Se for diferente do dia de hoje (exibição), essa turma "some" da tela
+      if (dataExibicao.getDay() !== diaDesejado) {
+        return false;
+      }
+    }
+    // Se a turma não for exclusiva (é de todos os dias), ou se for o dia certo, ela passa no filtro.
+    return true;
+  });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
 
   return (
