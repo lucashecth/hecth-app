@@ -15,6 +15,7 @@ import { PerfilView } from '../components/PerfilView';
 import { TurmaAlunosView } from '../components/TurmaAlunosView';
 import { AdminPagamentosView } from '../components/AdminPagamentosView';
 import { AdminAprovarView } from '../components/AdminAprovarView';
+import { UniformesView } from '../components/UniformesView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -321,10 +322,7 @@ export default function Home() {
 )}
 
         {abaAtiva === 'uniformes' && (
-          <div className="animacao-entrada text-center py-20 px-5">
-            <h2 className="text-xl font-bold mb-4">Em Construção 🚧</h2>
-            <button onClick={() => setAbaAtiva('arena')} className="text-sm font-bold uppercase tracking-widest text-[#ef3340] underline">Voltar para a Arena</button>
-          </div>
+          <UniformesView onVoltar={() => setAbaAtiva('arena')} isAdmin={isAdmin} />
         )}
 
         {abaAtiva === 'perfil' && (
