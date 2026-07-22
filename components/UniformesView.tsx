@@ -26,6 +26,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   const [selectedUniforme, setSelectedUniforme] = useState<Uniforme | null>(null);
   const [editEstoque, setEditEstoque] = useState<Record<string, number>>({});
   const [editPreco, setEditPreco] = useState<number | string>(0);
+  const [editImagemUrl, setEditImagemUrl] = useState<string>('');
   
   // States for adding a new uniform
   const [showAddForm, setShowAddForm] = useState(false);
@@ -60,6 +61,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   const handleCardClick = (uniforme: Uniforme) => {
     setSelectedUniforme(uniforme);
     setEditPreco(uniforme.preco || 0);
+    setEditImagemUrl(uniforme.imagem_url || '');
     // Initialize editable stock state, ensuring all default sizes exist in the local state
     const estoqueCompleto = { ...uniforme.estoque };
     tamanhosPadrao.forEach(t => {
@@ -96,20 +98,22 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
     if (!selectedUniforme) return;
     setSaveLoading(true);
     const precoNum = Number(editPreco) || 0;
+    const finalImagemUrl = editImagemUrl || selectedUniforme.imagem_url;
     try {
       const { error } = await supabase
         .from('uniformes')
         .update({ 
           estoque: editEstoque,
-          preco: precoNum
+          preco: precoNum,
+          imagem_url: finalImagemUrl
         })
         .eq('id', selectedUniforme.id);
 
       if (error) throw error;
 
       // Update local state list
-      setUniformes(prev => prev.map(u => u.id === selectedUniforme.id ? { ...u, estoque: editEstoque, preco: precoNum } : u));
-      setSelectedUniforme(prev => prev ? { ...prev, estoque: editEstoque, preco: precoNum } : null);
+      setUniformes(prev => prev.map(u => u.id === selectedUniforme.id ? { ...u, estoque: editEstoque, preco: precoNum, imagem_url: finalImagemUrl } : u));
+      setSelectedUniforme(prev => prev ? { ...prev, estoque: editEstoque, preco: precoNum, imagem_url: finalImagemUrl } : null);
       alert("Uniforme atualizado com sucesso!");
     } catch (err: any) {
       alert("Erro ao salvar: " + err.message);
@@ -204,14 +208,14 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
         <div className="bg-[#121212] border border-white/5 rounded-3xl p-5 animacao-entrada">
           <div className="flex gap-4 items-center mb-6">
             <img 
-              src={selectedUniforme.imagem_url} 
+              src={editImagemUrl || selectedUniforme.imagem_url} 
               alt={selectedUniforme.nome} 
-              className="w-16 h-16 rounded-2xl object-cover border border-white/10"
+              className="w-16 h-16 rounded-2xl object-cover border border-white/10 bg-zinc-900"
             />
             <div className="flex-1">
               <h3 className="font-black text-lg text-white uppercase tracking-tighter">{selectedUniforme.nome}</h3>
               <p className="text-sm font-black text-[#ef3340] mb-0.5">
-                {formatarPreco(selectedUniforme.preco)}
+                {formatarPreco(Number(editPreco) || selectedUniforme.preco)}
               </p>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">
                 Disponíveis: {totalEstoque(selectedUniforme.estoque)} peças
@@ -219,21 +223,36 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
             </div>
           </div>
 
-          {/* Admin Edit Price Input */}
+          {/* Admin Edit Controls: Price & Image URL */}
           {isAdmin && (
-            <div className="mb-4 bg-white/5 border border-white/10 p-3 rounded-2xl">
-              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">
-                Preço do Produto (R$)
-              </label>
-              <input 
-                type="number" 
-                step="0.01"
-                min="0"
-                value={editPreco}
-                onChange={(e) => setEditPreco(e.target.value)}
-                className="w-full bg-transparent text-white font-black text-base outline-none"
-                placeholder="0.00"
-              />
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="bg-white/5 border border-white/10 p-3 rounded-2xl">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">
+                  Preço do Produto (R$)
+                </label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  value={editPreco}
+                  onChange={(e) => setEditPreco(e.target.value)}
+                  className="w-full bg-transparent text-white font-black text-base outline-none"
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-3 rounded-2xl">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">
+                  URL da Imagem
+                </label>
+                <input 
+                  type="url" 
+                  value={editImagemUrl}
+                  onChange={(e) => setEditImagemUrl(e.target.value)}
+                  className="w-full bg-transparent text-white font-medium text-xs outline-none"
+                  placeholder="https://sua-imagem.com/foto.jpg"
+                />
+              </div>
             </div>
           )}
 
