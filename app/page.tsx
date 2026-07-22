@@ -18,6 +18,7 @@ import { AdminAprovarView } from '../components/AdminAprovarView';
 import { UniformesView } from '../components/UniformesView';
 import { AdminCriarAlunoView } from '../components/AdminCriarAlunoView';
 import { FotoObrigatoriaView } from '../components/FotoObrigatoriaView';
+import { QrCodeModal } from '../components/QrCodeModal';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -32,6 +33,7 @@ export default function Home() {
 
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar'>('menu');
+  const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
   
   const [email, setEmail] = useState('');
@@ -269,8 +271,8 @@ export default function Home() {
       }
     }
 
-    // 3. EVITAR DUPLICIDADE EM 19:00 NAS TERÇAS/QUINTAS
-    if ((diaAtual === 2 || diaAtual === 4) && horarioTurma === '19:00' && turma.nome.includes('Aprendiz')) {
+    // 3. DESABILITAR 19:00 INTERMEDIÁRIO ISOLADO (sem deletar do banco)
+    if (horarioTurma === '19:00' && (turma.nome === 'Intermediário' || turma.nome === 'Intermediario')) {
       return false;
     }
 
@@ -434,6 +436,17 @@ export default function Home() {
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Validar Comprovantes</p>
             </div>
           </button>
+
+          {/* QR CODE DO APP */}
+          <button onClick={() => setShowQrCodeModal(true)} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code do App</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Escanear no Celular</p>
+            </div>
+          </button>
         </div>
       </div>
     ) : viewAdmin === 'alunos' ? (
@@ -447,6 +460,11 @@ export default function Home() {
     )}
   </div>
 )}
+
+        <QrCodeModal 
+          isOpen={showQrCodeModal} 
+          onClose={() => setShowQrCodeModal(false)} 
+        />
       </main>
     </div>
   );
