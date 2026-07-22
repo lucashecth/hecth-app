@@ -212,9 +212,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 onChange={(e) => setEditNivel(e.target.value)}
                 className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold uppercase"
               >
+                <option value="APRENDIZ">Aprendiz</option>
                 <option value="INICIANTE">Iniciante</option>
+                <option value="INICIANTE AVANÇADO">Iniciante Avançado</option>
                 <option value="INTERMEDIÁRIO">Intermediário</option>
-                <option value="AVANÇADO">Avançado</option>
               </select>
             </div>
 
