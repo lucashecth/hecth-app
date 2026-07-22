@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 
 interface PreEncomendaItem {
@@ -21,8 +22,10 @@ export function PreEncomendasModal({ isOpen, onClose }: PreEncomendasModalProps)
   const [novoNome, setNovoNome] = useState('');
   const [loading, setLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (isOpen) {
       carregarEncomendas();
     }
@@ -108,10 +111,10 @@ export function PreEncomendasModal({ isOpen, onClose }: PreEncomendasModalProps)
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
       <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full max-h-[85vh] flex flex-col animacao-entrada shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
@@ -197,4 +200,6 @@ export function PreEncomendasModal({ isOpen, onClose }: PreEncomendasModalProps)
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

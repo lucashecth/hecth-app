@@ -1,6 +1,7 @@
 // src/components/AdminAlunosView.tsx
 "use client";
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 
 interface AdminAlunosViewProps {
@@ -12,6 +13,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [filtro, setFiltro] = useState<'todos' | 'vencimento'>('todos');
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   // Modal Student Editing State
   const [alunoEditando, setAlunoEditando] = useState<any | null>(null);
@@ -20,7 +22,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editNivel, setEditNivel] = useState<string>('INICIANTE');
   const [saveLoading, setSaveLoading] = useState(false);
 
-  useEffect(() => { carregarAlunos(); }, []);
+  useEffect(() => { 
+    setMounted(true);
+    carregarAlunos(); 
+  }, []);
 
   async function carregarAlunos() {
     setLoading(true);
@@ -105,9 +110,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     const nivelDoBanco = aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE';
     
     return (
-      <button 
+      <div 
         onClick={() => abrirModalAluno(aluno)}
-        className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
+        className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
           <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
@@ -151,11 +156,118 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
         </div>
-      </button>
+      </div>
     );
   }
 
   const diasComuns = [5, 10, 15, 20];
+
+  const renderModal = () => {
+    if (!alunoEditando || !mounted) return null;
+
+    const modalContent = (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+        <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full animacao-entrada shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-black text-lg text-white uppercase italic">Perfil do Atleta</h3>
+            <button 
+              onClick={() => setAlunoEditando(null)} 
+              className="text-white/40 hover:text-white font-black text-sm p-1"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center">
+              {alunoEditando.foto_url ? (
+                <img src={alunoEditando.foto_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xl">👤</span>
+              )}
+            </div>
+            <div>
+              <h4 className="font-black text-base text-white uppercase">{alunoEditando.nome} {alunoEditando.sobrenome}</h4>
+              <p className="text-xs text-white/40">{alunoEditando.email}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Nível</label>
+              <select 
+                value={editNivel}
+                onChange={(e) => setEditNivel(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold uppercase"
+              >
+                <option value="INICIANTE">Iniciante</option>
+                <option value="INTERMEDIÁRIO">Intermediário</option>
+                <option value="AVANÇADO">Avançado</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Dias na Semana</label>
+              <div className="flex gap-2">
+                {[2, 3, 5].map((freq) => (
+                  <button 
+                    key={freq}
+                    type="button"
+                    onClick={() => setEditFrequencia(freq)}
+                    className={`flex-1 py-3 rounded-xl text-xs font-black uppercase transition-all ${editFrequencia === freq ? 'bg-[#ef3340] text-white shadow-lg' : 'bg-white/5 text-white/40 border border-white/5'}`}
+                  >
+                    {freq}x / sem
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Dia do Vencimento</label>
+              <input 
+                type="number"
+                min="1"
+                max="31"
+                value={editDiaVencimento}
+                onChange={(e) => setEditDiaVencimento(Number(e.target.value))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold text-center mb-2"
+              />
+              <div className="flex gap-2">
+                {diasComuns.map((dia) => (
+                  <button 
+                    key={dia}
+                    type="button"
+                    onClick={() => setEditDiaVencimento(dia)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${editDiaVencimento === dia ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}
+                  >
+                    Dia {dia}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button 
+                onClick={salvarPerfilAluno}
+                disabled={saveLoading}
+                className="flex-1 bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
+              >
+                {saveLoading ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+              <button 
+                onClick={() => setAlunoEditando(null)}
+                className="flex-1 bg-white/10 text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl hover:bg-white/20 transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    return createPortal(modalContent, document.body);
+  };
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4 max-w-lg mx-auto">
@@ -196,7 +308,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               <div key={dia}>
                 <div className="flex items-center gap-2 mb-3 px-3">
                   <span className="bg-[#ef3340] text-white text-[10px] font-black px-3 py-1 rounded-full italic tracking-widest">DIA {dia}</span>
-                  <div className="h-[1px] flex-1 bg-white/10"></div>
+                  <div className="h-[1px] flex-1 bg-[#ffffff1a]"></div>
                 </div>
                 <div className="flex flex-col gap-3">
                   {alunosDoDia.map(aluno => <CardAluno key={aluno.id} aluno={aluno} mostrarDia />)}
@@ -207,107 +319,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         )}
       </div>
 
-      {/* STUDENT PROFILE EDIT MODAL */}
-      {alunoEditando && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full animacao-entrada">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-black text-lg text-white uppercase italic">Perfil do Atleta</h3>
-              <button 
-                onClick={() => setAlunoEditando(null)} 
-                className="text-white/40 hover:text-white font-black text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center">
-                {alunoEditando.foto_url ? (
-                  <img src={alunoEditando.foto_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xl">👤</span>
-                )}
-              </div>
-              <div>
-                <h4 className="font-black text-base text-white uppercase">{alunoEditando.nome} {alunoEditando.sobrenome}</h4>
-                <p className="text-xs text-white/40">{alunoEditando.email}</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Nível</label>
-                <select 
-                  value={editNivel}
-                  onChange={(e) => setEditNivel(e.target.value)}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold uppercase"
-                >
-                  <option value="INICIANTE">Iniciante</option>
-                  <option value="INTERMEDIÁRIO">Intermediário</option>
-                  <option value="AVANÇADO">Avançado</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Dias na Semana</label>
-                <div className="flex gap-2">
-                  {[2, 3, 5].map((freq) => (
-                    <button 
-                      key={freq}
-                      type="button"
-                      onClick={() => setEditFrequencia(freq)}
-                      className={`flex-1 py-3 rounded-xl text-xs font-black uppercase transition-all ${editFrequencia === freq ? 'bg-[#ef3340] text-white shadow-lg' : 'bg-white/5 text-white/40 border border-white/5'}`}
-                    >
-                      {freq}x / sem
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Dia do Vencimento</label>
-                <input 
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={editDiaVencimento}
-                  onChange={(e) => setEditDiaVencimento(Number(e.target.value))}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold text-center mb-2"
-                />
-                <div className="flex gap-2">
-                  {diasComuns.map((dia) => (
-                    <button 
-                      key={dia}
-                      type="button"
-                      onClick={() => setEditDiaVencimento(dia)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${editDiaVencimento === dia ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}
-                    >
-                      Dia {dia}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-4">
-                <button 
-                  onClick={salvarPerfilAluno}
-                  disabled={saveLoading}
-                  className="flex-1 bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
-                >
-                  {saveLoading ? 'Salvando...' : 'Salvar Alterações'}
-                </button>
-                <button 
-                  onClick={() => setAlunoEditando(null)}
-                  className="flex-1 bg-white/10 text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl hover:bg-white/20 transition-all"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderModal()}
     </div>
   );
 }
