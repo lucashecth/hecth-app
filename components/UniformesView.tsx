@@ -163,7 +163,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   };
 
   return (
-    <div className="animacao-entrada px-4 pb-20 pt-4 max-w-lg mx-auto">
+    <div className="animacao-entrada px-4 pb-36 pt-4 max-w-lg mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">
@@ -350,14 +350,24 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
               </form>
             </div>
           )}
+          {/* Footer Inline Button for Pre-Orders */}
+          <div className="mt-4 pt-4 border-t border-white/5 flex justify-center">
+            <button 
+              onClick={() => setShowModalPreEncomendas(true)}
+              className="w-full bg-[#121212] border border-[#ef3340]/40 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:border-[#ef3340] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-lg">📦</span>
+              <span>Abrir Lista de Pré-Encomendas</span>
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Botão Fixo de Pré-Encomendas no Rodapé da tela de Uniformes */}
-      <div className="fixed bottom-6 left-0 right-0 px-4 flex justify-center z-40 pointer-events-none">
+      {/* Floating Footer Bar */}
+      <div className="fixed bottom-4 left-0 right-0 px-4 flex justify-center z-40 pointer-events-none">
         <button 
           onClick={() => setShowModalPreEncomendas(true)}
-          className="pointer-events-auto bg-[#121212] border border-[#ef3340]/40 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-full shadow-[0_0_25px_rgba(239,51,64,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+          className="pointer-events-auto bg-[#121212]/95 backdrop-blur-md border border-[#ef3340]/40 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-full shadow-[0_4px_25px_rgba(239,51,64,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
         >
           <span className="text-base">📦</span>
           <span>Pré-Encomendas</span>
