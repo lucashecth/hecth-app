@@ -240,18 +240,23 @@ export default function Home() {
   const isHoje = dataExibicao.getDate() === agora.getDate() && dataExibicao.getMonth() === agora.getMonth();
 
   const turmasDoDia = turmas?.filter(turma => {
-    const diaAtual = dataExibicao.getDay(); // 5 = Sexta
+    const diaAtual = dataExibicao.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab
     const horarioTurma = turma.horario;
 
-    // 1. TRAVA DA SEXTA: Esconde turmas das 17h, 18h, 19h e 20h
+    // 1. REGRAS DA SEXTA-FEIRA (5):
     if (diaAtual === 5) {
+      // Esconde turmas noturnas (17h, 18h, 19h, 20h)
       const horariosNoturnos = ['17:00', '18:00', '19:00', '20:00'];
       if (horariosNoturnos.includes(horarioTurma)) {
         return false;
       }
+      // Esconde o horário das 09:00 na Sexta (sem deletar do banco)
+      if (horarioTurma === '09:00') {
+        return false;
+      }
     }
 
-    // 2. REGRA DE DIA EXCLUSIVO (Para a turma de 09:00 aparecer só na sexta)
+    // 2. REGRA DE DIA EXCLUSIVO
     if (turma.dia_exclusivo) {
       const diasMap: Record<string, number> = { 
         'Domingo': 0, 'Segunda': 1, 'Terça': 2, 'Terca': 2, 
@@ -264,7 +269,35 @@ export default function Home() {
       }
     }
 
+    // 3. EVITAR DUPLICIDADE EM 19:00 NAS TERÇAS/QUINTAS
+    if ((diaAtual === 2 || diaAtual === 4) && horarioTurma === '19:00' && turma.nome.includes('Aprendiz')) {
+      return false;
+    }
+
     return true;
+  }).map(turma => {
+    const diaAtual = dataExibicao.getDay();
+    let nomeCustomizado = turma.nome;
+
+    // 1. SEG/QUA (1 e 3) -> 18:00 = Iniciante Avançado / Intermediário
+    if ((diaAtual === 1 || diaAtual === 3) && turma.horario === '18:00') {
+      nomeCustomizado = 'Iniciante Avançado / Intermediário';
+    }
+
+    // 2. TER/QUI (2 e 4) -> 19:00 = Iniciante Avançado / Intermediário
+    if ((diaAtual === 2 || diaAtual === 4) && turma.horario === '19:00') {
+      nomeCustomizado = 'Iniciante Avançado / Intermediário';
+    }
+
+    // 3. SEX (5) -> 08:00 = Iniciante Avançado / Intermediário
+    if (diaAtual === 5 && turma.horario === '08:00') {
+      nomeCustomizado = 'Iniciante Avançado / Intermediário';
+    }
+
+    return {
+      ...turma,
+      nome: nomeCustomizado
+    };
   });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
 
