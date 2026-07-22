@@ -19,6 +19,7 @@ import { UniformesView } from '../components/UniformesView';
 import { AdminCriarAlunoView } from '../components/AdminCriarAlunoView';
 import { FotoObrigatoriaView } from '../components/FotoObrigatoriaView';
 import { QrCodeModal } from '../components/QrCodeModal';
+import { PixQrCodeModal } from '../components/PixQrCodeModal';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -34,6 +35,7 @@ export default function Home() {
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
+  const [pixModalTipo, setPixModalTipo] = useState<'uniformes' | 'mensalidade' | null>(null);
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
   
   const [email, setEmail] = useState('');
@@ -447,6 +449,28 @@ export default function Home() {
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Escanear no Celular</p>
             </div>
           </button>
+
+          {/* QR CODE PIX UNIFORMES */}
+          <button onClick={() => setPixModalTipo('uniformes')} className="bg-[#121212] border border-teal-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+            <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-black text-xl">
+              ❖
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Uniformes</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
+            </div>
+          </button>
+
+          {/* QR CODE PIX MENSALIDADE */}
+          <button onClick={() => setPixModalTipo('mensalidade')} className="bg-[#121212] border border-emerald-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl">
+              ❖
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Mensalidade</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
+            </div>
+          </button>
         </div>
       </div>
     ) : viewAdmin === 'alunos' ? (
@@ -464,6 +488,12 @@ export default function Home() {
         <QrCodeModal 
           isOpen={showQrCodeModal} 
           onClose={() => setShowQrCodeModal(false)} 
+        />
+
+        <PixQrCodeModal 
+          isOpen={!!pixModalTipo} 
+          onClose={() => setPixModalTipo(null)} 
+          tipo={pixModalTipo}
         />
       </main>
     </div>
