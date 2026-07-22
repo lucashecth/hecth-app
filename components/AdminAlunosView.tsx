@@ -1,3 +1,4 @@
+// src/components/AdminAlunosView.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -11,6 +12,13 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [filtro, setFiltro] = useState<'todos' | 'vencimento'>('todos');
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal Student Editing State
+  const [alunoEditando, setAlunoEditando] = useState<any | null>(null);
+  const [editFrequencia, setEditFrequencia] = useState<number>(2);
+  const [editDiaVencimento, setEditDiaVencimento] = useState<number>(10);
+  const [editNivel, setEditNivel] = useState<string>('INICIANTE');
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => { carregarAlunos(); }, []);
 
@@ -26,13 +34,46 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setLoading(false);
   }
 
+  function abrirModalAluno(aluno: any) {
+    setAlunoEditando(aluno);
+    setEditFrequencia(aluno.frequencia_semanal || 2);
+    setEditDiaVencimento(aluno.dia_vencimento || 10);
+    setEditNivel(aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE');
+  }
+
+  async function salvarPerfilAluno() {
+    if (!alunoEditando) return;
+    setSaveLoading(true);
+    try {
+      const updates = {
+        frequencia_semanal: editFrequencia,
+        dia_vencimento: editDiaVencimento,
+        nivel: editNivel
+      };
+
+      const { error } = await supabase
+        .from('alunos')
+        .update(updates)
+        .eq('id', alunoEditando.id);
+
+      if (error) throw error;
+
+      setAlunos(prev => prev.map(a => a.id === alunoEditando.id ? { ...a, ...updates } : a));
+      setAlunoEditando(null);
+      alert("Perfil do atleta atualizado com sucesso!");
+    } catch (err: any) {
+      alert("Erro ao atualizar perfil: " + err.message);
+    } finally {
+      setSaveLoading(false);
+    }
+  }
+
   async function alterarFrequencia(e: React.MouseEvent, aluno: any) {
     e.stopPropagation(); 
     const frequencias = [2, 3, 5];
     const indexAtual = frequencias.indexOf(aluno.frequencia_semanal || 2);
     const novaFreq = frequencias[(indexAtual + 1) % frequencias.length];
     
-    // TELA DE CONFIRMAÇÃO
     const confirmar = window.confirm(`Deseja realmente alterar os dias do aluno ${aluno.nome} ${aluno.sobrenome} para ${novaFreq}x na semana?`);
     
     if (confirmar) {
@@ -61,17 +102,20 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   );
 
   function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
-    // Pegamos o nível direto do banco. Se estiver vazio, mostramos INICIANTE por segurança.
     const nivelDoBanco = aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE';
     
     return (
       <button 
-        onClick={() => alert(`Perfil detalhado de ${aluno.nome} em breve`)}
+        onClick={() => abrirModalAluno(aluno)}
         className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
-            <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
+            {aluno.foto_url ? (
+              <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs">👤</span>
+            )}
           </div>
           <div>
             <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
@@ -80,10 +124,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             <div className="flex flex-wrap gap-1 mt-1">
               {mostrarDia ? (
                 <span className={`text-[10px] font-black uppercase italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-[#ef3340]'}`}>
-                  Vencimento dia {aluno.dia_vencimento}
+                  Vencimento dia {aluno.dia_vencimento || 10}
                 </span>
               ) : (
-                /* EXIBIÇÃO DO NÍVEL DO BANCO DE DADOS */
                 <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'text-green-400 border-green-400/30' : 'text-[#ef3340] border-[#ef3340]/20'}`}>
                   {nivelDoBanco}
                 </span>
@@ -112,8 +155,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     );
   }
 
+  const diasComuns = [5, 10, 15, 20];
+
   return (
-    <div className="animacao-entrada w-full pb-20 pt-4">
+    <div className="animacao-entrada w-full pb-20 pt-4 max-w-lg mx-auto">
       <div className="flex items-center gap-4 mb-6 px-5">
         <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
         <h2 className="text-xl font-black uppercase italic tracking-tight">BASE DE ATLETAS</h2>
@@ -144,8 +189,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         ) : filtro === 'todos' ? (
           alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />)
         ) : (
-          [10, 15, 20].map(dia => {
-            const alunosDoDia = alunosFiltrados.filter(a => a.dia_vencimento === dia);
+          [5, 10, 15, 20].map(dia => {
+            const alunosDoDia = alunosFiltrados.filter(a => (a.dia_vencimento || 10) === dia);
             if (!alunosDoDia.length) return null;
             return (
               <div key={dia}>
@@ -161,6 +206,108 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           })
         )}
       </div>
+
+      {/* STUDENT PROFILE EDIT MODAL */}
+      {alunoEditando && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full animacao-entrada">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-black text-lg text-white uppercase italic">Perfil do Atleta</h3>
+              <button 
+                onClick={() => setAlunoEditando(null)} 
+                className="text-white/40 hover:text-white font-black text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center">
+                {alunoEditando.foto_url ? (
+                  <img src={alunoEditando.foto_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl">👤</span>
+                )}
+              </div>
+              <div>
+                <h4 className="font-black text-base text-white uppercase">{alunoEditando.nome} {alunoEditando.sobrenome}</h4>
+                <p className="text-xs text-white/40">{alunoEditando.email}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Nível</label>
+                <select 
+                  value={editNivel}
+                  onChange={(e) => setEditNivel(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold uppercase"
+                >
+                  <option value="INICIANTE">Iniciante</option>
+                  <option value="INTERMEDIÁRIO">Intermediário</option>
+                  <option value="AVANÇADO">Avançado</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Dias na Semana</label>
+                <div className="flex gap-2">
+                  {[2, 3, 5].map((freq) => (
+                    <button 
+                      key={freq}
+                      type="button"
+                      onClick={() => setEditFrequencia(freq)}
+                      className={`flex-1 py-3 rounded-xl text-xs font-black uppercase transition-all ${editFrequencia === freq ? 'bg-[#ef3340] text-white shadow-lg' : 'bg-white/5 text-white/40 border border-white/5'}`}
+                    >
+                      {freq}x / sem
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Dia do Vencimento</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={editDiaVencimento}
+                  onChange={(e) => setEditDiaVencimento(Number(e.target.value))}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold text-center mb-2"
+                />
+                <div className="flex gap-2">
+                  {diasComuns.map((dia) => (
+                    <button 
+                      key={dia}
+                      type="button"
+                      onClick={() => setEditDiaVencimento(dia)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${editDiaVencimento === dia ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}
+                    >
+                      Dia {dia}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-4">
+                <button 
+                  onClick={salvarPerfilAluno}
+                  disabled={saveLoading}
+                  className="flex-1 bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
+                >
+                  {saveLoading ? 'Salvando...' : 'Salvar Alterações'}
+                </button>
+                <button 
+                  onClick={() => setAlunoEditando(null)}
+                  className="flex-1 bg-white/10 text-white text-xs font-black uppercase tracking-widest py-3.5 rounded-xl hover:bg-white/20 transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

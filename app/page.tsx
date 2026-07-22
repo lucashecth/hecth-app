@@ -16,6 +16,8 @@ import { TurmaAlunosView } from '../components/TurmaAlunosView';
 import { AdminPagamentosView } from '../components/AdminPagamentosView';
 import { AdminAprovarView } from '../components/AdminAprovarView';
 import { UniformesView } from '../components/UniformesView';
+import { AdminCriarAlunoView } from '../components/AdminCriarAlunoView';
+import { FotoObrigatoriaView } from '../components/FotoObrigatoriaView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -29,7 +31,7 @@ export default function Home() {
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar'>('menu');
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
   
   const [email, setEmail] = useState('');
@@ -179,6 +181,16 @@ export default function Home() {
           <button onClick={fazerLogout} className="bg-white/10 px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition-colors">Sair</button>
         </div>
       </div>
+    );
+  }
+
+  if (session && alunoDb?.status === 'aprovado' && (!alunoDb?.foto_url || alunoDb?.foto_url === '')) {
+    return (
+      <FotoObrigatoriaView 
+        alunoDb={alunoDb} 
+        onFotoEnviada={() => carregarPerfil(session.user.email)} 
+        onLogout={fazerLogout}
+      />
     );
   }
 
@@ -343,6 +355,17 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-1 gap-4">
+          {/* BOTÃO NOVO: CADASTRAR ALUNO */}
+          <button onClick={() => setViewAdmin('criar')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Cadastrar Aluno</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Criar Conta Direta</p>
+            </div>
+          </button>
+
           {/* BOTÃO NOVO: APROVAR ALUNOS */}
           <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
             <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
@@ -384,8 +407,10 @@ export default function Home() {
       <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'pagamentos' ? (
       <AdminPagamentosView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'criar' ? (
+      <AdminCriarAlunoView onVoltar={() => setViewAdmin('menu')} />
     ) : (
-      <AdminAprovarView onVoltar={() => setViewAdmin('menu')} /> // <--- NOVA VIEW AQUI
+      <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
     )}
   </div>
 )}

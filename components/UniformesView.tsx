@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { PreEncomendasModal } from './PreEncomendasModal';
 
 interface Uniforme {
   id: number;
@@ -28,6 +29,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNome, setNewNome] = useState('');
   const [newImagemUrl, setNewImagemUrl] = useState('');
+  const [showModalPreEncomendas, setShowModalPreEncomendas] = useState(false);
 
   const tamanhosPadrao = ["PP", "P", "M", "G", "GG", "XGG"];
 
@@ -69,6 +71,20 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
     setEditEstoque(prev => ({
       ...prev,
       [tamanho]: val < 0 ? 0 : val
+    }));
+  };
+
+  const incrementQuantity = (tamanho: string) => {
+    setEditEstoque(prev => ({
+      ...prev,
+      [tamanho]: (prev[tamanho] || 0) + 1
+    }));
+  };
+
+  const decrementQuantity = (tamanho: string) => {
+    setEditEstoque(prev => ({
+      ...prev,
+      [tamanho]: Math.max(0, (prev[tamanho] || 0) - 1)
     }));
   };
 
@@ -151,7 +167,9 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">
-          {selectedUniforme ? 'Planilha de Estoque' : 'Uniformes HECTH'}
+          {selectedUniforme 
+            ? (isAdmin ? 'Gestão de Estoque' : 'Detalhes do Uniforme') 
+            : (isAdmin ? 'Uniformes HECTH (Gestão)' : 'Vitrine de Uniformes')}
         </h2>
         <button 
           onClick={selectedUniforme ? () => setSelectedUniforme(null) : onVoltar} 
@@ -166,7 +184,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
           <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-xs">Carregando estoque...</p>
         </div>
       ) : selectedUniforme ? (
-        /* SPREADSHEET DETAIL VIEW */
+        /* DETAIL VIEW (Spreadsheet/Vitrine) */
         <div className="bg-[#121212] border border-white/5 rounded-3xl p-5 animacao-entrada">
           <div className="flex gap-4 items-center mb-6">
             <img 
@@ -177,7 +195,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
             <div>
               <h3 className="font-black text-lg text-white uppercase tracking-tighter">{selectedUniforme.nome}</h3>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">
-                Total em Estoque: {totalEstoque(selectedUniforme.estoque)} unidades
+                Disponíveis: {totalEstoque(selectedUniforme.estoque)} peças
               </p>
             </div>
           </div>
@@ -188,7 +206,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60">
                   <th className="px-4 py-3 text-center">Tamanho</th>
-                  <th className="px-4 py-3">Quantidade (Estoque)</th>
+                  <th className="px-4 py-3 text-center">Quantidade Em Estoque</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,14 +215,36 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
                     <td className="px-4 py-3 text-center font-black text-sm text-[#ef3340] bg-white/[0.02] border-r border-white/5 w-20">
                       {tamanho}
                     </td>
-                    <td className="px-2 py-2">
-                      <input 
-                        type="number" 
-                        min="0"
-                        value={editEstoque[tamanho] !== undefined ? editEstoque[tamanho] : 0}
-                        onChange={(e) => handleQuantityChange(tamanho, e.target.value)}
-                        className="w-full bg-transparent border-0 outline-none text-white text-center font-bold px-3 py-1 focus:bg-white/5 focus:ring-1 focus:ring-[#ef3340]/30 rounded-lg text-base"
-                      />
+                    <td className="px-2 py-3 text-center">
+                      {isAdmin ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            type="button" 
+                            onClick={() => decrementQuantity(tamanho)} 
+                            className="w-8 h-8 rounded-lg bg-white/10 text-white font-black text-lg flex items-center justify-center hover:bg-white/20 active:scale-95 transition-all select-none"
+                          >
+                            -
+                          </button>
+                          <input 
+                            type="number" 
+                            min="0"
+                            value={editEstoque[tamanho] !== undefined ? editEstoque[tamanho] : 0}
+                            onChange={(e) => handleQuantityChange(tamanho, e.target.value)}
+                            className="w-16 bg-transparent border-0 outline-none text-white text-center font-bold px-1 py-1 focus:bg-white/5 focus:ring-1 focus:ring-[#ef3340]/30 rounded-lg text-base"
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => incrementQuantity(tamanho)} 
+                            className="w-8 h-8 rounded-lg bg-[#ef3340]/20 text-[#ef3340] border border-[#ef3340]/30 font-black text-lg flex items-center justify-center hover:bg-[#ef3340]/30 active:scale-95 transition-all select-none"
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="font-black text-white text-base">
+                          {editEstoque[tamanho] || 0} <span className="text-[10px] text-white/40 font-normal uppercase">unid</span>
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -212,24 +252,24 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
             </table>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={salvarEstoque}
-              disabled={saveLoading}
-              className="w-full bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
-            >
-              {saveLoading ? 'Salvando...' : 'Salvar Alterações'}
-            </button>
+          {isAdmin && (
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={salvarEstoque}
+                disabled={saveLoading}
+                className="w-full bg-[#ef3340] text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
+              >
+                {saveLoading ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
 
-            {isAdmin && (
               <button 
                 onClick={() => deleteUniforme(selectedUniforme.id)}
                 className="w-full bg-transparent text-red-500/50 hover:text-red-500 text-[10px] font-black uppercase tracking-widest py-2 rounded-xl transition-all"
               >
                 Remover Uniforme
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ) : (
         /* GRID VIEW (3 Columns) */
@@ -272,7 +312,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
           </div>
 
           {/* Add Uniform Form */}
-          {showAddForm && (
+          {showAddForm && isAdmin && (
             <div className="bg-[#121212] border border-white/5 rounded-3xl p-5 animacao-entrada">
               <h3 className="font-black text-sm uppercase text-white mb-4">Adicionar Novo Uniforme</h3>
               <form onSubmit={handleAddUniforme} className="flex flex-col gap-3">
@@ -312,6 +352,22 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
           )}
         </div>
       )}
+
+      {/* Botão Fixo de Pré-Encomendas no Rodapé da tela de Uniformes */}
+      <div className="fixed bottom-6 left-0 right-0 px-4 flex justify-center z-40 pointer-events-none">
+        <button 
+          onClick={() => setShowModalPreEncomendas(true)}
+          className="pointer-events-auto bg-[#121212] border border-[#ef3340]/40 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-full shadow-[0_0_25px_rgba(239,51,64,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+        >
+          <span className="text-base">📦</span>
+          <span>Pré-Encomendas</span>
+        </button>
+      </div>
+
+      <PreEncomendasModal 
+        isOpen={showModalPreEncomendas} 
+        onClose={() => setShowModalPreEncomendas(false)} 
+      />
     </div>
   );
 }
