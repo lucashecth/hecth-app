@@ -9,6 +9,7 @@ interface Uniforme {
   id: number;
   nome: string;
   imagem_url: string;
+  preco?: number;
   estoque: Record<string, number>;
   created_at: string;
 }
@@ -24,11 +25,13 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   const [saveLoading, setSaveLoading] = useState(false);
   const [selectedUniforme, setSelectedUniforme] = useState<Uniforme | null>(null);
   const [editEstoque, setEditEstoque] = useState<Record<string, number>>({});
+  const [editPreco, setEditPreco] = useState<number | string>(0);
   
   // States for adding a new uniform
   const [showAddForm, setShowAddForm] = useState(false);
   const [newNome, setNewNome] = useState('');
   const [newImagemUrl, setNewImagemUrl] = useState('');
+  const [newPreco, setNewPreco] = useState('');
   const [showModalPreEncomendas, setShowModalPreEncomendas] = useState(false);
 
   const tamanhosPadrao = ["PP", "P", "M", "G", "GG", "XGG"];
@@ -56,6 +59,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
 
   const handleCardClick = (uniforme: Uniforme) => {
     setSelectedUniforme(uniforme);
+    setEditPreco(uniforme.preco || 0);
     // Initialize editable stock state, ensuring all default sizes exist in the local state
     const estoqueCompleto = { ...uniforme.estoque };
     tamanhosPadrao.forEach(t => {
@@ -91,20 +95,24 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
   const salvarEstoque = async () => {
     if (!selectedUniforme) return;
     setSaveLoading(true);
+    const precoNum = Number(editPreco) || 0;
     try {
       const { error } = await supabase
         .from('uniformes')
-        .update({ estoque: editEstoque })
+        .update({ 
+          estoque: editEstoque,
+          preco: precoNum
+        })
         .eq('id', selectedUniforme.id);
 
       if (error) throw error;
 
       // Update local state list
-      setUniformes(prev => prev.map(u => u.id === selectedUniforme.id ? { ...u, estoque: editEstoque } : u));
-      setSelectedUniforme(prev => prev ? { ...prev, estoque: editEstoque } : null);
-      alert("Estoque atualizado com sucesso!");
+      setUniformes(prev => prev.map(u => u.id === selectedUniforme.id ? { ...u, estoque: editEstoque, preco: precoNum } : u));
+      setSelectedUniforme(prev => prev ? { ...prev, estoque: editEstoque, preco: precoNum } : null);
+      alert("Uniforme atualizado com sucesso!");
     } catch (err: any) {
-      alert("Erro ao salvar estoque: " + err.message);
+      alert("Erro ao salvar: " + err.message);
     } finally {
       setSaveLoading(false);
     }
@@ -115,6 +123,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
     if (!newNome) return alert("Por favor, preencha o nome do uniforme");
     
     setSaveLoading(true);
+    const precoNum = Number(newPreco) || 0;
     try {
       // Default stock structure
       const defaultEstoque = tamanhosPadrao.reduce((acc, t) => {
@@ -127,6 +136,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
         .insert([{
           nome: newNome,
           imagem_url: newImagemUrl || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500',
+          preco: precoNum,
           estoque: defaultEstoque
         }])
         .select();
@@ -137,6 +147,7 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
         setUniformes(prev => [...prev, data[0]]);
         setNewNome('');
         setNewImagemUrl('');
+        setNewPreco('');
         setShowAddForm(false);
       }
     } catch (err: any) {
@@ -160,6 +171,11 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
 
   const totalEstoque = (estoque: Record<string, number> = {}) => {
     return Object.values(estoque).reduce((acc, curr) => acc + (curr || 0), 0);
+  };
+
+  const formatarPreco = (valor?: number) => {
+    if (!valor) return 'R$ 0,00';
+    return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
   };
 
   return (
@@ -192,13 +208,34 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
               alt={selectedUniforme.nome} 
               className="w-16 h-16 rounded-2xl object-cover border border-white/10"
             />
-            <div>
+            <div className="flex-1">
               <h3 className="font-black text-lg text-white uppercase tracking-tighter">{selectedUniforme.nome}</h3>
+              <p className="text-sm font-black text-[#ef3340] mb-0.5">
+                {formatarPreco(selectedUniforme.preco)}
+              </p>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">
                 Disponíveis: {totalEstoque(selectedUniforme.estoque)} peças
               </p>
             </div>
           </div>
+
+          {/* Admin Edit Price Input */}
+          {isAdmin && (
+            <div className="mb-4 bg-white/5 border border-white/10 p-3 rounded-2xl">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">
+                Preço do Produto (R$)
+              </label>
+              <input 
+                type="number" 
+                step="0.01"
+                min="0"
+                value={editPreco}
+                onChange={(e) => setEditPreco(e.target.value)}
+                className="w-full bg-transparent text-white font-black text-base outline-none"
+                placeholder="0.00"
+              />
+            </div>
+          )}
 
           {/* Spreadsheet Table */}
           <div className="overflow-hidden border border-white/10 rounded-2xl mb-6 bg-black/40">
@@ -292,9 +329,14 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
                   </div>
                 </div>
                 <div className="p-2 flex-1 flex flex-col justify-between">
-                  <h4 className="text-[10px] font-black uppercase tracking-tighter text-white/90 line-clamp-2 leading-tight">
-                    {uniforme.nome}
-                  </h4>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-tighter text-white/90 line-clamp-2 leading-tight">
+                      {uniforme.nome}
+                    </h4>
+                    <p className="text-[10px] font-black text-[#ef3340] mt-0.5">
+                      {formatarPreco(uniforme.preco)}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -325,6 +367,15 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
                   required
                 />
                 <input 
+                  type="number"
+                  step="0.01"
+                  min="0" 
+                  placeholder="Preço R$ (ex: 120.00)"
+                  value={newPreco}
+                  onChange={(e) => setNewPreco(e.target.value)}
+                  className="w-full border border-white/10 rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                />
+                <input 
                   type="url" 
                   placeholder="URL da Imagem (opcional)"
                   value={newImagemUrl}
@@ -350,16 +401,6 @@ export function UniformesView({ onVoltar, isAdmin }: UniformesViewProps) {
               </form>
             </div>
           )}
-          {/* Footer Inline Button for Pre-Orders */}
-          <div className="mt-4 pt-4 border-t border-white/5 flex justify-center">
-            <button 
-              onClick={() => setShowModalPreEncomendas(true)}
-              className="w-full bg-[#121212] border border-[#ef3340]/40 text-white font-black text-xs uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:border-[#ef3340] active:scale-95 transition-all flex items-center justify-center gap-2"
-            >
-              <span className="text-lg">📦</span>
-              <span>Abrir Lista de Pré-Encomendas</span>
-            </button>
-          </div>
         </div>
       )}
 
