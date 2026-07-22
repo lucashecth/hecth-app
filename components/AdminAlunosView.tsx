@@ -29,21 +29,27 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   async function carregarAlunos() {
     setLoading(true);
-    const { data } = await supabase
-      .from('alunos')
-      .select('*')
-      .eq('status', 'aprovado')
-      .order('nome', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('alunos')
+        .select('*')
+        .eq('status', 'aprovado')
+        .order('nome', { ascending: true });
 
-    if (data) setAlunos(data);
-    setLoading(false);
+      if (error) throw error;
+      if (data) setAlunos(data);
+    } catch (err: any) {
+      console.error("Erro ao carregar alunos:", err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function abrirModalAluno(aluno: any) {
     setAlunoEditando(aluno);
     setEditFrequencia(aluno.frequencia_semanal || 2);
     setEditDiaVencimento(aluno.dia_vencimento || 10);
-    setEditNivel(aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE');
+    setEditNivel(aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE');
   }
 
   async function salvarPerfilAluno() {
@@ -107,7 +113,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   );
 
   function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
-    const nivelDoBanco = aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE';
+    const nivelDoBanco = aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE';
     
     return (
       <div 
@@ -140,10 +146,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <div 
             onClick={(e) => alterarFrequencia(e, aluno)} 
-            className={`px-3 py-2 rounded-xl border flex items-center justify-center ${aluno.mensalidade_paga ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
+            className={`px-3 py-2 rounded-xl border flex items-center justify-center cursor-pointer hover:bg-white/10 ${aluno.mensalidade_paga ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
           >
             <span className={`text-xs font-black ${aluno.mensalidade_paga ? 'text-green-400' : 'text-white/40'}`}>
               {aluno.frequencia_semanal || 2}x
@@ -151,7 +157,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           </div>
           <div 
             onClick={(e) => confirmarPagamento(e, aluno)} 
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${aluno.mensalidade_paga ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 ${aluno.mensalidade_paga ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
@@ -166,13 +172,19 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     if (!alunoEditando || !mounted) return null;
 
     const modalContent = (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-        <div className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full animacao-entrada shadow-2xl">
+      <div 
+        onClick={() => setAlunoEditando(null)}
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4"
+      >
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative"
+        >
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-black text-lg text-white uppercase italic">Perfil do Atleta</h3>
             <button 
               onClick={() => setAlunoEditando(null)} 
-              className="text-white/40 hover:text-white font-black text-sm p-1"
+              className="text-white/40 hover:text-white font-black text-base p-2 rounded-lg hover:bg-white/5 transition-colors"
             >
               ✕
             </button>
