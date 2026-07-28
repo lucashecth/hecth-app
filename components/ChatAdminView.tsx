@@ -11,6 +11,7 @@ interface Mensagem {
   nome_remetente: string;
   texto: string;
   created_at: string;
+  lida: boolean;
 }
 
 interface Aluno {
@@ -29,7 +30,7 @@ interface ChatAdminViewProps {
 
 export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps) {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [conversas, setConversas] = useState<Record<string, { ultimaMsg: string; data: string; unread: boolean }>>({});
+  const [conversas, setConversas] = useState<Record<string, { ultimaMsg: string; data: string; unreadCount: number; data_recente: number }>>({});
   const [busca, setBusca] = useState('');
   const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
@@ -40,7 +41,6 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-
   useEffect(() => {
     carregarAlunosEConversas();
 
@@ -49,16 +49,36 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
       .channel('chat_admin_global')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens' }, (payload) => {
         const novaMsg = payload.new as Mensagem;
+        const isStudentMsg = novaMsg.enviado_por === novaMsg.aluno_email;
         
-        // Update threads preview
-        setConversas(prev => ({
-          ...prev,
-          [novaMsg.aluno_email]: {
-            ultimaMsg: novaMsg.texto,
-            data: novaMsg.created_at,
-            unread: true
+        let isUnread = isStudentMsg;
+        setSelectedAluno(current => {
+          if (current && current.email === novaMsg.aluno_email) {
+            isUnread = false;
+            // Also mark it read in database if we are actively chatting!
+            supabase
+              .from('mensagens')
+              .update({ lida: true })
+              .eq('id', novaMsg.id)
+              .then();
           }
-        }));
+          return current;
+        });
+
+        // Update threads preview
+        setConversas(prev => {
+          const prevConv = prev[novaMsg.aluno_email];
+          const prevCount = prevConv ? prevConv.unreadCount : 0;
+          return {
+            ...prev,
+            [novaMsg.aluno_email]: {
+              ultimaMsg: novaMsg.texto,
+              data: novaMsg.created_at,
+              unreadCount: isUnread ? prevCount + 1 : prevCount,
+              data_recente: new Date(novaMsg.created_at).getTime()
+            }
+          };
+        });
 
         // If currently chatting with this student, append message
         setSelectedAluno(current => {
@@ -101,7 +121,7 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
       if (errorAlunos) throw errorAlunos;
       setAlunos(dataAlunos || []);
 
-      // 2. Fetch latest messages to construct snippets
+      // 2. Fetch latest messages to construct snippets and count unread
       const { data: dataMsgs, error: errorMsgs } = await supabase
         .from('mensagens')
         .select('*')
@@ -109,14 +129,22 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
 
       if (errorMsgs) throw errorMsgs;
 
-      const conversasMapeadas: Record<string, { ultimaMsg: string; data: string; unread: boolean }> = {};
+      const conversasMapeadas: Record<string, { ultimaMsg: string; data: string; unreadCount: number; data_recente: number }> = {};
       dataMsgs?.forEach((m: Mensagem) => {
+        const isStudentMsg = m.enviado_por === m.aluno_email;
+        const isUnread = isStudentMsg && !m.lida;
+
         if (!conversasMapeadas[m.aluno_email]) {
           conversasMapeadas[m.aluno_email] = {
             ultimaMsg: m.texto,
             data: m.created_at,
-            unread: false
+            unreadCount: isUnread ? 1 : 0,
+            data_recente: new Date(m.created_at).getTime()
           };
+        } else {
+          if (isUnread) {
+            conversasMapeadas[m.aluno_email].unreadCount += 1;
+          }
         }
       });
       setConversas(conversasMapeadas);
@@ -131,6 +159,13 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
   const carregarMensagensDoAluno = async (alunoEmail: string) => {
     setLoadingChat(true);
     try {
+      // Mark as read in Supabase
+      await supabase
+        .from('mensagens')
+        .update({ lida: true })
+        .eq('aluno_email', alunoEmail)
+        .eq('enviado_por', alunoEmail);
+
       const { data, error } = await supabase
         .from('mensagens')
         .select('*')
@@ -145,7 +180,7 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
         if (prev[alunoEmail]) {
           return {
             ...prev,
-            [alunoEmail]: { ...prev[alunoEmail], unread: false }
+            [alunoEmail]: { ...prev[alunoEmail], unreadCount: 0 }
           };
         }
         return prev;
@@ -177,7 +212,8 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
           aluno_email: selectedAluno.email,
           enviado_por: session?.user?.email || 'gestao',
           nome_remetente: nomeGestor,
-          texto: textoMensagem
+          texto: textoMensagem,
+          lida: true // Admin messages are read by default
         }]);
 
       if (error) throw error;
@@ -189,10 +225,18 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
     }
   };
 
-
   const alunosFiltrados = alunos.filter(a =>
     `${a.nome} ${a.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
   );
+
+  // SORT STUDENTS: Chat with the latest message always on top
+  const alunosOrdenados = [...alunosFiltrados].sort((a, b) => {
+    const infoA = conversas[a.email];
+    const infoB = conversas[b.email];
+    const timeA = infoA ? infoA.data_recente : 0;
+    const timeB = infoB ? infoB.data_recente : 0;
+    return timeB - timeA;
+  });
 
   return (
     <div className="animacao-entrada px-4 pb-10 pt-4 max-w-lg mx-auto flex flex-col h-[85vh]">
@@ -233,10 +277,10 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
               <div className="flex justify-center items-center py-20">
                 <p className="text-white/30 text-[10px] font-black uppercase tracking-widest animate-pulse">Carregando conversas...</p>
               </div>
-            ) : alunosFiltrados.length === 0 ? (
+            ) : alunosOrdenados.length === 0 ? (
               <p className="text-center py-10 text-white/30 text-xs font-black uppercase tracking-widest">Nenhum atleta encontrado</p>
             ) : (
-              alunosFiltrados.map((aluno) => {
+              alunosOrdenados.map((aluno) => {
                 const infoChat = conversas[aluno.email];
                 return (
                   <div 
@@ -258,7 +302,7 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
                           {aluno.nome} {aluno.sobrenome}
                         </h4>
                         {infoChat?.data && (
-                          <span className="text-[8px] font-black text-white/20 uppercase">
+                          <span className="text-[8px] font-black text-white/20 uppercase shrink-0">
                             {new Date(infoChat.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         )}
@@ -269,8 +313,10 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
                       </p>
                     </div>
 
-                    {infoChat?.unread && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#ef3340] shrink-0 animate-pulse"></div>
+                    {infoChat?.unreadCount !== undefined && infoChat.unreadCount > 0 && (
+                      <div className="min-w-5 h-5 px-1.5 rounded-full bg-[#ef3340] flex items-center justify-center text-white text-[9px] font-black shrink-0 shadow-[0_0_8px_rgba(239,51,64,0.4)]">
+                        {infoChat.unreadCount}
+                      </div>
                     )}
                   </div>
                 );
@@ -297,7 +343,6 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
               <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Conversa Direta</p>
             </div>
           </div>
-
 
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 mb-4 rounded-2xl bg-[#121212] border border-white/5 p-4 scrollbar-thin scrollbar-thumb-white/10">
@@ -326,7 +371,7 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
                       </span>
                     )}
                     <div 
-                      className={`px-3.5 py-2.5 rounded-2xl text-xs font-semibold leading-relaxed break-all ${
+                       className={`px-3.5 py-2.5 rounded-2xl text-xs font-semibold leading-relaxed break-all ${
                         !isStudent 
                           ? 'bg-purple-600 text-white rounded-tr-none' 
                           : 'bg-white/5 border border-white/10 text-white rounded-tl-none'

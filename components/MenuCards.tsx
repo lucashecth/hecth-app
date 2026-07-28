@@ -4,9 +4,12 @@
 interface MenuCardsProps {
   onNavegar: (aba: any) => void; 
   isAdmin: boolean;
+  totalMensagensNaoLidas?: number;
+  totalPagamentosPendentes?: number;
+  totalCadastrosPendentes?: number;
 }
 
-export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
+export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0 }: MenuCardsProps) {
   
   // Função para forçar a atualização do PWA e limpar cache
   const atualizarApp = () => {
@@ -98,7 +101,7 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
       {/* 5: Mensagens */}
       <button 
         onClick={() => onNavegar('mensagens')}
-        className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+        className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 relative"
       >
         <div className="w-9 h-9 rounded-full flex items-center justify-center bg-purple-500/10 text-purple-400">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -108,22 +111,32 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
         <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
           Mensagens
         </span>
+        {isAdmin && totalMensagensNaoLidas > 0 && (
+          <span className="absolute top-2 right-2 bg-[#ef3340] text-white text-[9px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(239,51,64,0.5)]">
+            {totalMensagensNaoLidas}
+          </span>
+        )}
       </button>
 
       {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
-{isAdmin && (
-  <button 
-    onClick={() => onNavegar('admin')}
-    className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group hover:border-[#ef3340]/30"
-  >
-    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-yellow-500/10 text-yellow-500 text-lg">
-      ☢️
-    </div>
-    <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
-      Gestão
-    </span>
-  </button>
-)}
+      {isAdmin && (
+        <button 
+          onClick={() => onNavegar('admin')}
+          className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group hover:border-[#ef3340]/30 relative"
+        >
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-yellow-500/10 text-yellow-500 text-lg">
+            ☢️
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
+            Gestão
+          </span>
+          {((totalPagamentosPendentes + totalCadastrosPendentes + totalMensagensNaoLidas) > 0) && (
+            <span className="absolute top-2 right-2 min-w-5 h-5 px-1.5 rounded-full bg-[#ef3340] flex items-center justify-center text-[9px] font-black text-white shadow-[0_0_8px_rgba(239,51,64,0.5)] border border-black/40">
+              {totalPagamentosPendentes + totalCadastrosPendentes + totalMensagensNaoLidas}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 }

@@ -38,6 +38,10 @@ export default function Home() {
   
   const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens' | 'rewards'>('arena');
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
+  const [totalMensagensNaoLidas, setTotalMensagensNaoLidas] = useState(0);
+  const [totalPagamentosPendentes, setTotalPagamentosPendentes] = useState(0);
+  const [totalCadastrosPendentes, setTotalCadastrosPendentes] = useState(0);
+
 
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno'>('menu');
@@ -80,7 +84,10 @@ export default function Home() {
     const canalRealtime = supabase.channel('atualizacoes_arena')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => carregarArena())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, () => carregarArena())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens' }, () => carregarNotificacoes())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => carregarNotificacoes())
       .subscribe();
+
 
     return () => {
       subscription.unsubscribe();
@@ -96,10 +103,37 @@ export default function Home() {
     const { data: pData } = await supabase.from('presencas').select('*');
     if (pData) setPresencasDb(pData);
 
-    // NOVA CHECAGEM PARA A BOLINHA VERMELHA (Com proteção do TypeScript):
-    const { data: alunosPagamento } = await supabase.from('alunos').select('id').eq('pagamento_enviado', true).limit(1);
-    setTemNovoPagamento((alunosPagamento?.length ?? 0) > 0);
+    carregarNotificacoes();
   };
+
+  const carregarNotificacoes = async () => {
+    try {
+      // 1. Total unread messages from students (where lida is false)
+      const { count: countMsgs } = await supabase
+        .from('mensagens')
+        .select('*', { count: 'exact', head: true })
+        .eq('lida', false);
+      setTotalMensagensNaoLidas(countMsgs ?? 0);
+
+      // 2. Pending payments (pagamento_enviado === true)
+      const { count: countPagamentos } = await supabase
+        .from('alunos')
+        .select('*', { count: 'exact', head: true })
+        .eq('pagamento_enviado', true);
+      setTotalPagamentosPendentes(countPagamentos ?? 0);
+      setTemNovoPagamento((countPagamentos ?? 0) > 0);
+
+      // 3. Pending approvals (status === 'pendente')
+      const { count: countCadastros } = await supabase
+        .from('alunos')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pendente');
+      setTotalCadastrosPendentes(countCadastros ?? 0);
+    } catch (e) {
+      console.error("Erro ao carregar notificacoes:", e);
+    }
+  };
+
 
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
@@ -338,9 +372,16 @@ export default function Home() {
         
         {abaAtiva === 'arena' && (
           <div className="px-5">
-            <MenuCards onNavegar={setAbaAtiva} isAdmin={isAdmin} />
+            <MenuCards 
+              onNavegar={setAbaAtiva} 
+              isAdmin={isAdmin} 
+              totalMensagensNaoLidas={totalMensagensNaoLidas}
+              totalPagamentosPendentes={totalPagamentosPendentes}
+              totalCadastrosPendentes={totalCadastrosPendentes}
+            />
             <InstallAppCard />
             <BotaoPush />
+
             
             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
               Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
@@ -477,7 +518,7 @@ export default function Home() {
           </button>
 
           {/* BOTÃO NOVO: APROVAR ALUNOS */}
-          <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+          <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg relative">
             <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
             </div>
@@ -485,7 +526,13 @@ export default function Home() {
               <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Aprovar Alunos</span>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Novos Cadastros</p>
             </div>
+            {totalCadastrosPendentes > 0 && (
+              <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
+                {totalCadastrosPendentes}
+              </span>
+            )}
           </button>
+
 
           {/* BASE DE ATLETAS */}
           <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
@@ -500,9 +547,6 @@ export default function Home() {
 
           {/* NOVOS PAGAMENTOS */}
           <button onClick={() => setViewAdmin('pagamentos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative">
-            {temNovoPagamento && (
-               <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#ef3340] rounded-full border-4 border-[#121212] shadow-[0_0_15px_rgba(239,51,64,0.8)] animate-pulse"></div>
-            )}
             <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
@@ -510,7 +554,13 @@ export default function Home() {
               <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Novos Pagamentos</span>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Validar Comprovantes</p>
             </div>
+            {totalPagamentosPendentes > 0 && (
+              <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
+                {totalPagamentosPendentes}
+              </span>
+            )}
           </button>
+
 
           {/* QR CODE DO APP */}
           <button onClick={() => setShowQrCodeModal(true)} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
