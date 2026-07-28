@@ -111,11 +111,12 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
         <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
           Mensagens
         </span>
-        {isAdmin && totalMensagensNaoLidas > 0 && (
+        {totalMensagensNaoLidas > 0 && (
           <span className="absolute top-2 right-2 bg-[#ef3340] text-white text-[9px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(239,51,64,0.5)]">
             {totalMensagensNaoLidas}
           </span>
         )}
+
       </button>
 
       {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}

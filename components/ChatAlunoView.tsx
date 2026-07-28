@@ -41,6 +41,14 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
       }, (payload) => {
         const novaMsg = payload.new as Mensagem;
         if (novaMsg.aluno_email === session.user.email) {
+          // Se o aluno está com o chat aberto e chega mensagem do admin, marca como lida
+          if (novaMsg.enviado_por !== session.user.email) {
+            supabase
+              .from('mensagens')
+              .update({ lida: true })
+              .eq('id', novaMsg.id)
+              .then();
+          }
           setMensagens(prev => {
             // Prevent duplicates
             if (prev.some(m => m.id === novaMsg.id)) return prev;
@@ -49,7 +57,6 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
         }
       })
       .subscribe();
-
 
     return () => {
       supabase.removeChannel(canal);
@@ -63,6 +70,14 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
   const carregarMensagens = async () => {
     setLoading(true);
     try {
+      // Marca as respostas do admin como lidas ao entrar
+      await supabase
+        .from('mensagens')
+        .update({ lida: true })
+        .eq('aluno_email', session.user.email)
+        .neq('enviado_por', session.user.email)
+        .eq('lida', false);
+
       const { data, error } = await supabase
         .from('mensagens')
         .select('*')
@@ -77,6 +92,7 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
       setLoading(false);
     }
   };
+
 
   const scrollParaBaixo = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });

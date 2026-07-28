@@ -81,19 +81,31 @@ export default function Home() {
 
     carregarArena();
 
-    const canalRealtime = supabase.channel('atualizacoes_arena')
+    const canalPresencas = supabase.channel('realtime_presencas')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => carregarArena())
+      .subscribe();
+
+    const canalTurmas = supabase.channel('realtime_turmas')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, () => carregarArena())
+      .subscribe();
+
+    const canalMensagens = supabase.channel('realtime_mensagens')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens' }, () => carregarNotificacoes())
+      .subscribe();
+
+    const canalAlunos = supabase.channel('realtime_alunos')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => carregarNotificacoes())
       .subscribe();
 
-
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(canalRealtime);
+      supabase.removeChannel(canalPresencas);
+      supabase.removeChannel(canalTurmas);
+      supabase.removeChannel(canalMensagens);
+      supabase.removeChannel(canalAlunos);
     };
   }, []);
+
 
   // Recarrega as notificacoes sempre que o usuario mudar de aba ou de tela de gestao
   useEffect(() => {
@@ -114,12 +126,29 @@ export default function Home() {
 
   const carregarNotificacoes = async () => {
     try {
-      // 1. Total unread messages from students (where lida is false)
-      const { count: countMsgs } = await supabase
-        .from('mensagens')
-        .select('*', { count: 'exact', head: true })
-        .eq('lida', false);
-      setTotalMensagensNaoLidas(countMsgs ?? 0);
+      if (!session?.user?.email) return;
+
+      // 1. Total unread messages
+      if (isAdmin) {
+        // Admin: Count unread messages sent by students (where enviado_por matches aluno_email)
+        const { data: dataMsgs } = await supabase
+          .from('mensagens')
+          .select('enviado_por, aluno_email')
+          .eq('lida', false);
+        
+        const unreadCount = dataMsgs?.filter(m => m.enviado_por === m.aluno_email).length ?? 0;
+        setTotalMensagensNaoLidas(unreadCount);
+      } else {
+        // Student: Count unread messages sent by admin (where aluno_email = self AND enviado_por != self)
+        const { count } = await supabase
+          .from('mensagens')
+          .select('*', { count: 'exact', head: true })
+          .eq('aluno_email', session.user.email)
+          .neq('enviado_por', session.user.email)
+          .eq('lida', false);
+        
+        setTotalMensagensNaoLidas(count ?? 0);
+      }
 
       // 2. Pending payments (pagamento_enviado === true)
       const { count: countPagamentos } = await supabase
@@ -139,6 +168,7 @@ export default function Home() {
       console.error("Erro ao carregar notificacoes:", e);
     }
   };
+
 
 
   const carregarPerfil = async (emailUsuario: string | undefined) => {
