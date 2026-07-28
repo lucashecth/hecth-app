@@ -7,6 +7,26 @@ interface HeaderProps {
 }
 
 export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
+  const nivel = alunoDb?.nivel || 'Aprendiz';
+  const normNivel = String(nivel).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  let levelStyle = 'bg-white/10 text-white border-white/20';
+  let avatarBorderClass = 'border-white';
+
+  if (normNivel === 'aprendiz') {
+    levelStyle = 'bg-white/10 text-white border-white/20';
+    avatarBorderClass = 'border-white';
+  } else if (normNivel === 'iniciante') {
+    levelStyle = 'bg-green-500/20 text-green-300 border-green-500/30';
+    avatarBorderClass = 'border-green-400';
+  } else if (normNivel === 'iniciante avancado') {
+    levelStyle = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+    avatarBorderClass = 'border-blue-400';
+  } else if (normNivel === 'intermediario') {
+    levelStyle = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+    avatarBorderClass = 'border-purple-400';
+  }
+
   return (
     <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-50 border-b border-white/10">
       
@@ -23,10 +43,10 @@ export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
   </span>
 
         <div className="h-8 w-[1px] bg-white/30 rounded-full"></div>
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start">
           <span className="text-sm font-bold leading-none text-white">Olá, {alunoDb?.nome?.split(' ')[0]}</span>
-          <span className="text-[10px] font-black uppercase tracking-widest text-black/60 mt-1">
-            {alunoDb?.nivel || 'Aprendiz'}
+          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border italic mt-1.5 ${levelStyle}`}>
+            {nivel}
           </span>
         </div>
       </div>
@@ -36,7 +56,7 @@ export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
         <button onClick={onLogout} className="text-[10px] font-black text-white uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">
           Sair
         </button>
-        <div className="w-10 h-10 rounded-full border-2 border-white shadow-lg overflow-hidden bg-white flex items-center justify-center">
+        <div className={`w-10 h-10 rounded-full border-2 shadow-lg overflow-hidden bg-white flex items-center justify-center ${avatarBorderClass}`}>
           {alunoDb?.foto_url ? (
             <img src={alunoDb.foto_url} className="w-full h-full object-cover" />
           ) : (
@@ -46,4 +66,4 @@ export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
       </div>
     </header>
   );
-}
+}

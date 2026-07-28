@@ -151,19 +151,33 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   function CardAluno({ aluno, mostrarDia, mostrarUltimaInscricao }: { aluno: any, mostrarDia?: boolean, mostrarUltimaInscricao?: boolean }) {
     const nivelDoBanco = aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE';
     
+    const normNivel = String(aluno.nivel || 'Aprendiz').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    let borderClass = 'border-white/20';
+
+    if (normNivel === 'aprendiz') {
+      borderClass = 'border-white';
+    } else if (normNivel === 'iniciante') {
+      borderClass = 'border-green-400';
+    } else if (normNivel === 'iniciante avancado') {
+      borderClass = 'border-blue-400';
+    } else if (normNivel === 'intermediario') {
+      borderClass = 'border-purple-400';
+    }
+
     return (
       <div 
         onClick={() => abrirModalAluno(aluno)}
         className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5 flex items-center justify-center">
+          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shrink-0 bg-white/5 flex items-center justify-center ${borderClass}`}>
             {aluno.foto_url ? (
               <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="text-xs">👤</span>
             )}
           </div>
+
           <div>
             <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
               {aluno.nome} {aluno.sobrenome}
