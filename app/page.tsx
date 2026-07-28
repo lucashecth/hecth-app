@@ -239,7 +239,12 @@ export default function Home() {
 
   const agora = new Date();
   let dataExibicao = new Date(agora);
-  if (agora.getHours() >= 21) dataExibicao.setDate(dataExibicao.getDate() + 1);
+  const horaAtual = agora.getHours();
+  const minAtual = agora.getMinutes();
+  if (horaAtual > 20 || (horaAtual === 20 && minAtual >= 30)) {
+    dataExibicao.setDate(dataExibicao.getDate() + 1);
+  }
+
   if (agora.getDay() === 5 && agora.getHours() >= 10) {
     dataExibicao = new Date(agora); dataExibicao.setDate(dataExibicao.getDate() + 3);
   } else if (dataExibicao.getDay() === 6) dataExibicao.setDate(dataExibicao.getDate() + 2);
@@ -389,7 +394,7 @@ export default function Home() {
 
         {abaAtiva === 'mensagens' && (
           isAdmin ? (
-            <ChatAdminView onVoltar={() => setAbaAtiva('arena')} />
+            <ChatAdminView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} session={session} />
           ) : (
             <ChatAlunoView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} session={session} />
           )
@@ -504,7 +509,7 @@ export default function Home() {
     ) : viewAdmin === 'criar' ? (
       <AdminCriarAlunoView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'mensagens' ? (
-      <ChatAdminView onVoltar={() => setViewAdmin('menu')} />
+      <ChatAdminView onVoltar={() => setViewAdmin('menu')} alunoDb={alunoDb} session={session} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
     )}

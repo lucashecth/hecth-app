@@ -23,11 +23,11 @@ interface Aluno {
 
 interface ChatAdminViewProps {
   onVoltar: () => void;
+  alunoDb: any;
+  session: any;
 }
 
-type SenderIdentity = 'Lucas' | 'Fellipe' | 'Equipe HECTH';
-
-export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
+export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps) {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [conversas, setConversas] = useState<Record<string, { ultimaMsg: string; data: string; unread: boolean }>>({});
   const [busca, setBusca] = useState('');
@@ -37,11 +37,9 @@ export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
   const [loadingList, setLoadingList] = useState(true);
   const [loadingChat, setLoadingChat] = useState(false);
   const [sending, setSending] = useState(false);
-  
-  // Gestor identity selection
-  const [identidade, setIdentidade] = useState<SenderIdentity>('Lucas');
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+
 
   useEffect(() => {
     carregarAlunosEConversas();
@@ -172,12 +170,13 @@ export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
     setNovoTexto('');
 
     try {
+      const nomeGestor = alunoDb?.nome || 'Gestor';
       const { error } = await supabase
         .from('mensagens')
         .insert([{
           aluno_email: selectedAluno.email,
-          enviado_por: `gestao_${identidade.toLowerCase()}`, // Distinct email format to identify support agent
-          nome_remetente: identidade,
+          enviado_por: session?.user?.email || 'gestao',
+          nome_remetente: nomeGestor,
           texto: textoMensagem
         }]);
 
@@ -189,6 +188,7 @@ export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
       setSending(false);
     }
   };
+
 
   const alunosFiltrados = alunos.filter(a =>
     `${a.nome} ${a.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
@@ -298,26 +298,6 @@ export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
             </div>
           </div>
 
-          {/* Identity Selection Bar */}
-          <div className="flex items-center justify-between gap-2 mb-3 bg-[#1a1a1a]/50 p-2.5 border border-white/5 rounded-xl shrink-0">
-            <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Enviando como:</span>
-            <div className="flex gap-1.5">
-              {(['Lucas', 'Fellipe', 'Equipe HECTH'] as SenderIdentity[]).map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => setIdentidade(name)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                    identidade === name 
-                      ? 'bg-purple-600 text-white shadow-md' 
-                      : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'
-                  }`}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 mb-4 rounded-2xl bg-[#121212] border border-white/5 p-4 scrollbar-thin scrollbar-thumb-white/10">
@@ -368,7 +348,7 @@ export function ChatAdminView({ onVoltar }: ChatAdminViewProps) {
           <form onSubmit={handleEnviar} className="flex gap-2 shrink-0">
             <input 
               type="text" 
-              placeholder={`Responder como ${identidade}...`}
+              placeholder={`Responder como ${alunoDb?.nome || 'Gestor'}...`}
               value={novoTexto}
               onChange={(e) => setNovoTexto(e.target.value)}
               className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-purple-500 text-xs font-bold"
