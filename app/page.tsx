@@ -24,6 +24,8 @@ import { ChatAlunoView } from '../components/ChatAlunoView';
 import { ChatAdminView } from '../components/ChatAdminView';
 import { AdminTurmasView } from '../components/AdminTurmasView';
 import { RewardsView } from '../components/RewardsView';
+import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
+
 
 
 
@@ -38,8 +40,9 @@ export default function Home() {
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
+
 
   const [pixModalTipo, setPixModalTipo] = useState<'uniformes' | 'mensalidade' | null>(null);
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
@@ -438,6 +441,18 @@ export default function Home() {
             </div>
           </button>
 
+          {/* BOTÃO EXCLUIR ALUNO */}
+          <button onClick={() => setViewAdmin('deletar_aluno')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Excluir Aluno</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Remover Cadastro</p>
+            </div>
+          </button>
+
+
           {/* EDITOR DE TURMAS */}
           <button onClick={() => setViewAdmin('turmas')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
@@ -541,9 +556,12 @@ export default function Home() {
       <ChatAdminView onVoltar={() => setViewAdmin('menu')} alunoDb={alunoDb} session={session} />
     ) : viewAdmin === 'turmas' ? (
       <AdminTurmasView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'deletar_aluno' ? (
+      <AdminDeletarAlunoView onVoltar={() => setViewAdmin('menu')} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
     )}
+
 
   </div>
 )}

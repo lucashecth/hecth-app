@@ -192,10 +192,25 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                   {formatarUltimaInscricao(aluno.ultima_inscricao)}
                 </span>
               ) : (
-                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'text-green-400 border-green-400/30' : 'text-[#ef3340] border-[#ef3340]/20'}`}>
-                  {nivelDoBanco}
-                </span>
+                (() => {
+                  let levelTagStyle = 'bg-white/5 text-white border-white/10';
+                  if (normNivel === 'aprendiz') {
+                    levelTagStyle = 'bg-white/5 text-white border-white/10';
+                  } else if (normNivel === 'iniciante') {
+                    levelTagStyle = 'bg-green-500/10 text-green-400 border-green-500/20';
+                  } else if (normNivel === 'iniciante avancado') {
+                    levelTagStyle = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                  } else if (normNivel === 'intermediario') {
+                    levelTagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                  }
+                  return (
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${levelTagStyle}`}>
+                      {nivelDoBanco}
+                    </span>
+                  );
+                })()
               )}
+
               {aluno.personal && (
                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-amber-500/30 text-amber-500 bg-amber-500/5 italic tracking-wider">
                   ★ Personal
