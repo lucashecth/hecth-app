@@ -37,17 +37,19 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
-        table: 'mensagens',
-        filter: `aluno_email=eq.${session.user.email}`
+        table: 'mensagens'
       }, (payload) => {
         const novaMsg = payload.new as Mensagem;
-        setMensagens(prev => {
-          // Prevent duplicates
-          if (prev.some(m => m.id === novaMsg.id)) return prev;
-          return [...prev, novaMsg];
-        });
+        if (novaMsg.aluno_email === session.user.email) {
+          setMensagens(prev => {
+            // Prevent duplicates
+            if (prev.some(m => m.id === novaMsg.id)) return prev;
+            return [...prev, novaMsg];
+          });
+        }
       })
       .subscribe();
+
 
     return () => {
       supabase.removeChannel(canal);
