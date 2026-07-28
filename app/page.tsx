@@ -22,6 +22,8 @@ import { QrCodeModal } from '../components/QrCodeModal';
 import { PixQrCodeModal } from '../components/PixQrCodeModal';
 import { ChatAlunoView } from '../components/ChatAlunoView';
 import { ChatAdminView } from '../components/ChatAdminView';
+import { AdminTurmasView } from '../components/AdminTurmasView';
+
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -35,8 +37,9 @@ export default function Home() {
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
+
   const [pixModalTipo, setPixModalTipo] = useState<'uniformes' | 'mensalidade' | null>(null);
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
   
@@ -288,7 +291,16 @@ export default function Home() {
       return false;
     }
 
+    // 4. REGRA DE DIAS DA SEMANA SELECIONADOS NO EDITOR
+    if (turma.dias_semana !== undefined && turma.dias_semana !== null) {
+      const diasPermitidos = String(turma.dias_semana).split(',').map((d: string) => parseInt(d.trim())).filter(d => !isNaN(d));
+      if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaAtual)) {
+        return false;
+      }
+    }
+
     return true;
+
   }).map(turma => {
     const diaAtual = dataExibicao.getDay();
     let nomeCustomizado = turma.nome;
@@ -421,6 +433,18 @@ export default function Home() {
             </div>
           </button>
 
+          {/* EDITOR DE TURMAS */}
+          <button onClick={() => setViewAdmin('turmas')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Editor de Turmas</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Gerenciar Grade</p>
+            </div>
+          </button>
+
+
           {/* MENSAGENS / CENTRAL DE CHAT */}
           <button onClick={() => setViewAdmin('mensagens')} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
             <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
@@ -510,9 +534,12 @@ export default function Home() {
       <AdminCriarAlunoView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'mensagens' ? (
       <ChatAdminView onVoltar={() => setViewAdmin('menu')} alunoDb={alunoDb} session={session} />
+    ) : viewAdmin === 'turmas' ? (
+      <AdminTurmasView onVoltar={() => setViewAdmin('menu')} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
     )}
+
   </div>
 )}
 

@@ -57,7 +57,14 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
   const surgindo = turmaIdClicada === turma.id && acaoClicada === 'marcar';
 
   return (
-    <div className={`bg-[#121212] rounded-3xl p-6 border mb-5 relative transition-all duration-300 ${aulaEncerrada ? 'border-white/5 opacity-40 grayscale' : 'border-white/5 shadow-lg'}`}>
+    <div 
+      className={`rounded-3xl p-6 border mb-5 relative transition-all duration-300 ${aulaEncerrada ? 'opacity-40 grayscale' : 'shadow-lg'}`}
+      style={{ 
+        backgroundColor: turma.cor_card || '#121212',
+        borderColor: 'rgba(255,255,255,0.05)'
+      }}
+    >
+
       
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col gap-2">
