@@ -326,7 +326,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
-      <Header alunoDb={alunoDb} onLogout={fazerLogout} />
+      <Header alunoDb={alunoDb} onLogout={fazerLogout} onGoHome={() => setAbaAtiva('arena')} />
+
 
       <main className="w-full">
         

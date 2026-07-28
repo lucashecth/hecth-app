@@ -3,18 +3,25 @@
 interface HeaderProps {
   alunoDb: any;
   onLogout: () => void;
+  onGoHome?: () => void;
 }
 
-export function Header({ alunoDb, onLogout }: HeaderProps) {
+export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
   return (
     <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-50 border-b border-white/10">
       
       {/* LADO ESQUERDO: Logo + Barra + Nome/Nível */}
       <div className="flex items-center gap-4">
-        <img src="/hecth-logo.svg" alt="HECTH." className="h-8 w-auto"/>
+        <img 
+          src="/hecth-logo.svg" 
+          alt="HECTH." 
+          className="h-8 w-auto cursor-pointer hover:opacity-85 active:scale-95 transition-all"
+          onClick={onGoHome}
+        />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
     v0.1.77
   </span>
+
         <div className="h-8 w-[1px] bg-white/30 rounded-full"></div>
         <div className="flex flex-col">
           <span className="text-sm font-bold leading-none text-white">Olá, {alunoDb?.nome?.split(' ')[0]}</span>
