@@ -260,15 +260,16 @@ export default function Home() {
     const diaAtual = dataExibicao.getDay(); // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab
     const horarioTurma = turma.horario;
 
+    // 0. SE ESTIVER INATIVA, NÃO MOSTRAR
+    if (turma.ativo === false) {
+      return false;
+    }
+
     // 1. REGRAS DA SEXTA-FEIRA (5):
     if (diaAtual === 5) {
       // Esconde turmas noturnas (17h, 18h, 19h, 20h)
       const horariosNoturnos = ['17:00', '18:00', '19:00', '20:00'];
       if (horariosNoturnos.includes(horarioTurma)) {
-        return false;
-      }
-      // Esconde o horário das 09:00 na Sexta (sem deletar do banco)
-      if (horarioTurma === '09:00') {
         return false;
       }
     }
@@ -286,12 +287,7 @@ export default function Home() {
       }
     }
 
-    // 3. DESABILITAR 19:00 INTERMEDIÁRIO ISOLADO (sem deletar do banco)
-    if (horarioTurma === '19:00' && (turma.nome === 'Intermediário' || turma.nome === 'Intermediario')) {
-      return false;
-    }
-
-    // 4. REGRA DE DIAS DA SEMANA SELECIONADOS NO EDITOR
+    // 3. REGRA DE DIAS DA SEMANA SELECIONADOS NO EDITOR
     if (turma.dias_semana !== undefined && turma.dias_semana !== null) {
       const diasPermitidos = String(turma.dias_semana).split(',').map((d: string) => parseInt(d.trim())).filter(d => !isNaN(d));
       if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaAtual)) {
@@ -300,6 +296,7 @@ export default function Home() {
     }
 
     return true;
+
 
   }).map(turma => {
     const diaAtual = dataExibicao.getDay();

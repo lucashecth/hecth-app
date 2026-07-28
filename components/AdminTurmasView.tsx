@@ -14,11 +14,14 @@ interface Turma {
   dia_exclusivo: string | null;
   cor_card: string;
   dias_semana: string;
+  ativo: boolean;
 }
 
 interface AdminTurmasViewProps {
   onVoltar: () => void;
 }
+
+const NIVEIS_OPCOES = ['Aprendiz', 'Iniciante', 'Iniciante Avançado', 'Intermediário'];
 
 const CORES_PREMIUM = [
   { nome: 'Grafite (Padrão)', value: '#121212' },
@@ -46,12 +49,13 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
   // Edit / Create form state
   const [modalOpen, setModalOpen] = useState(false);
   const [turmaEditando, setTurmaEditando] = useState<Turma | null>(null); // Null = creating new
-  const [nome, setNome] = useState('');
+  const [niveisSelecionados, setNiveisSelecionados] = useState<string[]>([]);
   const [professor, setProfessor] = useState('Equipe CT Hecth');
   const [horario, setHorario] = useState('18:00');
   const [vagasTotais, setVagasTotais] = useState(30);
   const [corCard, setCorCard] = useState('#121212');
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([1, 2, 3, 4, 5]); // default Seg-Sex
+  const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -77,23 +81,32 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
 
   const abrirModalCriar = () => {
     setTurmaEditando(null);
-    setNome('');
+    setNiveisSelecionados([]);
     setProfessor('Equipe CT Hecth');
     setHorario('18:00');
     setVagasTotais(30);
     setCorCard('#121212');
     setDiasSelecionados([1, 2, 3, 4, 5]);
+    setAtivo(true);
     setModalOpen(true);
   };
 
   const abrirModalEditar = (turma: Turma) => {
     setTurmaEditando(turma);
-    setNome(turma.nome);
     setProfessor(turma.professor || 'Equipe CT Hecth');
     setHorario(turma.horario);
     setVagasTotais(turma.vagas_totais);
     setCorCard(turma.cor_card || '#121212');
+    setAtivo(turma.ativo !== false);
     
+    // Parse levels
+    if (turma.nome) {
+      const parsed = turma.nome.split(/[/,]/).map(n => n.trim()).filter(Boolean);
+      setNiveisSelecionados(parsed);
+    } else {
+      setNiveisSelecionados([]);
+    }
+
     // Parse days list
     if (turma.dias_semana) {
       const parsed = turma.dias_semana.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d));
@@ -111,22 +124,45 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
     );
   };
 
+  const alternarNivel = (nivel: string) => {
+    setNiveisSelecionados(prev =>
+      prev.includes(nivel) ? prev.filter(n => n !== nivel) : [...prev, nivel]
+    );
+  };
+
+  const alternarStatusAtivoRapido = async (turma: Turma) => {
+    const novoStatus = turma.ativo === false;
+    try {
+      const { error } = await supabase
+        .from('turmas')
+        .update({ ativo: novoStatus })
+        .eq('id', turma.id);
+
+      if (error) throw error;
+      setTurmas(prev => prev.map(t => t.id === turma.id ? { ...t, ativo: novoStatus } : t));
+    } catch (err: any) {
+      alert("Erro ao alterar status: " + err.message);
+    }
+  };
+
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim() || !horario.trim() || diasSelecionados.length === 0) {
-      return alert("Preencha o nome, horário e selecione ao menos 1 dia da semana!");
+    if (niveisSelecionados.length === 0 || !horario.trim() || diasSelecionados.length === 0) {
+      return alert("Selecione ao menos 1 nível, preencha o horário e selecione ao menos 1 dia da semana!");
     }
 
     setSaving(true);
     const stringDias = diasSelecionados.sort((a,b)=>a-b).join(',');
+    const nomeTurmaCalculado = niveisSelecionados.join(' / ');
 
     const payload = {
-      nome,
+      nome: nomeTurmaCalculado,
       professor,
       horario,
       vagas_totais: vagasTotais,
       cor_card: corCard,
       dias_semana: stringDias,
+      ativo,
       dia_exclusivo: null // clear outdated single-day exclusive field
     };
 
@@ -229,7 +265,9 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
           turmas.map((turma) => (
             <div 
               key={turma.id}
-              className="bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between text-left relative overflow-hidden"
+              className={`border rounded-2xl p-4 flex items-center justify-between text-left relative overflow-hidden transition-all ${
+                turma.ativo !== false ? 'bg-[#121212] border-white/5 opacity-100' : 'bg-[#0c0c0c] border-white/5 opacity-50'
+              }`}
             >
               {/* Colored status bar to preview color card selection */}
               <div 
@@ -242,9 +280,14 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
                   <span className="text-white font-black text-sm uppercase tracking-tight truncate">
                     {turma.nome}
                   </span>
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white/5 text-white/60">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white/5 text-white/60 shrink-0">
                     {turma.horario}
                   </span>
+                  {turma.ativo === false && (
+                    <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 shrink-0">
+                      Inativa
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[10px] font-bold text-white/40 uppercase tracking-wide">
                   <span>Vagas: {turma.vagas_totais}</span>
@@ -254,6 +297,18 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {/* Active/Inactive quick toggle */}
+                <button 
+                  onClick={() => alternarStatusAtivoRapido(turma)}
+                  className={`px-3 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${
+                    turma.ativo !== false 
+                      ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                      : 'bg-red-500/10 border-red-500/30 text-red-400'
+                  }`}
+                  title={turma.ativo !== false ? 'Desativar turma' : 'Ativar turma'}
+                >
+                  {turma.ativo !== false ? 'Ativa' : 'Inativa'}
+                </button>
                 <button 
                   onClick={() => abrirModalEditar(turma)}
                   className="p-2.5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/70"
@@ -291,16 +346,42 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
             </div>
 
             <form onSubmit={handleSalvar} className="flex flex-col gap-4 text-left">
+              {/* Categoria/Nível Multi-Select Tag Buttons */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nome / Nível da Turma</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Nível de Alunos (Tags)</label>
+                <div className="flex flex-wrap gap-2">
+                  {NIVEIS_OPCOES.map((nivel) => {
+                    const selecionado = niveisSelecionados.includes(nivel);
+                    return (
+                      <button
+                        key={nivel}
+                        type="button"
+                        onClick={() => alternarNivel(nivel)}
+                        className={`px-3.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
+                          selecionado 
+                            ? 'bg-[#ef3340] text-white border-[#ef3340] shadow-sm' 
+                            : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+                        }`}
+                      >
+                        {nivel}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Status Ativo Toggle */}
+              <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
                 <input 
-                  type="text"
-                  required
-                  placeholder="Ex: Iniciante Avançado / Intermediário"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold uppercase"
+                  type="checkbox" 
+                  id="checkbox-ativo-modal"
+                  checked={ativo}
+                  onChange={(e) => setAtivo(e.target.checked)}
+                  className="w-5 h-5 rounded border-white/20 bg-[#1a1a1a] text-[#ef3340] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                 />
+                <label htmlFor="checkbox-ativo-modal" className="text-xs font-black uppercase tracking-wider text-white/80 cursor-pointer select-none">
+                  Turma Ativa (Disponível na agenda)
+                </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -366,14 +447,14 @@ export function AdminTurmasView({ onVoltar }: AdminTurmasViewProps) {
                 <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Dias de Exibição</label>
                 <div className="grid grid-cols-4 gap-2">
                   {DIAS_SEMANA_MAP.map((d) => {
-                    const ativo = diasSelecionados.includes(d.id);
+                    const diaAtivo = diasSelecionados.includes(d.id);
                     return (
                       <button
                         key={d.id}
                         type="button"
                         onClick={() => alternarDia(d.id)}
                         className={`py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
-                          ativo 
+                          diaAtivo 
                             ? 'bg-[#ef3340] text-white border-[#ef3340] shadow-sm' 
                             : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
                         }`}

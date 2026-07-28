@@ -68,13 +68,25 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       
       <div className="flex justify-between items-start mb-6">
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap gap-2">
-            {niveisTurmaArray.map((nivel: string) => (
-              <span key={nivel} className="bg-[#ef3340]/10 text-[#ef3340] text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border border-[#ef3340]/20 italic">
-                {nivel}
-              </span>
-            ))}
-          </div>
+            {niveisTurmaArray.map((nivel: string) => {
+              const normNivel = nivel.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              let tagStyle = 'bg-[#ef3340]/10 text-[#ef3340] border-[#ef3340]/20';
+              if (normNivel === 'aprendiz') {
+                tagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+              } else if (normNivel === 'iniciante') {
+                tagStyle = 'bg-sky-500/10 text-sky-400 border-sky-500/20';
+              } else if (normNivel === 'iniciante avancado') {
+                tagStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+              } else if (normNivel === 'intermediario') {
+                tagStyle = 'bg-[#ef3340]/10 text-[#ef3340] border-[#ef3340]/20';
+              }
+              return (
+                <span key={nivel} className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-lg border italic ${tagStyle}`}>
+                  {nivel}
+                </span>
+              );
+            })}
+
           <p className="text-white/40 text-[11px] font-black uppercase tracking-[0.2em] italic mt-2 ml-0.5">Prof. {turma.professor}</p>
         </div>
         <div className="text-right">
