@@ -18,6 +18,19 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
   
   const nivelAluno = alunoDb?.nivel || 'Aprendiz';
   
+  const normNivel = String(nivelAluno).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let avatarBorderClass = 'border-white';
+  if (normNivel === 'aprendiz') {
+    avatarBorderClass = 'border-white';
+  } else if (normNivel === 'iniciante') {
+    avatarBorderClass = 'border-green-400';
+  } else if (normNivel === 'iniciante avancado') {
+    avatarBorderClass = 'border-blue-400';
+  } else if (normNivel === 'intermediario') {
+    avatarBorderClass = 'border-purple-400';
+  }
+
+  
   // Transforma a string do banco "Aprendiz / Iniciante" em um Array para gerar as tags separadas
   const niveisTurmaArray = turma.nome ? turma.nome.split(/[/,]/).map((s: string) => s.trim()) : ['Aprendiz'];
 
@@ -110,7 +123,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           ))}
 
           {(jaMarcou || sumindo) && (
-            <div style={{ zIndex: 30 }} className={`w-10 h-10 rounded-full border-2 border-[#ef3340] shadow-xl overflow-hidden bg-gray-800 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
+            <div style={{ zIndex: 30 }} className={`w-10 h-10 rounded-full border-2 ${avatarBorderClass} shadow-xl overflow-hidden bg-gray-800 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
               {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-black text-xs">{alunoDb?.nome?.charAt(0)}</span>}
             </div>
           )}
