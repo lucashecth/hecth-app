@@ -94,10 +94,20 @@ export function MenuCards({ onNavegar, isAdmin }: MenuCardsProps) {
         </span>
       </button>
 
-      {/* 5: Espaço Reservado / Futuro Recurso */}
-      <div className="rounded-2xl border border-white/[0.02] flex items-center justify-center">
-         <span className="text-[8px] font-black text-white/[0.05] tracking-widest italic uppercase">Hecth.</span>
-      </div>
+      {/* 5: Mensagens */}
+      <button 
+        onClick={() => onNavegar('mensagens')}
+        className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+      >
+        <div className="w-9 h-9 rounded-full flex items-center justify-center bg-purple-500/10 text-purple-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
+          Mensagens
+        </span>
+      </button>
 
       {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
 {isAdmin && (

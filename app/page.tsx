@@ -20,6 +20,8 @@ import { AdminCriarAlunoView } from '../components/AdminCriarAlunoView';
 import { FotoObrigatoriaView } from '../components/FotoObrigatoriaView';
 import { QrCodeModal } from '../components/QrCodeModal';
 import { PixQrCodeModal } from '../components/PixQrCodeModal';
+import { ChatAlunoView } from '../components/ChatAlunoView';
+import { ChatAdminView } from '../components/ChatAdminView';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -29,11 +31,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   
   // AQUI ESTAVA O ERRO: Adicionei o 'turma_alunos' na lista de abas permitidas
-  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' >('arena');
+  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens'>('arena');
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [pixModalTipo, setPixModalTipo] = useState<'uniformes' | 'mensalidade' | null>(null);
   const [turmaDetalhe, setTurmaDetalhe] = useState<any>(null);
@@ -385,6 +387,14 @@ export default function Home() {
           <TurmaAlunosView turma={turmaDetalhe} onVoltar={() => setAbaAtiva('arena')} />
         )}
 
+        {abaAtiva === 'mensagens' && (
+          isAdmin ? (
+            <ChatAdminView onVoltar={() => setAbaAtiva('arena')} />
+          ) : (
+            <ChatAlunoView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} session={session} />
+          )
+        )}
+
         {abaAtiva === 'admin' && isAdmin && (
   <div className="w-full"> 
     {viewAdmin === 'menu' ? (
@@ -403,6 +413,17 @@ export default function Home() {
             <div>
               <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Cadastrar Aluno</span>
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Criar Conta Direta</p>
+            </div>
+          </button>
+
+          {/* MENSAGENS / CENTRAL DE CHAT */}
+          <button onClick={() => setViewAdmin('mensagens')} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Mensagens</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Central de Chats</p>
             </div>
           </button>
 
@@ -482,6 +503,8 @@ export default function Home() {
       <AdminPagamentosView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'criar' ? (
       <AdminCriarAlunoView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'mensagens' ? (
+      <ChatAdminView onVoltar={() => setViewAdmin('menu')} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
     )}
