@@ -24,7 +24,8 @@ export function PixQrCodeModal({ isOpen, onClose, tipo }: PixQrCodeModalProps) {
   const subtitulo = isUniformes 
     ? 'Aponte o app do banco para pagar seus Uniformes' 
     : 'Aponte o app do banco para pagar sua Mensalidade';
-  const imageSrc = isUniformes ? '/qrcode-uniformes.png' : '/qrcode-mensalidade.png';
+  const imageSrc = isUniformes ? '/qrcode-mensalidade.png' : '/qrcode-uniformes.png';
+
 
   const modalContent = (
     <div 
