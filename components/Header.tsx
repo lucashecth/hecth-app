@@ -4,9 +4,11 @@ interface HeaderProps {
   alunoDb: any;
   onLogout: () => void;
   onGoHome?: () => void;
+  onGoToProfile?: () => void;
 }
 
-export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
+
+export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderProps) {
   const nivel = alunoDb?.nivel || 'Aprendiz';
   const normNivel = String(nivel).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -56,7 +58,10 @@ export function Header({ alunoDb, onLogout, onGoHome }: HeaderProps) {
         <button onClick={onLogout} className="text-[10px] font-black text-white uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">
           Sair
         </button>
-        <div className={`w-10 h-10 rounded-full border-2 shadow-lg overflow-hidden bg-white flex items-center justify-center ${avatarBorderClass}`}>
+        <div 
+          onClick={onGoToProfile}
+          className={`w-10 h-10 rounded-full border-2 shadow-lg overflow-hidden bg-white flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all ${avatarBorderClass}`}
+        >
           {alunoDb?.foto_url ? (
             <img src={alunoDb.foto_url} className="w-full h-full object-cover" />
           ) : (

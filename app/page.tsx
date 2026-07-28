@@ -23,6 +23,8 @@ import { PixQrCodeModal } from '../components/PixQrCodeModal';
 import { ChatAlunoView } from '../components/ChatAlunoView';
 import { ChatAdminView } from '../components/ChatAdminView';
 import { AdminTurmasView } from '../components/AdminTurmasView';
+import { RewardsView } from '../components/RewardsView';
+
 
 
 export default function Home() {
@@ -32,8 +34,7 @@ export default function Home() {
   const [telaAtiva, setTelaAtiva] = useState<'inicio' | 'login' | 'cadastro'>('inicio');
   const [loading, setLoading] = useState(false);
   
-  // AQUI ESTAVA O ERRO: Adicionei o 'turma_alunos' na lista de abas permitidas
-  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens'>('arena');
+  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens' | 'rewards'>('arena');
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
 
   const { isAdmin } = useAdmin();
@@ -327,7 +328,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
-      <Header alunoDb={alunoDb} onLogout={fazerLogout} onGoHome={() => setAbaAtiva('arena')} />
+      <Header alunoDb={alunoDb} onLogout={fazerLogout} onGoHome={() => setAbaAtiva('arena')} onGoToProfile={() => setAbaAtiva('perfil')} />
 
 
       <main className="w-full">
@@ -398,6 +399,11 @@ export default function Home() {
         {abaAtiva === 'perfil' && (
           <PerfilView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
         )}
+
+        {abaAtiva === 'rewards' && (
+          <RewardsView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
+        )}
+
 
         {abaAtiva === 'turma_alunos' && turmaDetalhe && (
           <TurmaAlunosView turma={turmaDetalhe} onVoltar={() => setAbaAtiva('arena')} />
