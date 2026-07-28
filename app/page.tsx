@@ -95,6 +95,12 @@ export default function Home() {
     };
   }, []);
 
+  // Recarrega as notificacoes sempre que o usuario mudar de aba ou de tela de gestao
+  useEffect(() => {
+    carregarNotificacoes();
+  }, [viewAdmin, abaAtiva]);
+
+
   const carregarArena = async () => {
     const { data: tData } = await supabase.from('turmas').select('*').order('horario', { ascending: true });
 
