@@ -204,26 +204,47 @@ export function ChatAdminView({ onVoltar, alunoDb, session }: ChatAdminViewProps
     const textoMensagem = novoTexto.trim();
     setNovoTexto('');
 
+    const tempId = Math.floor(Math.random() * 10000000);
+    const nomeGestor = alunoDb?.nome || 'Gestor';
+    const msgOtimista: Mensagem = {
+      id: tempId,
+      aluno_email: selectedAluno.email,
+      enviado_por: session?.user?.email || 'gestao',
+      nome_remetente: nomeGestor,
+      texto: textoMensagem,
+      created_at: new Date().toISOString(),
+      lida: true
+    };
+
+    // Adiciona na tela do admin na hora
+    setMensagens(prev => [...prev, msgOtimista]);
+
     try {
-      const nomeGestor = alunoDb?.nome || 'Gestor';
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('mensagens')
         .insert([{
           aluno_email: selectedAluno.email,
           enviado_por: session?.user?.email || 'gestao',
           nome_remetente: nomeGestor,
           texto: textoMensagem,
-          lida: true // Admin messages are read by default
-        }]);
+          lida: true
+        }])
+        .select();
 
       if (error) throw error;
+
+      if (data && data[0]) {
+        setMensagens(prev => prev.map(m => m.id === tempId ? (data[0] as Mensagem) : m));
+      }
     } catch (err: any) {
       alert("Erro ao enviar: " + err.message);
+      setMensagens(prev => prev.filter(m => m.id !== tempId));
       setNovoTexto(textoMensagem);
     } finally {
       setSending(false);
     }
   };
+
 
   const alunosFiltrados = alunos.filter(a =>
     `${a.nome} ${a.sobrenome}`.toLowerCase().includes(busca.toLowerCase())

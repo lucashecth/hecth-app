@@ -90,25 +90,48 @@ export function ChatAlunoView({ onVoltar, alunoDb, session }: ChatAlunoViewProps
     const textoMensagem = novoTexto.trim();
     setNovoTexto('');
 
+    // ID temporário para evitar chaves duplicadas no map do React
+    const tempId = Math.floor(Math.random() * 10000000);
+    const msgOtimista: Mensagem = {
+      id: tempId,
+      aluno_email: session.user.email,
+      enviado_por: session.user.email,
+      nome_remetente: `${alunoDb?.nome || 'Aluno'}`,
+      texto: textoMensagem,
+      created_at: new Date().toISOString()
+    };
+
+    // Adiciona instantaneamente na tela do remetente
+    setMensagens(prev => [...prev, msgOtimista]);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('mensagens')
         .insert([{
           aluno_email: session.user.email,
           enviado_por: session.user.email,
           nome_remetente: `${alunoDb?.nome || 'Aluno'}`,
-          texto: textoMensagem
-        }]);
+          texto: textoMensagem,
+          lida: false
+        }])
+        .select();
 
       if (error) throw error;
-      // Note: Realtime channel will receive the inserted message and update state
+
+      // Substitui o ID temporário pelo ID real vindo do banco
+      if (data && data[0]) {
+        setMensagens(prev => prev.map(m => m.id === tempId ? (data[0] as Mensagem) : m));
+      }
     } catch (err: any) {
       alert("Erro ao enviar mensagem: " + err.message);
-      setNovoTexto(textoMensagem); // Restore text on error
+      // Remove a mensagem otimista em caso de erro
+      setMensagens(prev => prev.filter(m => m.id !== tempId));
+      setNovoTexto(textoMensagem); // Restaura o texto
     } finally {
       setSending(false);
     }
   };
+
 
   return (
     <div className="animacao-entrada px-4 pb-10 pt-4 max-w-lg mx-auto flex flex-col h-[85vh]">
