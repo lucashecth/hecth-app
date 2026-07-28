@@ -20,6 +20,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editFrequencia, setEditFrequencia] = useState<number>(2);
   const [editDiaVencimento, setEditDiaVencimento] = useState<number>(10);
   const [editNivel, setEditNivel] = useState<string>('INICIANTE');
+  const [editPersonal, setEditPersonal] = useState<boolean>(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => { 
@@ -50,6 +51,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setEditFrequencia(aluno.frequencia_semanal || 2);
     setEditDiaVencimento(aluno.dia_vencimento || 10);
     setEditNivel(aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE');
+    setEditPersonal(!!aluno.personal);
   }
 
   async function salvarPerfilAluno() {
@@ -59,7 +61,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       const updates = {
         frequencia_semanal: editFrequencia,
         dia_vencimento: editDiaVencimento,
-        nivel: editNivel
+        nivel: editNivel,
+        personal: editPersonal
       };
 
       const { error } = await supabase
@@ -179,6 +182,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                   {nivelDoBanco}
                 </span>
               )}
+              {aluno.personal && (
+                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-amber-500/30 text-amber-500 bg-amber-500/5 italic tracking-wider">
+                  ★ Personal
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -254,6 +262,19 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 <option value="INICIANTE AVANÇADO">Iniciante Avançado</option>
                 <option value="INTERMEDIÁRIO">Intermediário</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <input 
+                type="checkbox" 
+                id="checkbox-personal"
+                checked={editPersonal}
+                onChange={(e) => setEditPersonal(e.target.checked)}
+                className="w-5 h-5 rounded border-white/20 bg-[#1a1a1a] text-[#ef3340] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              />
+              <label htmlFor="checkbox-personal" className="text-xs font-black uppercase tracking-wider text-white/80 cursor-pointer select-none">
+                Aluno de Personal
+              </label>
             </div>
 
             <div>
