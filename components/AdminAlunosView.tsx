@@ -10,7 +10,7 @@ interface AdminAlunosViewProps {
 
 export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<'todos' | 'vencimento'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'vencimento' | 'ativos' | 'evasoes'>('todos');
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -108,11 +108,44 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     }
   }
 
-  const alunosFiltrados = alunos.filter(aluno =>
-    `${aluno.nome} ${aluno.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
-  );
+  const formatarUltimaInscricao = (dateStr?: string) => {
+    if (!dateStr) return "Nunca treinou";
+    const diffTime = Math.abs(new Date().getTime() - new Date(dateStr).getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Treinou hoje";
+    if (diffDays === 1) return "Treinou ontem";
+    return `Treinou há ${diffDays} dias`;
+  };
 
-  function CardAluno({ aluno, mostrarDia }: { aluno: any, mostrarDia?: boolean }) {
+  // Get active (paying) vs total counters
+  const totalAlunos = alunos.length;
+  const ativosAlunos = alunos.filter(a => a.mensalidade_paga).length;
+
+  const getAlunosFiltrados = () => {
+    const list = alunos.filter(aluno =>
+      `${aluno.nome} ${aluno.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
+    );
+
+    if (filtro === 'ativos') {
+      return list.filter(a => a.mensalidade_paga);
+    }
+
+    if (filtro === 'evasoes') {
+      return list
+        .filter(a => a.mensalidade_paga)
+        .sort((a, b) => {
+          const timeA = a.ultima_inscricao ? new Date(a.ultima_inscricao).getTime() : 0;
+          const timeB = b.ultima_inscricao ? new Date(b.ultima_inscricao).getTime() : 0;
+          return timeA - timeB; // Ascending: oldest first
+        });
+    }
+
+    return list;
+  };
+
+  const alunosFiltrados = getAlunosFiltrados();
+
+  function CardAluno({ aluno, mostrarDia, mostrarUltimaInscricao }: { aluno: any, mostrarDia?: boolean, mostrarUltimaInscricao?: boolean }) {
     const nivelDoBanco = aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE';
     
     return (
@@ -136,6 +169,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               {mostrarDia ? (
                 <span className={`text-[10px] font-black uppercase italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-[#ef3340]'}`}>
                   Vencimento dia {aluno.dia_vencimento || 10}
+                </span>
+              ) : mostrarUltimaInscricao ? (
+                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-[#ef3340]/25 text-[#ef3340] bg-[#ef3340]/5 italic">
+                  {formatarUltimaInscricao(aluno.ultima_inscricao)}
                 </span>
               ) : (
                 <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'text-green-400 border-green-400/30' : 'text-[#ef3340] border-[#ef3340]/20'}`}>
@@ -285,8 +322,15 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   return (
     <div className="animacao-entrada w-full pb-20 pt-4 max-w-lg mx-auto">
       <div className="flex items-center gap-4 mb-6 px-5">
-        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-        <h2 className="text-xl font-black uppercase italic tracking-tight">BASE DE ATLETAS</h2>
+        <button onClick={onVoltar} className="p-2 bg-white/5 rounded-full text-white/50 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div className="flex justify-between items-center flex-1">
+          <h2 className="text-xl font-black uppercase italic tracking-tight">BASE DE ATLETAS</h2>
+          <span className="text-[10px] font-black tracking-widest bg-[#ef3340]/10 border border-[#ef3340]/25 px-3 py-1 rounded-full text-[#ef3340] italic">
+            {ativosAlunos}/{totalAlunos} ATIVOS
+          </span>
+        </div>
       </div>
 
       <div className="px-5 mb-4">
@@ -299,21 +343,40 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         />
       </div>
 
-      <div className="flex gap-2 mb-6 px-5">
-        <button onClick={() => setFiltro('todos')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest ${filtro === 'todos' ? 'bg-white text-black' : 'bg-white/5 text-white/40 border border-white/5'}`}>
+      {/* Grid of 4 Filters */}
+      <div className="grid grid-cols-2 gap-2 mb-6 px-5">
+        <button 
+          onClick={() => setFiltro('todos')} 
+          className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${filtro === 'todos' ? 'bg-white text-black shadow-md' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
+        >
           TODOS A-Z
         </button>
-        <button onClick={() => setFiltro('vencimento')} className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white' : 'bg-white/5 text-white/40 border border-white/5'}`}>
+        <button 
+          onClick={() => setFiltro('vencimento')} 
+          className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${filtro === 'vencimento' ? 'bg-[#ef3340] text-white shadow-md' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
+        >
           VENCIMENTO
+        </button>
+        <button 
+          onClick={() => setFiltro('ativos')} 
+          className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${filtro === 'ativos' ? 'bg-green-600 text-white shadow-md' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
+        >
+          ATIVOS
+        </button>
+        <button 
+          onClick={() => setFiltro('evasoes')} 
+          className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${filtro === 'evasoes' ? 'bg-yellow-600 text-white shadow-md' : 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'}`}
+        >
+          EVASÕES
         </button>
       </div>
 
       <div className="flex flex-col gap-3 px-2">
         {loading ? (
           <p className="text-center py-10 text-white/20 text-[10px] font-black uppercase tracking-widest animate-pulse italic">Sincronizando...</p>
-        ) : filtro === 'todos' ? (
-          alunosFiltrados.map(aluno => <CardAluno key={aluno.id} aluno={aluno} />)
-        ) : (
+        ) : getAlunosFiltrados().length === 0 ? (
+          <p className="text-center py-10 text-white/40 text-xs font-black uppercase tracking-wider italic">Nenhum atleta encontrado</p>
+        ) : filtro === 'vencimento' ? (
           [5, 10, 15, 20].map(dia => {
             const alunosDoDia = alunosFiltrados.filter(a => (a.dia_vencimento || 10) === dia);
             if (!alunosDoDia.length) return null;
@@ -329,6 +392,14 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               </div>
             );
           })
+        ) : (
+          alunosFiltrados.map(aluno => (
+            <CardAluno 
+              key={aluno.id} 
+              aluno={aluno} 
+              mostrarUltimaInscricao={filtro === 'evasoes'}
+            />
+          ))
         )}
       </div>
 

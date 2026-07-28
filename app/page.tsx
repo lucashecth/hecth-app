@@ -157,8 +157,11 @@ export default function Home() {
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
       
+      const nowIso = new Date().toISOString();
       await supabase.from('presencas').insert([novaPresenca]);
       await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais + 1 }).eq('id', turmaId);
+      await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
+      setAlunoDb((prev: any) => prev ? { ...prev, ultima_inscricao: nowIso } : null);
       
       setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
     }
