@@ -85,7 +85,8 @@ export default function Home() {
   }, []);
 
   const carregarArena = async () => {
-    const { data: tData } = await supabase.from('turmas').select('*').order('id', { ascending: true });
+    const { data: tData } = await supabase.from('turmas').select('*').order('horario', { ascending: true });
+
     if (tData) setTurmas(tData);
 
     const { data: pData } = await supabase.from('presencas').select('*');
