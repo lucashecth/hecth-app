@@ -25,6 +25,7 @@ import { ChatAdminView } from '../components/ChatAdminView';
 import { AdminTurmasView } from '../components/AdminTurmasView';
 import { RewardsView } from '../components/RewardsView';
 import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
+import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 
 
 
@@ -46,6 +47,8 @@ export default function Home() {
   const { isAdmin } = useAdmin();
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
+  const [showQrCodeBaixarModal, setShowQrCodeBaixarModal] = useState(false);
+
 
 
   const [pixModalTipo, setPixModalTipo] = useState<'uniformes' | 'mensalidade' | null>(null);
@@ -53,9 +56,13 @@ export default function Home() {
   
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [dataNascimento, setDataNascimento] = useState('');
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
+  const [aniversariantesHoje, setAniversariantesHoje] = useState<any[]>([]);
+  const [showAniversariantesModal, setShowAniversariantesModal] = useState(false);
+
 
   const [turmas, setTurmas] = useState<any[]>([]);
   const [presencasDb, setPresencasDb] = useState<any[]>([]);
@@ -122,7 +129,37 @@ export default function Home() {
     if (pData) setPresencasDb(pData);
 
     carregarNotificacoes();
+    carregarAniversariantes();
   };
+
+  const carregarAniversariantes = async () => {
+    try {
+      const hojeStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Sao_Paulo' });
+      const hojeDate = new Date(hojeStr);
+      const diaHoje = String(hojeDate.getDate()).padStart(2, '0');
+      const mesHoje = String(hojeDate.getMonth() + 1).padStart(2, '0');
+      const diaMesHoje = `${mesHoje}-${diaHoje}`; // 'MM-DD'
+
+      const { data, error } = await supabase
+        .from('alunos')
+        .select('id, nome, sobrenome, foto_url, data_nascimento')
+        .eq('status', 'aprovado');
+      
+      if (error) throw error;
+
+      const filtrados = data?.filter((a: any) => {
+        if (!a.data_nascimento) return false;
+        const parts = a.data_nascimento.split('-');
+        if (parts.length < 3) return false;
+        return `${parts[1]}-${parts[2]}` === diaMesHoje;
+      }) || [];
+
+      setAniversariantesHoje(filtrados);
+    } catch (e) {
+      console.error("Erro ao carregar aniversariantes:", e);
+    }
+  };
+
 
   const carregarNotificacoes = async () => {
     try {
@@ -194,7 +231,7 @@ export default function Home() {
 
   const fazerCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome || !sobrenome || !email || !senha || !foto) return alert('Preencha tudo e selecione a foto!');
+    if (!nome || !sobrenome || !email || !senha || !foto || !dataNascimento) return alert('Preencha tudo e selecione a foto!');
     setLoading(true);
     try {
       const fileExt = foto.name.split('.').pop();
@@ -206,12 +243,20 @@ export default function Home() {
       const { error: authError } = await supabase.auth.signUp({ email, password: senha });
       if (authError) throw authError;
       
-      const novoAluno = { nome, sobrenome, email, foto_url: publicUrlData.publicUrl, status: 'pendente' };
+      const novoAluno = { 
+        nome, 
+        sobrenome, 
+        email, 
+        foto_url: publicUrlData.publicUrl, 
+        status: 'pendente',
+        data_nascimento: dataNascimento || null
+      };
       await supabase.from('alunos').insert([novoAluno]);
       setAlunoDb(novoAluno);
     } catch (err: any) { alert('Erro: ' + err.message); }
     setLoading(false);
   };
+
 
   const alternarPresenca = async (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => {
     if (!session || alunoDb?.status !== 'aprovado') return;
@@ -305,10 +350,15 @@ export default function Home() {
               <input type="text" placeholder="Sobrenome" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5" value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} />
               <input type="email" placeholder="E-mail" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5" value={email} onChange={(e) => setEmail(e.target.value)} />
               <input type="password" placeholder="Senha" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5" value={senha} onChange={(e) => setSenha(e.target.value)} />
+              <div className="flex flex-col gap-1 text-left">
+                <span className="text-[10px] font-black uppercase text-white/40 tracking-wider ml-1">Data de Nascimento</span>
+                <input type="date" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-2 focus:ring-red-500 font-bold" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
+              </div>
               <input type="file" required onChange={(e) => setFoto(e.target.files?.[0] || null)} className="text-xs text-white/50 file:bg-white/10 file:text-white file:rounded-full file:border-0 file:px-4 file:py-2" />
               <button className="w-full bg-red-600 text-white font-bold py-4 rounded-xl disabled:opacity-50" disabled={loading}>{loading ? 'Criando...' : 'Criar Conta'}</button>
               <button type="button" onClick={() => setTelaAtiva('inicio')} className="text-gray-400 text-sm font-bold uppercase mt-1">Voltar</button>
             </form>
+
           )}
         </div>
       </div>
@@ -415,7 +465,25 @@ export default function Home() {
               totalPagamentosPendentes={totalPagamentosPendentes}
               totalCadastrosPendentes={totalCadastrosPendentes}
             />
+            {aniversariantesHoje.length > 0 && (
+              <button 
+                onClick={() => setShowAniversariantesModal(true)}
+                className="w-full bg-[#121212] border border-amber-500/20 rounded-2xl p-4 mb-4 flex items-center justify-between transition-all active:scale-[0.98] text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🎂</span>
+                  <div>
+                    <h4 className="text-white text-xs font-black uppercase tracking-wider">
+                      {aniversariantesHoje.length} {aniversariantesHoje.length === 1 ? 'Aniversariante' : 'Aniversariantes'} de hoje!
+                    </h4>
+                    <p className="text-white/40 text-[9px] uppercase font-bold tracking-widest mt-0.5">Clique para parabenizar</p>
+                  </div>
+                </div>
+                <span className="text-white/30 text-xs">➔</span>
+              </button>
+            )}
             <InstallAppCard />
+
             <BotaoPush />
 
             
@@ -609,6 +677,18 @@ export default function Home() {
             </div>
           </button>
 
+          {/* QR CODE BAIXAR */}
+          <button onClick={() => setShowQrCodeBaixarModal(true)} className="bg-[#121212] border border-amber-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Baixar</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Baixar Aplicativo</p>
+            </div>
+          </button>
+
+
           {/* QR CODE PIX UNIFORMES */}
           <button onClick={() => setPixModalTipo('uniformes')} className="bg-[#121212] border border-teal-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
             <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-black text-xl">
@@ -656,6 +736,61 @@ export default function Home() {
           isOpen={showQrCodeModal} 
           onClose={() => setShowQrCodeModal(false)} 
         />
+
+        <QrCodeBaixarModal 
+          isOpen={showQrCodeBaixarModal} 
+          onClose={() => setShowQrCodeBaixarModal(false)} 
+        />
+
+        {showAniversariantesModal && (
+          <div 
+            onClick={() => setShowAniversariantesModal(false)}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-5 animate-fadeIn"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl relative flex flex-col items-center"
+            >
+              <button 
+                onClick={() => setShowAniversariantesModal(false)} 
+                className="absolute top-4 right-4 text-white/40 hover:text-white font-black text-base p-1 transition-colors"
+              >
+                ✕
+              </button>
+
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 text-xl">
+                🎂
+              </div>
+
+              <h3 className="font-black text-xl text-white uppercase italic tracking-tight mb-2">
+                Aniversariantes de Hoje
+              </h3>
+              <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-6">
+                Parabéns aos atletas aniversariantes! 🎉
+              </p>
+
+              <div className="flex flex-col gap-3 w-full max-h-60 overflow-y-auto mb-2">
+                {aniversariantesHoje.map((aluno: any) => (
+                  <div key={aluno.id} className="flex items-center gap-3 p-3 rounded-2xl border border-white/5 bg-white/5 text-left">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                      {aluno.foto_url ? (
+                        <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm">👤</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-black text-xs uppercase text-white">{aluno.nome} {aluno.sobrenome}</h4>
+                      <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Felicidades! 🎈</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+
 
         <PixQrCodeModal 
           isOpen={!!pixModalTipo} 

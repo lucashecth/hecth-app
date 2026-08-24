@@ -35,7 +35,8 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
         </svg>
       ),
       cor: 'text-green-400',
-      bg: 'bg-green-400/10'
+      bg: 'bg-green-400/10',
+      bloqueado: false
     },
     {
       nome: 'Uniformes',
@@ -46,7 +47,8 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
         </svg>
       ),
       cor: 'text-[#ef3340]',
-      bg: 'bg-[#ef3340]/10'
+      bg: 'bg-[#ef3340]/10',
+      bloqueado: true
     },
     {
       nome: 'Hecth Rewards',
@@ -57,9 +59,9 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
         </svg>
       ),
       cor: 'text-amber-400',
-      bg: 'bg-amber-400/10'
+      bg: 'bg-amber-400/10',
+      bloqueado: true
     }
-
   ];
 
   return (
@@ -68,17 +70,25 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
       {acoes.map((acao) => (
         <button 
           key={acao.nome}
-          onClick={() => onNavegar(acao.id)}
-          className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+          onClick={() => {
+            if (acao.bloqueado) {
+              alert("🔒 Esta funcionalidade estará disponível em breve!");
+            } else {
+              onNavegar(acao.id);
+            }
+          }}
+          className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 relative"
         >
           <div className={`w-9 h-9 rounded-full flex items-center justify-center ${acao.bg} ${acao.cor}`}>
             {acao.icone}
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
+          <span className="text-[9px] font-black uppercase tracking-tighter text-white/60 flex items-center justify-center gap-1">
+            {acao.bloqueado && <span>🔒</span>}
             {acao.nome}
           </span>
         </button>
       ))}
+
 
       {/* 4: Atualizar (Sempre na segunda linha, primeira posição) */}
       <button 

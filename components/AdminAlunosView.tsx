@@ -135,13 +135,13 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
     if (filtro === 'evasoes') {
       return list
-        .filter(a => a.mensalidade_paga)
         .sort((a, b) => {
           const timeA = a.ultima_inscricao ? new Date(a.ultima_inscricao).getTime() : 0;
           const timeB = b.ultima_inscricao ? new Date(b.ultima_inscricao).getTime() : 0;
           return timeA - timeB; // Ascending: oldest first
         });
     }
+
 
     return list;
   };
@@ -188,9 +188,15 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                   Vencimento dia {aluno.dia_vencimento || 10}
                 </span>
               ) : mostrarUltimaInscricao ? (
-                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-[#ef3340]/25 text-[#ef3340] bg-[#ef3340]/5 italic">
-                  {formatarUltimaInscricao(aluno.ultima_inscricao)}
-                </span>
+                <div className="flex gap-2 items-center flex-wrap">
+                  <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-[#ef3340]/25 text-[#ef3340] bg-[#ef3340]/5 italic">
+                    {formatarUltimaInscricao(aluno.ultima_inscricao)}
+                  </span>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-white/10 text-white/40 bg-white/5'}`}>
+                    {aluno.mensalidade_paga ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+
               ) : (
                 (() => {
                   let levelTagStyle = 'bg-white/5 text-white border-white/10';

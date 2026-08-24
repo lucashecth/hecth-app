@@ -41,8 +41,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v0.1.77
+    v1.0.1
   </span>
+
 
         <div className="h-8 w-[1px] bg-white/30 rounded-full"></div>
         <div className="flex flex-col items-start">
