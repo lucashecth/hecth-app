@@ -55,6 +55,22 @@ async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
 export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dataNascimento, setDataNascimento] = useState(alunoDb?.data_nascimento || '');
+
+  const handleSalvarDataNascimento = async (val: string) => {
+    setDataNascimento(val);
+    try {
+      const { error } = await supabase
+        .from('alunos')
+        .update({ data_nascimento: val || null })
+        .eq('id', alunoDb.id);
+      
+      if (error) throw error;
+    } catch (e: any) {
+      alert("Erro ao salvar data de nascimento: " + e.message);
+    }
+  };
+
 
   // Estados para o Cropper
   const [imageSrc, setImageSrc] = useState<string | null>(null);
