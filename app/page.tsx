@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
 import { supabase } from '../lib/supabase';
 import { lancarBolasMikasa } from '../utils/animacoes';
 import { Header } from '../components/Header';
@@ -52,6 +53,8 @@ export default function Home() {
   const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno'>('menu');
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [showQrCodeBaixarModal, setShowQrCodeBaixarModal] = useState(false);
+  const excelInputRef = useRef<HTMLInputElement>(null);
+
 
 
 
@@ -163,6 +166,128 @@ export default function Home() {
       console.error("Erro ao carregar aniversariantes:", e);
     }
   };
+
+  const handleExportarExcel = async () => {
+    try {
+      const { data: alunos, error } = await supabase
+        .from('alunos')
+        .select('*')
+        .eq('status', 'aprovado')
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+      if (!alunos || alunos.length === 0) {
+        alert("Nenhum atleta cadastrado e aprovado encontrado para exportar.");
+        return;
+      }
+
+      const anexar = window.confirm("Deseja anexar a aba de hoje a uma planilha existente?\n\n(Clique em OK para selecionar um arquivo existente do seu computador, ou CANCELAR para criar um arquivo novo do zero)");
+      
+      if (anexar) {
+        excelInputRef.current?.click();
+        return;
+      }
+
+      const dadosPlanilha = alunos.map((aluno: any) => {
+        const status = obterStatusMensalidade(aluno);
+        return {
+          'Atleta': `${aluno.nome} ${aluno.sobrenome || ''}`.trim(),
+          'E-mail': aluno.email,
+          'Vencimento (Dia)': aluno.dia_vencimento || 10,
+          'Freq. Semanal': `${aluno.frequencia_semanal || 2}x`,
+          'Último Mês Pago': aluno.ultimo_mes_pago || 'Não cadastrado',
+          'Nível': aluno.nivel || 'APRENDIZ',
+          'Aluno Personal': aluno.personal ? 'Sim' : 'Não',
+          'Status Acesso': status.ativo ? 'Ativo' : 'Inativo',
+          'Dias Restantes': status.diasRestantes === 999 ? 'Infinito (Prof)' : `${status.diasRestantes} dias`
+        };
+      });
+
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      const nomeAba = `${dia}-${mes}-${ano}`;
+
+      const ws = XLSX.utils.json_to_sheet(dadosPlanilha);
+      XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+
+      XLSX.writeFile(wb, `HECTH_Planilha_Mensalidades_${nomeAba}.xlsx`);
+      alert("📊 Planilha gerada com sucesso!");
+    } catch (err: any) {
+      console.error(err);
+      alert("Erro ao exportar: " + err.message);
+    }
+  };
+
+  const handleUploadEAnexarExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const { data: alunos, error } = await supabase
+        .from('alunos')
+        .select('*')
+        .eq('status', 'aprovado')
+        .order('nome', { ascending: true });
+
+      if (error) throw error;
+      if (!alunos || alunos.length === 0) return alert("Nenhum atleta encontrado.");
+
+      const dadosPlanilha = alunos.map((aluno: any) => {
+        const status = obterStatusMensalidade(aluno);
+        return {
+          'Atleta': `${aluno.nome} ${aluno.sobrenome || ''}`.trim(),
+          'E-mail': aluno.email,
+          'Vencimento (Dia)': aluno.dia_vencimento || 10,
+          'Freq. Semanal': `${aluno.frequencia_semanal || 2}x`,
+          'Último Mês Pago': aluno.ultimo_mes_pago || 'Não cadastrado',
+          'Nível': aluno.nivel || 'APRENDIZ',
+          'Aluno Personal': aluno.personal ? 'Sim' : 'Não',
+          'Status Acesso': status.ativo ? 'Ativo' : 'Inativo',
+          'Dias Restantes': status.diasRestantes === 999 ? 'Infinito (Prof)' : `${status.diasRestantes} dias`
+        };
+      });
+
+      const XLSX = await import('xlsx');
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const wb = XLSX.read(data, { type: 'array' });
+          
+          const hoje = new Date();
+          const dia = String(hoje.getDate()).padStart(2, '0');
+          const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+          const ano = hoje.getFullYear();
+          const nomeAba = `${dia}-${mes}-${ano}`;
+          
+          if (wb.SheetNames.includes(nomeAba)) {
+            const idx = wb.SheetNames.indexOf(nomeAba);
+            wb.SheetNames.splice(idx, 1);
+            delete wb.Sheets[nomeAba];
+          }
+
+          const ws = XLSX.utils.json_to_sheet(dadosPlanilha);
+          XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+          
+          XLSX.writeFile(wb, file.name);
+          alert(`📊 Nova aba '${nomeAba}' adicionada com sucesso no seu arquivo existente!`);
+        } catch (err: any) {
+          alert("Erro ao ler/anexar dados na planilha: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (err: any) {
+      alert("Erro ao buscar dados do banco: " + err.message);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
 
 
   const carregarNotificacoes = async () => {
@@ -734,8 +859,27 @@ export default function Home() {
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
             </div>
           </button>
+
+          {/* EXPORTAR PLANILHA EXCEL */}
+          <input 
+            type="file" 
+            accept=".xlsx" 
+            ref={excelInputRef} 
+            onChange={handleUploadEAnexarExcel} 
+            className="hidden" 
+          />
+          <button onClick={handleExportarExcel} className="bg-[#121212] border border-blue-500/30 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div>
+              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Exportar Planilha</span>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Exportar Relatório Excel</p>
+            </div>
+          </button>
         </div>
       </div>
+
     ) : viewAdmin === 'alunos' ? (
       <AdminAlunosView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'pagamentos' ? (
