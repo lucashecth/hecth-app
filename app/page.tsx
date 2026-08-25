@@ -26,6 +26,8 @@ import { AdminTurmasView } from '../components/AdminTurmasView';
 import { RewardsView } from '../components/RewardsView';
 import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
+import { obterStatusMensalidade } from '../utils/mensalidade';
+
 
 
 
@@ -448,6 +450,8 @@ export default function Home() {
     };
   });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
+  const statusMensalidade = obterStatusMensalidade(alunoDb);
+
 
   return (
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
@@ -484,6 +488,20 @@ export default function Home() {
             )}
             <InstallAppCard />
 
+            {statusMensalidade.ativo && statusMensalidade.diasRestantes <= 5 && (
+              <div className="bg-[#121212] border border-amber-500/30 rounded-2xl p-4 mb-4 flex items-center gap-3">
+                <span className="text-xl">⏳</span>
+                <div>
+                  <h4 className="text-white text-xs font-black uppercase tracking-wider leading-none mb-1">
+                    Seu plano está vencendo!
+                  </h4>
+                  <p className="text-amber-400 text-[10px] uppercase font-bold tracking-wider">
+                    Faltam {statusMensalidade.diasRestantes} {statusMensalidade.diasRestantes === 1 ? 'dia' : 'dias'} para expirar seu acesso.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <BotaoPush />
 
             
@@ -491,8 +509,8 @@ export default function Home() {
               Próximas Aulas <span className="text-sm text-[#ef3340] ml-2">({dataFormatada})</span>
             </h3>
 
-            {/* TRAVA DE MENSALIDADE: Só mapeia os cards se o aluno pagou */}
-            {alunoDb?.mensalidade_paga ? (
+            {/* TRAVA DE MENSALIDADE: Só mapeia os cards se o aluno está ativo */}
+            {statusMensalidade.ativo ? (
               turmasDoDia?.map((turma) => (
                 <TurmaCard 
                   key={turma.id} 

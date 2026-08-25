@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
+import { obterNovoMesPago } from '../utils/mensalidade';
+
 
 interface AdminAlunosViewProps {
   onVoltar: () => void;
@@ -104,12 +106,30 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     const confirmar = window.confirm(`${acao} pagamento de ${aluno.nome} (${aluno.frequencia_semanal || 2}x)?`);
     if (confirmar) {
       const novoStatus = !aluno.mensalidade_paga;
-      const { error } = await supabase.from('alunos').update({ mensalidade_paga: novoStatus }).eq('id', aluno.id);
+      
+      let ultimoMes = '';
+      if (novoStatus) {
+        // Se está confirmando, calcula o novo mês com base no atual/antecipado
+        ultimoMes = obterNovoMesPago(aluno);
+      } else {
+        // Se está estornando, volta para o anterior
+        const hoje = new Date();
+        const anteriorDate = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        ultimoMes = `${anteriorDate.getFullYear()}-${String(anteriorDate.getMonth() + 1).padStart(2, '0')}`;
+      }
+
+      const { error } = await supabase.from('alunos').update({ 
+        mensalidade_paga: novoStatus,
+        ultimo_mes_pago: ultimoMes
+      }).eq('id', aluno.id);
+
       if (!error) {
-        setAlunos(alunos.map(a => a.id === aluno.id ? { ...a, mensalidade_paga: novoStatus } : a));
+        setAlunos(alunos.map(a => a.id === aluno.id ? { ...a, mensalidade_paga: novoStatus, ultimo_mes_pago: ultimoMes } : a));
       }
     }
   }
+
+
 
   const formatarUltimaInscricao = (dateStr?: string) => {
     if (!dateStr) return "Nunca treinou";

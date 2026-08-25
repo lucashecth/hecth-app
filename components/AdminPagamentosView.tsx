@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { obterNovoMesPago } from '../utils/mensalidade';
 
 export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
   const [alunos, setAlunos] = useState<any[]>([]);
@@ -20,16 +21,21 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
   async function confirmarPagamento(aluno: any) {
     if (!window.confirm(`Confirmar recebimento do PIX de ${aluno.nome}?`)) return;
 
+    const novoMes = obterNovoMesPago(aluno);
+
     const { error } = await supabase.from('alunos').update({ 
       mensalidade_paga: true, 
-      pagamento_enviado: false 
+      pagamento_enviado: false,
+      ultimo_mes_pago: novoMes
     }).eq('id', aluno.id);
+
 
     if (!error) {
       setAlunos(alunos.filter(a => a.id !== aluno.id));
       alert("✅ Pagamento confirmado!");
     }
   }
+
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4">
