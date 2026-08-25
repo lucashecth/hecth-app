@@ -13,11 +13,10 @@ export async function enviarParaGoogleSheets(scriptUrl: string, sheetName: strin
       rows
     };
 
-    const response = await fetch(scriptUrl, {
+    const response = await fetch('/api/export-sheets', {
       method: 'POST',
-      mode: 'cors',
       headers: {
-        'Content-Type': 'text/plain;charset=utf-8', // Apps Script prefere receber como texto puro ou json sem preflight CORS estrito em alguns casos
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload)
     });
@@ -26,10 +25,11 @@ export async function enviarParaGoogleSheets(scriptUrl: string, sheetName: strin
     if (result && result.status === 'success') {
       return { success: true };
     } else {
-      return { success: false, message: result.message || 'Erro reportado pelo Google Apps Script.' };
+      return { success: false, message: result.message || 'Erro reportado pelo Google Sheets API Server.' };
     }
   } catch (err: any) {
-    console.error('Erro de conexão com o Google Sheets:', err);
-    return { success: false, message: err.message || 'Erro de rede ao conectar com o Google Sheets.' };
+    console.error('Erro de conexão com o backend:', err);
+    return { success: false, message: err.message || 'Erro de conexão.' };
   }
 }
+
