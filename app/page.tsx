@@ -193,8 +193,16 @@ export default function Home() {
       const ano = hoje.getFullYear();
       const nomeAba = `${dia}/${mes}/${ano}`; // Nome de página solicitado pelo usuário: xx/xx/xxxx
 
+      // Filtra para remover administradores e professores da planilha de exportação
+      const alunosFiltrados = alunos.filter((aluno: any) => {
+        if (aluno.is_admin) return false;
+        const nivel = String(aluno.nivel || '').toLowerCase();
+        if (nivel.includes('professor')) return false;
+        return true;
+      });
+
       // Ordenação: 1º por dia_vencimento (5, 10, 15, 20), 2º por nome A-Z
-      const alunosOrdenados = [...alunos].sort((a: any, b: any) => {
+      const alunosOrdenados = [...alunosFiltrados].sort((a: any, b: any) => {
         const vencA = a.dia_vencimento || 10;
         const vencB = b.dia_vencimento || 10;
         if (vencA !== vencB) {
@@ -210,10 +218,11 @@ export default function Home() {
         const status = obterStatusMensalidade(aluno);
         return {
           'Atleta': `${aluno.nome} ${aluno.sobrenome || ''}`.trim(),
-          'Mensalidade': status.ativo, // boolean true/false que vira checkbox no Sheets
+          'Mensalidade': status.ativo, // boolean que vira checkbox no Sheets
           'Vencimento': `Dia ${aluno.dia_vencimento || 10}`
         };
       });
+
 
       if (acao) {
         // Envio para o Google Sheets (URL Fixa do usuário)

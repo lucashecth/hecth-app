@@ -186,7 +186,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       borderClass = 'border-blue-400';
     } else if (normNivel === 'intermediario') {
       borderClass = 'border-purple-400';
+    } else if (normNivel === 'professor') {
+      borderClass = 'border-orange-500';
     }
+
 
     return (
       <div 
@@ -232,7 +235,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                     levelTagStyle = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
                   } else if (normNivel === 'intermediario') {
                     levelTagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+                  } else if (normNivel === 'professor') {
+                    levelTagStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
                   }
+
                   return (
                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${levelTagStyle}`}>
                       {nivelDoBanco}

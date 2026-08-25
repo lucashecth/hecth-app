@@ -50,8 +50,9 @@ export function obterStatusMensalidade(aluno: any) {
   const diffTime = dataLimite.getTime() - hoje.getTime();
   const diasRestantes = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-  return { ativo, diasRestantes };
+  return { ativo, diasRestantes, dataVencimento: dataLimite };
 }
+
 
 export function obterNovoMesPago(aluno: any) {
   const hoje = new Date();

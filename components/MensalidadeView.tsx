@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { comprimirImagem } from '../utils/imagem';
+import { obterStatusMensalidade } from '../utils/mensalidade';
+
 
 
 interface MensalidadeViewProps {
@@ -109,9 +111,13 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
     } catch (error: any) { alert(error.message); } finally { setUploading(false); }
   };
 
-  const dataVenc = new Date();
-  dataVenc.setMonth(dataVenc.getMonth() + 1);
-  const dataFormatada = dataVenc.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const status = obterStatusMensalidade(alunoDb);
+  const dataFormatada = status.diasRestantes === 999 
+    ? 'Livre' 
+    : (status.dataVencimento 
+        ? status.dataVencimento.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) 
+        : '...');
+
 
   return (
     <div className={`animacao-entrada w-full min-h-screen -mt-6 pt-6 pb-20 transition-colors duration-700 ${planoAtivo.brilhoFundo} relative overflow-x-hidden`}>
