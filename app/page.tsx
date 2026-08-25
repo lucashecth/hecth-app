@@ -29,6 +29,8 @@ import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 import { obterStatusMensalidade } from '../utils/mensalidade';
 import { comprimirImagem } from '../utils/imagem';
+import { enviarParaGoogleSheets } from '../utils/googleSheets';
+
 
 
 
@@ -181,12 +183,16 @@ export default function Home() {
         return;
       }
 
-      const anexar = window.confirm("Deseja anexar a aba de hoje a uma planilha existente?\n\n(Clique em OK para selecionar um arquivo existente do seu computador, ou CANCELAR para criar um arquivo novo do zero)");
-      
-      if (anexar) {
-        excelInputRef.current?.click();
-        return;
-      }
+      // Pergunta se quer enviar para o Google Sheets ou baixar localmente
+      const acao = window.confirm(
+        "Deseja enviar os dados de hoje diretamente para a Planilha do Google Sheets?\n\n(Clique em OK para enviar para o Google Sheets, ou CANCELAR para baixar a planilha Excel local .xlsx)"
+      );
+
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      const nomeAba = `${dia}/${mes}/${ano}`; // Nome de página solicitado pelo usuário: xx/xx/xxxx
 
       const dadosPlanilha = alunos.map((aluno: any) => {
         const status = obterStatusMensalidade(aluno);
@@ -203,27 +209,46 @@ export default function Home() {
         };
       });
 
-      const XLSX = await import('xlsx');
-      const wb = XLSX.utils.book_new();
+      if (acao) {
+        // Envio para o Google Sheets
+        let scriptUrl = localStorage.getItem('hecth_google_script_url');
+        if (!scriptUrl) {
+          scriptUrl = window.prompt(
+            "Por favor, insira a URL de implantação do Google Apps Script (Web App) que você configurou no Sheets:"
+          );
+          if (!scriptUrl) return;
+          localStorage.setItem('hecth_google_script_url', scriptUrl);
+        }
 
-      const hoje = new Date();
-      const dia = String(hoje.getDate()).padStart(2, '0');
-      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-      const ano = hoje.getFullYear();
-      const nomeAba = `${dia}-${mes}-${ano}`;
-
-      const ws = XLSX.utils.json_to_sheet(dadosPlanilha);
-      XLSX.utils.book_append_sheet(wb, ws, nomeAba);
-
-      XLSX.writeFile(wb, `HECTH_Planilha_Mensalidades_${nomeAba}.xlsx`);
-      alert("📊 Planilha gerada com sucesso!");
+        alert("Enviando dados para o Google Sheets... Por favor, aguarde.");
+        
+        const res = await enviarParaGoogleSheets(scriptUrl, nomeAba, dadosPlanilha);
+        if (res.success) {
+          alert(`✅ Sincronizado com sucesso! Aba "${nomeAba}" criada na sua planilha do Google Sheets.`);
+        } else {
+          const recalibrar = window.confirm(`Erro ao enviar: ${res.message}\n\nDeseja alterar a URL do Google Apps Script configurada?`);
+          if (recalibrar) {
+            localStorage.removeItem('hecth_google_script_url');
+          }
+        }
+      } else {
+        // Backup de exportação local .xlsx
+        const XLSX = await import('xlsx');
+        const wb = XLSX.utils.book_new();
+        const nomeAbaLocal = `${dia}-${mes}-${ano}`;
+        const ws = XLSX.utils.json_to_sheet(dadosPlanilha);
+        XLSX.utils.book_append_sheet(wb, ws, nomeAbaLocal);
+        XLSX.writeFile(wb, `HECTH_Planilha_Mensalidades_${nomeAbaLocal}.xlsx`);
+        alert("📊 Planilha Excel gerada localmente com sucesso!");
+      }
     } catch (err: any) {
       console.error(err);
-      alert("Erro ao exportar: " + err.message);
+      alert("Erro ao exportar dados: " + err.message);
     }
   };
 
   const handleUploadEAnexarExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = event.target.files?.[0];
     if (!file) return;
     try {
