@@ -174,8 +174,7 @@ export default function Home() {
       const { data: alunos, error } = await supabase
         .from('alunos')
         .select('*')
-        .eq('status', 'aprovado')
-        .order('nome', { ascending: true });
+        .eq('status', 'aprovado');
 
       if (error) throw error;
       if (!alunos || alunos.length === 0) {
@@ -194,31 +193,31 @@ export default function Home() {
       const ano = hoje.getFullYear();
       const nomeAba = `${dia}/${mes}/${ano}`; // Nome de página solicitado pelo usuário: xx/xx/xxxx
 
-      const dadosPlanilha = alunos.map((aluno: any) => {
+      // Ordenação: 1º por dia_vencimento (5, 10, 15, 20), 2º por nome A-Z
+      const alunosOrdenados = [...alunos].sort((a: any, b: any) => {
+        const vencA = a.dia_vencimento || 10;
+        const vencB = b.dia_vencimento || 10;
+        if (vencA !== vencB) {
+          return vencA - vencB;
+        }
+        const nomeA = `${a.nome} ${a.sobrenome || ''}`.trim().toLowerCase();
+        const nomeB = `${b.nome} ${b.sobrenome || ''}`.trim().toLowerCase();
+        return nomeA.localeCompare(nomeB);
+      });
+
+      // Mapeia apenas as 3 colunas solicitadas: Atleta, Mensalidade (boolean), Vencimento
+      const dadosPlanilha = alunosOrdenados.map((aluno: any) => {
         const status = obterStatusMensalidade(aluno);
         return {
           'Atleta': `${aluno.nome} ${aluno.sobrenome || ''}`.trim(),
-          'E-mail': aluno.email,
-          'Vencimento (Dia)': aluno.dia_vencimento || 10,
-          'Freq. Semanal': `${aluno.frequencia_semanal || 2}x`,
-          'Último Mês Pago': aluno.ultimo_mes_pago || 'Não cadastrado',
-          'Nível': aluno.nivel || 'APRENDIZ',
-          'Aluno Personal': aluno.personal ? 'Sim' : 'Não',
-          'Status Acesso': status.ativo ? 'Ativo' : 'Inativo',
-          'Dias Restantes': status.diasRestantes === 999 ? 'Infinito (Prof)' : `${status.diasRestantes} dias`
+          'Mensalidade': status.ativo, // boolean true/false que vira checkbox no Sheets
+          'Vencimento': `Dia ${aluno.dia_vencimento || 10}`
         };
       });
 
       if (acao) {
-        // Envio para o Google Sheets
-        let scriptUrl = localStorage.getItem('hecth_google_script_url');
-        if (!scriptUrl) {
-          scriptUrl = window.prompt(
-            "Por favor, insira a URL de implantação do Google Apps Script (Web App) que você configurou no Sheets:"
-          );
-          if (!scriptUrl) return;
-          localStorage.setItem('hecth_google_script_url', scriptUrl);
-        }
+        // Envio para o Google Sheets (URL Fixa do usuário)
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzQWVqn5LEoJXZuf2wLierTlMjCYKRVTb3jAp12NZSayITGe1qI_00qHq8sAh7ln7zuUQ/exec';
 
         alert("Enviando dados para o Google Sheets... Por favor, aguarde.");
         
@@ -226,10 +225,7 @@ export default function Home() {
         if (res.success) {
           alert(`✅ Sincronizado com sucesso! Aba "${nomeAba}" criada na sua planilha do Google Sheets.`);
         } else {
-          const recalibrar = window.confirm(`Erro ao enviar: ${res.message}\n\nDeseja alterar a URL do Google Apps Script configurada?`);
-          if (recalibrar) {
-            localStorage.removeItem('hecth_google_script_url');
-          }
+          alert(`Erro ao enviar para o Google Sheets: ${res.message}`);
         }
       } else {
         // Backup de exportação local .xlsx
@@ -246,6 +242,7 @@ export default function Home() {
       alert("Erro ao exportar dados: " + err.message);
     }
   };
+
 
   const handleUploadEAnexarExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
 
