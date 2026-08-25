@@ -27,6 +27,8 @@ import { RewardsView } from '../components/RewardsView';
 import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 import { obterStatusMensalidade } from '../utils/mensalidade';
+import { comprimirImagem } from '../utils/imagem';
+
 
 
 
@@ -236,10 +238,14 @@ export default function Home() {
     if (!nome || !sobrenome || !email || !senha || !foto || !dataNascimento) return alert('Preencha tudo e selecione a foto!');
     setLoading(true);
     try {
-      const fileExt = foto.name.split('.').pop();
+      // Comprime a imagem de perfil antes do upload
+      const fotoComprimida = await comprimirImagem(foto, 600, 0.75);
+      
+      const fileExt = fotoComprimida.name.split('.').pop() || 'jpg';
       const fileName = `${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, foto);
+      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, fotoComprimida);
       if (uploadError) throw uploadError;
+
       
       const { data: publicUrlData } = supabase.storage.from('avatares').getPublicUrl(fileName);
       const { error: authError } = await supabase.auth.signUp({ email, password: senha });

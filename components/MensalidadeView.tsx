@@ -2,6 +2,8 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { comprimirImagem } from '../utils/imagem';
+
 
 interface MensalidadeViewProps {
   onVoltar: () => void;
@@ -82,13 +84,18 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       const file = event.target.files?.[0];
       if (!file) return;
       setUploading(true);
-      const fileExt = file.name.split('.').pop();
+      
+      // Comprime o comprovante mantendo a legibilidade do texto
+      const fileComprimido = await comprimirImagem(file, 1000, 0.75);
+      
+      const fileExt = fileComprimido.name.split('.').pop() || 'jpg';
       const dataAtual = new Date();
       const mesNome = dataAtual.toLocaleString('pt-BR', { month: 'long' }).toUpperCase();
       const nomeLimpo = `${alunoDb.nome}_${alunoDb.sobrenome}`.replace(/\s+/g, '_');
       const fileName = `comprovante_${nomeLimpo}_${mesNome}_${dataAtual.getFullYear()}.${fileExt}`;
       
-      await supabase.storage.from('comprovantes').upload(fileName, file, { upsert: true });
+      await supabase.storage.from('comprovantes').upload(fileName, fileComprimido, { upsert: true });
+
       const { data: urlData } = supabase.storage.from('comprovantes').getPublicUrl(fileName);
 
       await supabase.from('alunos').update({ 
