@@ -4,12 +4,13 @@
 interface MenuCardsProps {
   onNavegar: (aba: any) => void; 
   isAdmin: boolean;
+  isTeacher?: boolean;
   totalMensagensNaoLidas?: number;
   totalPagamentosPendentes?: number;
   totalCadastrosPendentes?: number;
 }
 
-export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0 }: MenuCardsProps) {
+export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0 }: MenuCardsProps) {
   
   // Função para forçar a atualização do PWA e limpar cache
   const atualizarApp = () => {
@@ -130,7 +131,7 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
       </button>
 
       {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
-      {isAdmin && (
+      {(isAdmin || isTeacher) && (
         <button 
           onClick={() => onNavegar('admin')}
           className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group hover:border-[#ef3340]/30 relative"
@@ -141,7 +142,7 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
           <span className="text-[9px] font-black uppercase tracking-tighter text-white/60">
             Gestão
           </span>
-          {((totalPagamentosPendentes + totalCadastrosPendentes + totalMensagensNaoLidas) > 0) && (
+          {isAdmin && ((totalPagamentosPendentes + totalCadastrosPendentes + totalMensagensNaoLidas) > 0) && (
             <span className="absolute top-2 right-2 min-w-5 h-5 px-1.5 rounded-full bg-[#ef3340] flex items-center justify-center text-[9px] font-black text-white shadow-[0_0_8px_rgba(239,51,64,0.5)] border border-black/40">
               {totalPagamentosPendentes + totalCadastrosPendentes + totalMensagensNaoLidas}
             </span>
@@ -151,3 +152,4 @@ export function MenuCards({ onNavegar, isAdmin, totalMensagensNaoLidas = 0, tota
     </div>
   );
 }
+

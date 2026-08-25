@@ -582,6 +582,8 @@ export default function Home() {
   });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
   const statusMensalidade = obterStatusMensalidade(alunoDb);
+  const isTeacher = String(alunoDb?.nivel || '').toLowerCase().includes('professor');
+
 
 
   return (
@@ -596,10 +598,12 @@ export default function Home() {
             <MenuCards 
               onNavegar={setAbaAtiva} 
               isAdmin={isAdmin} 
+              isTeacher={isTeacher}
               totalMensagensNaoLidas={totalMensagensNaoLidas}
               totalPagamentosPendentes={totalPagamentosPendentes}
               totalCadastrosPendentes={totalCadastrosPendentes}
             />
+
             {aniversariantesHoje.length > 0 && (
               <button 
                 onClick={() => setShowAniversariantesModal(true)}
@@ -714,7 +718,8 @@ export default function Home() {
           )
         )}
 
-        {abaAtiva === 'admin' && isAdmin && (
+        {abaAtiva === 'admin' && (isAdmin || isTeacher) && (
+
   <div className="w-full"> 
     {viewAdmin === 'menu' ? (
       <div className="animacao-entrada px-5 pb-20 pt-4">
@@ -722,29 +727,32 @@ export default function Home() {
            <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
            <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
         </div>
-        
         <div className="grid grid-cols-1 gap-4">
           {/* BOTÃO NOVO: CADASTRAR ALUNO */}
-          <button onClick={() => setViewAdmin('criar')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Cadastrar Aluno</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Criar Conta Direta</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('criar')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Cadastrar Aluno</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Criar Conta Direta</p>
+              </div>
+            </button>
+          )}
 
           {/* BOTÃO EXCLUIR ALUNO */}
-          <button onClick={() => setViewAdmin('deletar_aluno')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Excluir Aluno</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Remover Cadastro</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('deletar_aluno')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Excluir Aluno</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Remover Cadastro</p>
+              </div>
+            </button>
+          )}
 
 
           {/* EDITOR DE TURMAS */}
@@ -760,71 +768,81 @@ export default function Home() {
 
 
           {/* MENSAGENS / CENTRAL DE CHAT */}
-          <button onClick={() => setViewAdmin('mensagens')} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Mensagens</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Central de Chats</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('mensagens')} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Mensagens</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Central de Chats</p>
+              </div>
+            </button>
+          )}
 
           {/* BOTÃO NOVO: APROVAR ALUNOS */}
-          <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg relative">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Aprovar Alunos</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Novos Cadastros</p>
-            </div>
-            {totalCadastrosPendentes > 0 && (
-              <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
-                {totalCadastrosPendentes}
-              </span>
-            )}
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg relative">
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Aprovar Alunos</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Novos Cadastros</p>
+              </div>
+              {totalCadastrosPendentes > 0 && (
+                <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
+                  {totalCadastrosPendentes}
+                </span>
+              )}
+            </button>
+          )}
 
 
           {/* BASE DE ATLETAS */}
-          <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Base de Atletas</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Gerenciar Ativos</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Base de Atletas</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Gerenciar Ativos</p>
+              </div>
+            </button>
+          )}
 
           {/* NOVOS PAGAMENTOS */}
-          <button onClick={() => setViewAdmin('pagamentos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative">
-            <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Novos Pagamentos</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Validar Comprovantes</p>
-            </div>
-            {totalPagamentosPendentes > 0 && (
-              <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
-                {totalPagamentosPendentes}
-              </span>
-            )}
-          </button>
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('pagamentos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative">
+              <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Novos Pagamentos</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Validar Comprovantes</p>
+              </div>
+              {totalPagamentosPendentes > 0 && (
+                <span className="absolute top-4 right-4 bg-[#ef3340] text-white text-[10px] font-black min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(239,51,64,0.4)] border border-black/20">
+                  {totalPagamentosPendentes}
+                </span>
+              )}
+            </button>
+          )}
 
 
           {/* QR CODE DO APP */}
-          <button onClick={() => setShowQrCodeModal(true)} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
-            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code do App</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Escanear no Celular</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setShowQrCodeModal(true)} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code do App</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Escanear no Celular</p>
+              </div>
+            </button>
+          )}
 
           {/* QR CODE BAIXAR */}
           <button onClick={() => setShowQrCodeBaixarModal(true)} className="bg-[#121212] border border-amber-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
@@ -839,44 +857,53 @@ export default function Home() {
 
 
           {/* QR CODE PIX UNIFORMES */}
-          <button onClick={() => setPixModalTipo('uniformes')} className="bg-[#121212] border border-teal-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
-            <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-black text-xl">
-              ❖
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Uniformes</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setPixModalTipo('uniformes')} className="bg-[#121212] border border-teal-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+              <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-black text-xl">
+                ❖
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Uniformes</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
+              </div>
+            </button>
+          )}
 
           {/* QR CODE PIX MENSALIDADE */}
-          <button onClick={() => setPixModalTipo('mensalidade')} className="bg-[#121212] border border-emerald-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl">
-              ❖
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Mensalidade</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <button onClick={() => setPixModalTipo('mensalidade')} className="bg-[#121212] border border-emerald-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl">
+                ❖
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">QR Code Mensalidade</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Pagamento PIX</p>
+              </div>
+            </button>
+          )}
 
           {/* EXPORTAR PLANILHA EXCEL */}
-          <input 
-            type="file" 
-            accept=".xlsx" 
-            ref={excelInputRef} 
-            onChange={handleUploadEAnexarExcel} 
-            className="hidden" 
-          />
-          <button onClick={handleExportarExcel} className="bg-[#121212] border border-blue-500/30 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            </div>
-            <div>
-              <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Exportar Planilha</span>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Exportar Relatório Excel</p>
-            </div>
-          </button>
+          {isAdmin && (
+            <>
+              <input 
+                type="file" 
+                accept=".xlsx" 
+                ref={excelInputRef} 
+                onChange={handleUploadEAnexarExcel} 
+                className="hidden" 
+              />
+              <button onClick={handleExportarExcel} className="bg-[#121212] border border-blue-500/30 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <div>
+                  <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Exportar Planilha</span>
+                  <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Exportar Relatório Excel</p>
+                </div>
+              </button>
+            </>
+          )}
+
         </div>
       </div>
 

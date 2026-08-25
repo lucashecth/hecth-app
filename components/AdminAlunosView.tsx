@@ -23,6 +23,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editDiaVencimento, setEditDiaVencimento] = useState<number>(10);
   const [editNivel, setEditNivel] = useState<string>('INICIANTE');
   const [editPersonal, setEditPersonal] = useState<boolean>(false);
+  const [editIsAdmin, setEditIsAdmin] = useState<boolean>(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => { 
@@ -54,6 +55,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setEditDiaVencimento(aluno.dia_vencimento || 10);
     setEditNivel(aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE');
     setEditPersonal(!!aluno.personal);
+    setEditIsAdmin(!!aluno.is_admin);
   }
 
   async function salvarPerfilAluno() {
@@ -64,7 +66,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         frequencia_semanal: editFrequencia,
         dia_vencimento: editDiaVencimento,
         nivel: editNivel,
-        personal: editPersonal
+        personal: editPersonal,
+        is_admin: editIsAdmin
       };
 
       const { error } = await supabase
@@ -76,6 +79,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
       setAlunos(prev => prev.map(a => a.id === alunoEditando.id ? { ...a, ...updates } : a));
       setAlunoEditando(null);
+
       alert("Perfil do atleta atualizado com sucesso!");
     } catch (err: any) {
       alert("Erro ao atualizar perfil: " + err.message);
@@ -316,6 +320,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 <option value="INICIANTE">Iniciante</option>
                 <option value="INICIANTE AVANÇADO">Iniciante Avançado</option>
                 <option value="INTERMEDIÁRIO">Intermediário</option>
+                <option value="PROFESSOR">Professor</option>
               </select>
             </div>
 
@@ -331,6 +336,20 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 Aluno de Personal
               </label>
             </div>
+
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <input 
+                type="checkbox" 
+                id="checkbox-admin"
+                checked={editIsAdmin}
+                onChange={(e) => setEditIsAdmin(e.target.checked)}
+                className="w-5 h-5 rounded border-white/20 bg-[#1a1a1a] text-[#ef3340] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              />
+              <label htmlFor="checkbox-admin" className="text-xs font-black uppercase tracking-wider text-white/80 cursor-pointer select-none">
+                Acesso de Gestor (Admin)
+              </label>
+            </div>
+
 
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Dias na Semana</label>
