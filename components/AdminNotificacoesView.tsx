@@ -27,10 +27,95 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
 
   // Automation State
   const [rodandoCron, setRodandoCron] = useState(false);
+  const [diagInfo, setDiagInfo] = useState<string>('');
+
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const testarRegistroLocal = async () => {
+    setDiagInfo('Iniciando diagnóstico...');
+    try {
+      if (typeof window === 'undefined') return;
+      if (!('Notification' in window)) {
+        setDiagInfo('Erro: Notificações não suportadas pelo navegador');
+        return;
+      }
+      
+      setDiagInfo(prev => prev + `\n• Permissão atual: ${Notification.permission}`);
+      
+      if (!('serviceWorker' in navigator)) {
+        setDiagInfo(prev => prev + '\nErro: Service Workers não suportados');
+        return;
+      }
+
+      setDiagInfo(prev => prev + '\n• Registrando /sw.js...');
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      setDiagInfo(prev => prev + '\n• Service Worker registrado com sucesso');
+
+      setDiagInfo(prev => prev + '\n• Aguardando Service Worker ready...');
+      await navigator.serviceWorker.ready;
+      setDiagInfo(prev => prev + '\n• Service Worker pronto');
+
+      setDiagInfo(prev => prev + '\n• Buscando chave VAPID pública de /api/push/public-key...');
+      const keyRes = await fetch('/api/push/public-key');
+      if (!keyRes.ok) {
+        setDiagInfo(prev => prev + `\nErro: Falha na API de chave pública (Status ${keyRes.status})`);
+        return;
+      }
+      const keyData = await keyRes.json();
+      const publicVapidKey = keyData.publicKey;
+      setDiagInfo(prev => prev + `\n• Chave pública recebida: ${publicVapidKey ? publicVapidKey.substring(0, 15) + '...' : 'INDISPONÍVEL'}`);
+
+      if (!publicVapidKey) {
+        setDiagInfo(prev => prev + '\nErro: Chave VAPID não configurada no servidor (.env / Vercel)');
+        return;
+      }
+
+      setDiagInfo(prev => prev + '\n• Solicitando inscrição do Push Manager...');
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+      });
+      setDiagInfo(prev => prev + '\n• Inscrição gerada com sucesso pelo navegador');
+
+      setDiagInfo(prev => prev + '\n• Enviando inscrição para /api/push/register...');
+      const { data: { user } } = await supabase.auth.getUser();
+      const emailObj = user?.email;
+      if (!emailObj) {
+        setDiagInfo(prev => prev + '\nErro: Usuário não logado na sessão');
+        return;
+      }
+
+      const registerRes = await fetch('/api/push/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailObj, subscription })
+      });
+
+      if (!registerRes.ok) {
+        setDiagInfo(prev => prev + `\nErro: Servidor rejeitou registro (Status ${registerRes.status})`);
+        return;
+      }
+
+      setDiagInfo(prev => prev + '\n\n✅ DISPOSITIVO REGISTRADO COM SUCESSO NO BANCO!');
+      carregarDados();
+    } catch (err: any) {
+      setDiagInfo(prev => prev + `\n❌ ERRO CRÍTICO: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     carregarDados();
   }, []);
+
 
   const carregarDados = async () => {
     try {
@@ -369,7 +454,29 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
           </div>
         </div>
 
+        {/* Bloco 4: Diagnóstico de Dispositivo */}
+        <div className="bg-[#121212] border border-white/5 rounded-3xl p-6">
+          <h3 className="text-sm font-black uppercase tracking-wider text-white mb-2 italic">Diagnóstico e Teste de Push</h3>
+          <p className="text-white/40 text-[9px] uppercase font-bold tracking-wider leading-relaxed mb-4">
+            Use este painel para registrar manualmente o seu próprio computador/celular de teste e diagnosticar possíveis erros.
+          </p>
+
+          <button
+            onClick={testarRegistroLocal}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-widest py-3 rounded-xl active:scale-95 transition-all mb-4"
+          >
+            Diagnosticar e Registrar Meu Aparelho
+          </button>
+
+          {diagInfo && (
+            <pre className="text-[10px] text-white/70 font-mono bg-black border border-white/10 p-4 rounded-xl overflow-x-auto text-left whitespace-pre-wrap">
+              {diagInfo}
+            </pre>
+          )}
+        </div>
+
       </div>
     </div>
   );
 }
+
