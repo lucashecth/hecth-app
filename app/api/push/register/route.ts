@@ -8,12 +8,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Falta email ou inscricao' }, { status: 400 });
     }
 
-    // Deleta inscrições antigas com o mesmo endpoint para o mesmo email
-    await supabase
+    // Busca inscrições existentes para este e-mail
+    const { data: existentes } = await supabase
       .from('push_inscricoes')
-      .delete()
-      .eq('aluno_email', email)
-      .eq('subscription->>endpoint', subscription.endpoint);
+      .select('id, subscription')
+      .eq('aluno_email', email);
+
+    if (existentes && existentes.length > 0) {
+      const idsParaDeletar = existentes
+        .filter((ins: any) => ins.subscription?.endpoint === subscription.endpoint)
+        .map((ins: any) => ins.id);
+
+      if (idsParaDeletar.length > 0) {
+        await supabase
+          .from('push_inscricoes')
+          .delete()
+          .in('id', idsParaDeletar);
+      }
+    }
+
 
     // Insere a nova inscricao
     const { error } = await supabase
