@@ -135,9 +135,11 @@ export default function Home() {
   useEffect(() => {
     if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       if (Notification.permission === 'granted') {
-        navigator.serviceWorker.ready.then(async (reg) => {
+        navigator.serviceWorker.register('/sw.js').then(async (reg) => {
           try {
-            const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            const keyRes = await fetch('/api/push/public-key');
+            const keyData = await keyRes.json();
+            const publicVapidKey = keyData.publicKey;
             if (publicVapidKey) {
               const subscription = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -156,6 +158,8 @@ export default function Home() {
       }
     }
   }, [session, alunoDb]);
+
+
 
   // Roda automações de push se for admin ao carregar a área de gestão
   useEffect(() => {

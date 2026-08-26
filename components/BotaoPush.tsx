@@ -45,7 +45,9 @@ export function BotaoPush({ email }: BotaoPushProps) {
         await navigator.serviceWorker.ready;
 
         // Solicita a inscrição do Push Manager do Navegador
-        const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        const keyRes = await fetch('/api/push/public-key');
+        const keyData = await keyRes.json();
+        const publicVapidKey = keyData.publicKey;
         if (!publicVapidKey) {
           throw new Error('Chave VAPID pública não encontrada.');
         }
@@ -54,6 +56,7 @@ export function BotaoPush({ email }: BotaoPushProps) {
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
+
 
         // Envia as credenciais para nossa rota de registro local
         const res = await fetch('/api/push/register', {
