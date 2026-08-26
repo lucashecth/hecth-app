@@ -463,8 +463,19 @@ export default function Home() {
         setTurmaIdClicada(null); setAcaoClicada(null);
       }, 400);
     } else {
-      if (vagasAtuais >= vagasTotais) return alert("Esta turma já está lotada!");
+      if (!isTeacher && !isAdmin && progressoSemanal.concluido) {
+        alert(`Você já atingiu seu limite de treinos semanal (${progressoSemanal.total}/${progressoSemanal.total} aulas agendadas)!`);
+        setTurmaIdClicada(null);
+        setAcaoClicada(null);
+        return;
+      }
+      if (vagasAtuais >= vagasTotais) {
+        setTurmaIdClicada(null);
+        setAcaoClicada(null);
+        return alert("Esta turma já está lotada!");
+      }
       lancarBolasMikasa(e);
+
       
       const novaPresenca = { turma_id: turmaId, aluno_email: session.user.email, foto_url: alunoDb.foto_url, inicial: alunoDb.nome.charAt(0) };
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
@@ -639,9 +650,41 @@ export default function Home() {
   const statusMensalidade = obterStatusMensalidade(alunoDb);
   const isTeacher = String(alunoDb?.nivel || '').toLowerCase().includes('professor');
 
+  // Obtém presenças da semana atual (Segunda a Domingo)
+  const obterContagemSemanal = () => {
+    if (!session?.user?.email) return { total: 2, marcadas: 0, restantes: 2, concluido: false };
+    const hoje = new Date();
+    
+    // Segunda-feira da semana corrente
+    const diaSemana = hoje.getDay(); // 0 = Dom, 1 = Seg, ...
+    const diffSegunda = hoje.getDate() - diaSemana + (diaSemana === 0 ? -6 : 1);
+    const segunda = new Date(hoje);
+    segunda.setDate(diffSegunda);
+    segunda.setHours(0, 0, 0, 0);
 
+    // Domingo da semana corrente
+    const domingo = new Date(segunda);
+    domingo.setDate(segunda.getDate() + 6);
+    domingo.setHours(23, 59, 59, 999);
+
+    const presencasDaSemana = presencasDb.filter(p => {
+      if (p.aluno_email !== session.user.email) return false;
+      const dataPresenca = new Date(p.created_at || new Date());
+      return dataPresenca >= segunda && dataPresenca <= domingo;
+    });
+
+    const total = alunoDb?.frequencia_semanal || 2;
+    const marcadas = presencasDaSemana.length;
+    const restantes = Math.max(0, total - marcadas);
+    const concluido = marcadas >= total;
+
+    return { total, marcadas, restantes, concluido };
+  };
+
+  const progressoSemanal = obterContagemSemanal();
 
   return (
+
     <div className="min-h-screen bg-black font-sans pb-10 text-white overflow-x-hidden">
       <Header alunoDb={alunoDb} onLogout={fazerLogout} onGoHome={() => setAbaAtiva('arena')} onGoToProfile={() => setAbaAtiva('perfil')} />
 
@@ -658,6 +701,62 @@ export default function Home() {
               totalPagamentosPendentes={totalPagamentosPendentes}
               totalCadastrosPendentes={totalCadastrosPendentes}
             />
+
+            {/* CARD DE PROGRESSO SEMANAL */}
+            {session && alunoDb?.status === 'aprovado' && !isTeacher && !isAdmin && (
+              <div className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 mb-4 shadow-xl">
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <h4 className="text-white text-xs font-black uppercase tracking-wider">
+                      Frequência Semanal
+                    </h4>
+                    <p className="text-white/40 text-[9px] uppercase font-bold tracking-widest mt-0.5">
+                      {progressoSemanal.concluido ? (
+                        <span className="text-green-400 flex items-center gap-1 font-black">
+                          ✓ Treinos Concluídos!
+                        </span>
+                      ) : (
+                        `Você tem ${progressoSemanal.restantes} ${progressoSemanal.restantes === 1 ? 'treino restante' : 'treinos restantes'} essa semana`
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-full">
+                    <span className="text-white/30 text-[9px] font-black uppercase tracking-wider">Status</span>
+                    {progressoSemanal.concluido ? (
+                      <span className="text-green-400 text-xs">✅</span>
+                    ) : (
+                      <span className="text-amber-400 text-[10px] font-black uppercase italic">{progressoSemanal.marcadas}/{progressoSemanal.total}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Barra de Progresso com a Bola Mikasa de Ponto do Slider */}
+                <div className="relative w-full h-2 bg-white/5 rounded-full mt-5 mb-3 border border-white/5">
+                  <div 
+                    className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-red-500 to-green-500 transition-all duration-500"
+                    style={{ width: `${Math.min(100, (progressoSemanal.marcadas / progressoSemanal.total) * 100)}%` }}
+                  />
+                  {/* Bolinha Mikasa no ponto do slider */}
+                  <div 
+                    className="absolute transition-all duration-500 flex items-center justify-center"
+                    style={{ 
+                      left: `${Math.min(100, (progressoSemanal.marcadas / progressoSemanal.total) * 100)}%`,
+                      transform: 'translate(-50%, -50%)',
+                      top: '50%',
+                      width: '20px',
+                      height: '20px'
+                    }}
+                  >
+                    <img 
+                      src="/mikasa-ball.png" 
+                      alt="Bola" 
+                      className="w-full h-full object-contain" 
+                      style={{ animation: 'spin 8s linear infinite' }} 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {aniversariantesHoje.length > 0 && (
               <button 
@@ -676,6 +775,7 @@ export default function Home() {
                 <span className="text-white/30 text-xs">➔</span>
               </button>
             )}
+
             <InstallAppCard />
 
             {statusMensalidade.ativo && statusMensalidade.diasRestantes <= 5 && (
@@ -713,6 +813,7 @@ export default function Home() {
                   onAlternarPresenca={alternarPresenca} 
                   alunoJaMarcouAlguma={alunoJaMarcouAlguma} 
                   isHoje={isHoje}
+                  limiteAtingido={progressoSemanal.concluido && !isTeacher && !isAdmin}
                   onVerAlunos={(t) => { setTurmaDetalhe(t); setAbaAtiva('turma_alunos'); }} 
                 />
               ))

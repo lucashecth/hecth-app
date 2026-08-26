@@ -11,10 +11,12 @@ interface TurmaCardProps {
   onAlternarPresenca: (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => void;
   alunoJaMarcouAlguma: boolean;
   isHoje: boolean; 
+  limiteAtingido?: boolean;
   onVerAlunos?: (turma: any) => void; // Adicionamos a prop aqui
 }
 
-export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje, onVerAlunos }: TurmaCardProps) {
+export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje, limiteAtingido = false, onVerAlunos }: TurmaCardProps) {
+
   
   const nivelAluno = alunoDb?.nivel || 'Aprendiz';
   
@@ -189,9 +191,9 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       ) : (
         <button 
           onClick={(e) => onAlternarPresenca(e, turma.id, turma.vagas_ocupadas, turma.vagas_totais, jaMarcou)}
-          disabled={!jaMarcou && (lotou || alunoJaMarcouAlguma)}
+          disabled={!jaMarcou && (lotou || alunoJaMarcouAlguma || limiteAtingido)}
           className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 transition-all active:scale-95 group relative italic
-            ${jaMarcou ? 'bg-green-600 text-white shadow-[0_5px_15px_rgba(22,163,74,0.3)]' : (lotou || alunoJaMarcouAlguma) ? 'bg-white/5 text-white/10' : 'bg-white text-black shadow-lg hover:bg-[#ef3340] hover:text-white'}`}
+            ${jaMarcou ? 'bg-green-600 text-white shadow-[0_5px_15px_rgba(22,163,74,0.3)]' : (lotou || alunoJaMarcouAlguma || limiteAtingido) ? 'bg-white/5 text-white/10' : 'bg-white text-black shadow-lg hover:bg-[#ef3340] hover:text-white'}`}
         >
           {jaMarcou ? (
             <><span className="group-hover:hidden flex items-center justify-center gap-2">✓ Confirmado</span><span className="hidden group-hover:block">Cancelar</span></>
@@ -199,10 +201,13 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             'Turma Lotada'
           ) : alunoJaMarcouAlguma ? (
             'Limite: 1 aula/dia'
+          ) : limiteAtingido ? (
+            'Limite Semanal Atingido'
           ) : (
             'Agendar Aula'
           )}
         </button>
+
       )}
     </div>
   );
