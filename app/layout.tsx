@@ -40,28 +40,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className} bg-black text-white antialiased`}>
         
-        {/* ========================================== */}
-        {/* CÓDIGO OFICIAL DO ONESIGNAL */}
-        {/* ========================================== */}
-        <Script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" strategy="afterInteractive" />
-       <Script id="onesignal-init" strategy="afterInteractive">
-          {`
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(async function(OneSignal) {
-              await OneSignal.init({
-                appId: "8a2576f5-33b1-4791-be60-2c0a5444b633",
-                safari_web_id: "web.onesignal.auto.246fdfe2-a404-4d40-aa8a-d2b211d431d5",
-                notifyButton: {
-                  enable: false,
-                },
-                welcomeNotification: {
-                  title: "HECTH",
-                  message: "Tudo certo! Você agora receberá nossos avisos."
-                }
-              });
-            });
-          `}
-        </Script>
+
 
         {children}
       </body>

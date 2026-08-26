@@ -26,7 +26,9 @@ import { ChatAdminView } from '../components/ChatAdminView';
 import { AdminTurmasView } from '../components/AdminTurmasView';
 import { RewardsView } from '../components/RewardsView';
 import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
+import { AdminNotificacoesView } from '../components/AdminNotificacoesView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
+
 import { obterStatusMensalidade } from '../utils/mensalidade';
 import { comprimirImagem } from '../utils/imagem';
 import { enviarParaGoogleSheets } from '../utils/googleSheets';
@@ -52,7 +54,8 @@ export default function Home() {
 
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes'>('menu');
+
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [showQrCodeBaixarModal, setShowQrCodeBaixarModal] = useState(false);
   const excelInputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +130,54 @@ export default function Home() {
   useEffect(() => {
     carregarNotificacoes();
   }, [viewAdmin, abaAtiva]);
+
+  // Sincroniza inscrição de push nativo em background se já houver permissão
+  useEffect(() => {
+    if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      if (Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(async (reg) => {
+          try {
+            const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            if (publicVapidKey) {
+              const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+              });
+              await fetch('/api/push/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: session.user.email, subscription })
+              });
+            }
+          } catch (err) {
+            console.error('Erro ao atualizar inscrição push em background:', err);
+          }
+        });
+      }
+    }
+  }, [session, alunoDb]);
+
+  // Roda automações de push se for admin ao carregar a área de gestão
+  useEffect(() => {
+    if (isAdmin && viewAdmin === 'menu') {
+      fetch('/api/push/cron', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => console.log('Automação push executada:', data))
+        .catch(err => console.error('Erro na automação push:', err));
+    }
+  }, [viewAdmin, isAdmin]);
+
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
 
 
   const carregarArena = async () => {
@@ -792,7 +843,8 @@ export default function Home() {
               </div>
             )}
 
-            <BotaoPush />
+            <BotaoPush email={alunoDb?.email} />
+
 
             
             <h3 className="text-xl font-black uppercase tracking-tighter mb-6 text-white/90 ml-1">
@@ -1060,6 +1112,19 @@ export default function Home() {
             </>
           )}
 
+          {/* CENTRAL PUSH */}
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('notificacoes')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Central Push</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Disparar Avisos</p>
+              </div>
+            </button>
+          )}
+
         </div>
       </div>
 
@@ -1075,8 +1140,11 @@ export default function Home() {
       <AdminTurmasView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'deletar_aluno' ? (
       <AdminDeletarAlunoView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'notificacoes' ? (
+      <AdminNotificacoesView onVoltar={() => setViewAdmin('menu')} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
+
     )}
 
 
