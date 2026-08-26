@@ -134,6 +134,9 @@ export default function Home() {
   // Sincroniza inscrição de push nativo em background se já houver permissão
   useEffect(() => {
     if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      if (window.sessionStorage.getItem('push_synced') === 'true') return;
+      window.sessionStorage.setItem('push_synced', 'true');
+
       if (Notification.permission === 'granted') {
         navigator.serviceWorker.register('/sw.js').then(async (reg) => {
           try {
@@ -163,7 +166,8 @@ export default function Home() {
         });
       }
     }
-  }, [session, alunoDb]);
+  }, [session]);
+
 
 
 
