@@ -5,8 +5,9 @@ self.addEventListener('push', function (event) {
       const payload = event.data.json();
       const options = {
         body: payload.body,
-        icon: '/icon-192x192.png',
-        badge: '/icon-192x192.png',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+
         vibrate: [100, 50, 100],
         data: {
           url: payload.url || '/'
@@ -18,9 +19,10 @@ self.addEventListener('push', function (event) {
     } catch (e) {
       const options = {
         body: event.data.text(),
-        icon: '/icon-192x192.png',
+        icon: '/icon-192.png',
         vibrate: [100, 50, 100]
       };
+
       event.waitUntil(
         self.registration.showNotification('HECTH', options)
       );
