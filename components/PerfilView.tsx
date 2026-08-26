@@ -197,8 +197,9 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
           </div>
           
           <h3 className="text-xl font-black uppercase tracking-tighter text-white/90 leading-tight">
-            {alunoDb?.nome} {alunoDb?.sobrenome}
+            {alunoDb?.nome} {alunoDb?.sobrenome} {alunoDb?.apelido ? `(${alunoDb.apelido})` : ''}
           </h3>
+
           <p className="text-[10px] font-black uppercase tracking-widest text-[#ef3340] italic mt-1 mb-6">
             {alunoDb?.nivel || 'Atleta HECTH'}
           </p>

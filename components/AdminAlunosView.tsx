@@ -24,6 +24,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editNivel, setEditNivel] = useState<string>('INICIANTE');
   const [editPersonal, setEditPersonal] = useState<boolean>(false);
   const [editIsAdmin, setEditIsAdmin] = useState<boolean>(false);
+  const [editApelido, setEditApelido] = useState<string>('');
   const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => { 
@@ -56,7 +57,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setEditNivel(aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE');
     setEditPersonal(!!aluno.personal);
     setEditIsAdmin(!!aluno.is_admin);
+    setEditApelido(aluno.apelido || '');
   }
+
 
   async function salvarPerfilAluno() {
     if (!alunoEditando) return;
@@ -67,8 +70,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         dia_vencimento: editDiaVencimento,
         nivel: editNivel,
         personal: editPersonal,
-        is_admin: editIsAdmin
+        is_admin: editIsAdmin,
+        apelido: editApelido
       };
+
 
       const { error } = await supabase
         .from('alunos')
@@ -210,8 +215,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
           <div>
             <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
-              {aluno.nome} {aluno.sobrenome}
+              {aluno.nome} {aluno.sobrenome} {aluno.apelido ? `(${aluno.apelido})` : ''}
             </h4>
+
             <div className="flex flex-wrap gap-1 mt-1">
               {mostrarDia ? (
                 <span className={`text-[10px] font-black uppercase italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-[#ef3340]'}`}>
@@ -332,6 +338,18 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 <option value="PROFESSOR">Professor</option>
               </select>
             </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Apelido (Aparece ao lado do Nome)</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Master, VIP, etc." 
+                value={editApelido}
+                onChange={(e) => setEditApelido(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+              />
+            </div>
+
 
             <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
               <input 

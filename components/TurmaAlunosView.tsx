@@ -118,8 +118,9 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                   </div>
                   <div>
                     <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
-                      {aluno.nome} {aluno.sobrenome}
+                      {aluno.nome} {aluno.sobrenome} {aluno.apelido ? `(${aluno.apelido})` : ''}
                     </h4>
+
                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border italic ${levelTagStyle}`}>
                       {nivelDoBanco}
                     </span>

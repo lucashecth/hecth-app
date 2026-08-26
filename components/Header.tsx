@@ -45,8 +45,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v1.1.3
+    v1.2.0
   </span>
+
 
 
 
@@ -63,7 +64,8 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
 
         <div className="h-8 w-[1px] bg-white/30 rounded-full"></div>
         <div className="flex flex-col items-start">
-          <span className="text-sm font-bold leading-none text-white">Olá, {alunoDb?.nome?.split(' ')[0]}</span>
+          <span className="text-sm font-bold leading-none text-white">Olá, {alunoDb?.nome?.split(' ')[0]} {alunoDb?.apelido ? `(${alunoDb.apelido})` : ''}</span>
+
           <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border italic mt-1.5 ${levelStyle}`}>
             {nivel}
           </span>
