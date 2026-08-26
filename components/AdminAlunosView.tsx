@@ -197,13 +197,16 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
-          <div className={`w-12 h-12 rounded-full overflow-hidden border-2 shrink-0 bg-white/5 flex items-center justify-center ${borderClass}`}>
-            {aluno.foto_url ? (
-              <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-xs">👤</span>
-            )}
+          <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
+            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
+              {aluno.foto_url ? (
+                <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs">👤</span>
+              )}
+            </div>
           </div>
+
 
           <div>
             <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">

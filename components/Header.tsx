@@ -27,7 +27,11 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
   } else if (normNivel === 'intermediario') {
     levelStyle = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
     avatarBorderClass = 'border-purple-400';
+  } else if (normNivel === 'professor') {
+    levelStyle = 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+    avatarBorderClass = 'border-orange-500';
   }
+
 
   return (
     <header className="bg-[#ef3340] px-5 py-4 shadow-xl flex justify-between items-center mb-6 sticky top-0 z-50 border-b border-white/10">
@@ -41,8 +45,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v1.1.0
+    v1.1.1
   </span>
+
 
 
 
@@ -70,14 +75,17 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
         </button>
         <div 
           onClick={onGoToProfile}
-          className={`w-10 h-10 rounded-full border-2 shadow-lg overflow-hidden bg-white flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all ${avatarBorderClass}`}
+          className={`w-10 h-10 rounded-full border-2 shadow-lg flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all p-[2px] bg-[#121212] ${avatarBorderClass}`}
         >
-          {alunoDb?.foto_url ? (
-            <img src={alunoDb.foto_url} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-red-600 font-bold">{alunoDb?.nome?.charAt(0)}</span>
-          )}
+          <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
+            {alunoDb?.foto_url ? (
+              <img src={alunoDb.foto_url} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white/60 text-xs font-bold">{alunoDb?.nome?.charAt(0)}</span>
+            )}
+          </div>
         </div>
+
       </div>
     </header>
   );
