@@ -59,6 +59,8 @@ export default function Home() {
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [showQrCodeBaixarModal, setShowQrCodeBaixarModal] = useState(false);
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const pushSyncedRef = useRef(false);
+
 
 
 
@@ -134,8 +136,9 @@ export default function Home() {
   // Sincroniza inscrição de push nativo em background se já houver permissão
   useEffect(() => {
     if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      if (window.sessionStorage.getItem('push_synced') === 'true') return;
-      window.sessionStorage.setItem('push_synced', 'true');
+      if (pushSyncedRef.current) return;
+      pushSyncedRef.current = true;
+
 
       if (Notification.permission === 'granted') {
         navigator.serviceWorker.register('/sw.js').then(async (reg) => {
