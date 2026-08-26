@@ -141,10 +141,16 @@ export default function Home() {
             const keyData = await keyRes.json();
             const publicVapidKey = keyData.publicKey;
             if (publicVapidKey) {
+              let existingSub = await reg.pushManager.getSubscription();
+              if (existingSub) {
+                // Se a chave não bater, desinscreve para registrar com a nova chave VAPID
+                await existingSub.unsubscribe();
+              }
               const subscription = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
               });
+
               await fetch('/api/push/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

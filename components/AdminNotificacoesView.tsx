@@ -79,11 +79,19 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
         return;
       }
 
-      setDiagInfo(prev => prev + '\n• Solicitando inscrição do Push Manager...');
+      setDiagInfo(prev => prev + '\n• Verificando e limpando inscrições antigas conflituosas...');
+      let existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) {
+        await existingSub.unsubscribe();
+        setDiagInfo(prev => prev + '\n• Inscrição antiga removida');
+      }
+
+      setDiagInfo(prev => prev + '\n• Solicitando nova inscrição do Push Manager...');
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
+
       setDiagInfo(prev => prev + '\n• Inscrição gerada com sucesso pelo navegador');
 
       setDiagInfo(prev => prev + '\n• Enviando inscrição para /api/push/register...');
