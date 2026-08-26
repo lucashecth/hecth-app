@@ -76,7 +76,8 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
   const [horaAulaStr, minAulaStr] = (turma.horario || "00:00").split(':');
   const tempoAulaMinutos = parseInt(horaAulaStr) * 60 + parseInt(minAulaStr);
   
-  const aulaEncerrada = isHoje && (tempoAtualMinutos >= tempoAulaMinutos);
+  const aulaEncerrada = isHoje && (tempoAtualMinutos >= (tempoAulaMinutos - 10));
+
 
   const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
   const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
@@ -179,8 +180,9 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
 
       {aulaEncerrada ? (
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-white/5 text-white/20 flex items-center justify-center gap-2 border border-white/5 italic">
-          Aula Encerrada
+          Inscrições Encerradas
         </div>
+
       ) : !acessoLiberado ? (
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-[#ef3340]/5 text-[#ef3340]/40 flex items-center justify-center gap-3 cursor-not-allowed border border-[#ef3340]/10 italic">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

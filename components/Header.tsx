@@ -45,8 +45,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v1.3.0
+    v1.3.1
   </span>
+
 
 
 
