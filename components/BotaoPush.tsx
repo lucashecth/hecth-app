@@ -52,15 +52,26 @@ export function BotaoPush({ email }: BotaoPushProps) {
           throw new Error('Chave VAPID pública não encontrada.');
         }
 
-        let existingSub = await reg.pushManager.getSubscription();
-        if (existingSub) {
-          await existingSub.unsubscribe();
+        let subscription = await reg.pushManager.getSubscription();
+
+        if (!subscription) {
+          try {
+            subscription = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            });
+          } catch (subErr: any) {
+            const existingSub = await reg.pushManager.getSubscription();
+            if (existingSub) {
+              await existingSub.unsubscribe();
+            }
+            subscription = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            });
+          }
         }
 
-        const subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-        });
 
 
 

@@ -144,21 +144,35 @@ export default function Home() {
             const keyData = await keyRes.json();
             const publicVapidKey = keyData.publicKey;
             if (publicVapidKey) {
-              let existingSub = await reg.pushManager.getSubscription();
-              if (existingSub) {
-                // Se a chave não bater, desinscreve para registrar com a nova chave VAPID
-                await existingSub.unsubscribe();
+              let subscription = await reg.pushManager.getSubscription();
+              
+              if (!subscription) {
+                try {
+                  subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                  });
+                } catch (subErr: any) {
+                  // Se houver incompatibilidade de chave, limpa e subscreve de novo
+                  const existingSub = await reg.pushManager.getSubscription();
+                  if (existingSub) {
+                    await existingSub.unsubscribe();
+                  }
+                  subscription = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                  });
+                }
               }
-              const subscription = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-              });
 
-              await fetch('/api/push/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: session.user.email, subscription })
-              });
+              if (subscription) {
+                await fetch('/api/push/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: session.user.email, subscription })
+                });
+              }
+
             }
           } catch (err) {
             console.error('Erro ao atualizar inscrição push em background:', err);
