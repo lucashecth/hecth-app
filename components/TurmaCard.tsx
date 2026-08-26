@@ -28,7 +28,20 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
     avatarBorderClass = 'border-blue-400';
   } else if (normNivel === 'intermediario') {
     avatarBorderClass = 'border-purple-400';
+  } else if (normNivel === 'professor') {
+    avatarBorderClass = 'border-orange-500';
   }
+
+  const obterBorderClass = (nivelStr: string) => {
+    const norm = String(nivelStr || 'Aprendiz').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (norm === 'aprendiz') return 'border-white';
+    if (norm === 'iniciante') return 'border-green-400';
+    if (norm === 'iniciante avancado') return 'border-blue-400';
+    if (norm === 'intermediario') return 'border-purple-400';
+    if (norm === 'professor') return 'border-orange-500';
+    return 'border-white/20';
+  };
+
 
   
   // Transforma a string do banco "Aprendiz / Iniciante" em um Array para gerar as tags separadas
@@ -116,17 +129,40 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           onClick={() => onVerAlunos && onVerAlunos(turma)}
           className="flex -space-x-3 items-center cursor-pointer active:scale-95 hover:opacity-80 transition-all"
         >
-          {outrasFotos.map((p, idx) => (
-            <div key={p.aluno_email} style={{ zIndex: 10 + idx }} className="w-9 h-9 rounded-full border-2 border-[#121212] shadow-xl overflow-hidden bg-gray-800 flex items-center justify-center">
-              {p.foto_url ? <img src={p.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-black text-[10px]">{p.inicial}</span>}
-            </div>
-          ))}
+          {outrasFotos.map((p, idx) => {
+            const borderCls = obterBorderClass(p.nivel);
+            return (
+              <div 
+                key={p.aluno_email} 
+                style={{ zIndex: 10 + idx }} 
+                className={`w-9 h-9 rounded-full border-2 flex items-center justify-center p-[1.5px] bg-[#121212] shadow-xl ${borderCls}`}
+              >
+                <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
+                  {p.foto_url ? (
+                    <img src={p.foto_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white font-black text-[10px]">{p.inicial}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
           {(jaMarcou || sumindo) && (
-            <div style={{ zIndex: 30 }} className={`w-10 h-10 rounded-full border-2 ${avatarBorderClass} shadow-xl overflow-hidden bg-gray-800 flex items-center justify-center ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}>
-              {alunoDb?.foto_url ? <img src={alunoDb.foto_url} className="w-full h-full object-cover" /> : <span className="text-white font-black text-xs">{alunoDb?.nome?.charAt(0)}</span>}
+            <div 
+              style={{ zIndex: 30 }} 
+              className={`w-10 h-10 rounded-full border-2 flex items-center justify-center p-[2px] bg-[#121212] shadow-xl ${avatarBorderClass} ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}
+            >
+              <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
+                {alunoDb?.foto_url ? (
+                  <img src={alunoDb.foto_url} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-black text-xs">{alunoDb?.nome?.charAt(0)}</span>
+                )}
+              </div>
             </div>
           )}
+
         </div>
 
         <div className="text-right">

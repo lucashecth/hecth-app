@@ -135,7 +135,31 @@ export default function Home() {
     if (tData) setTurmas(tData);
 
     const { data: pData } = await supabase.from('presencas').select('*');
-    if (pData) setPresencasDb(pData);
+    if (pData) {
+      const emails = pData.map(p => p.aluno_email);
+      if (emails.length > 0) {
+        const { data: alunosNiveis } = await supabase
+          .from('alunos')
+          .select('email, nivel')
+          .in('email', emails);
+        
+        if (alunosNiveis) {
+          const presencasComNivel = pData.map(p => {
+            const match = alunosNiveis.find(a => a.email === p.aluno_email);
+            return {
+              ...p,
+              nivel: match ? match.nivel : 'Aprendiz'
+            };
+          });
+          setPresencasDb(presencasComNivel);
+        } else {
+          setPresencasDb(pData);
+        }
+      } else {
+        setPresencasDb(pData);
+      }
+    }
+
 
     carregarNotificacoes();
     carregarAniversariantes();
