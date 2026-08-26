@@ -25,7 +25,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editPersonal, setEditPersonal] = useState<boolean>(false);
   const [editIsAdmin, setEditIsAdmin] = useState<boolean>(false);
   const [editApelido, setEditApelido] = useState<string>('');
+  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
+
 
   useEffect(() => { 
     setMounted(true);
@@ -310,7 +312,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           </div>
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center">
+            <div 
+              onClick={() => alunoEditando.foto_url && setFotoAmpliada(alunoEditando.foto_url)}
+              className={`w-16 h-16 rounded-2xl overflow-hidden border border-white/10 bg-white/5 shrink-0 flex items-center justify-center ${alunoEditando.foto_url ? 'cursor-pointer hover:opacity-80 active:scale-95 transition-all' : ''}`}
+            >
               {alunoEditando.foto_url ? (
                 <img src={alunoEditando.foto_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -322,6 +327,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               <p className="text-xs text-white/40">{alunoEditando.email}</p>
             </div>
           </div>
+
 
           <div className="flex flex-col gap-4">
             <div>
@@ -438,8 +444,33 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       </div>
     );
 
-    return createPortal(modalContent, document.body);
+    const imageOverlay = fotoAmpliada && (
+      <div 
+        onClick={() => setFotoAmpliada(null)}
+        className="fixed inset-0 bg-black/95 backdrop-blur-lg z-[100000] flex flex-col items-center justify-center p-6 animacao-entrada"
+      >
+        <button 
+          onClick={() => setFotoAmpliada(null)}
+          className="absolute top-6 right-6 text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full text-base font-black flex items-center justify-center transition-colors"
+        >
+          ✕
+        </button>
+        <div className="w-full max-w-xs aspect-square rounded-3xl overflow-hidden border border-white/10 bg-[#121212] shadow-2xl flex items-center justify-center">
+          <img src={fotoAmpliada} alt="Foto Ampliada" className="w-full h-full object-cover" />
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-white/40 italic mt-6">Clique em qualquer lugar para fechar</span>
+      </div>
+    );
+
+    return createPortal(
+      <>
+        {modalContent}
+        {imageOverlay}
+      </>,
+      document.body
+    );
   };
+
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4 max-w-lg mx-auto">
