@@ -73,31 +73,68 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
             Nenhum atleta inscrito.
           </p>
         ) : (
-          alunosInscritos.map(aluno => (
-            <div key={aluno.id} className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
-              
-              <div className="flex items-center gap-3 flex-1 text-left">
-                <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
-                  <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
-                    {aluno.nome} {aluno.sobrenome}
-                  </h4>
-                  <span className="text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border border-white/10 text-white/40 italic">
-                    {aluno.nivel ? aluno.nivel.toUpperCase() : 'INICIANTE'}
-                  </span>
-                </div>
-              </div>
+          alunosInscritos.map(aluno => {
+            const nivelDoBanco = aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE';
+            const normNivel = String(aluno.nivel || 'Aprendiz').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            
+            let borderClass = 'border-white/20';
+            if (normNivel === 'aprendiz') {
+              borderClass = 'border-white';
+            } else if (normNivel === 'iniciante') {
+              borderClass = 'border-green-400';
+            } else if (normNivel === 'iniciante avancado') {
+              borderClass = 'border-blue-400';
+            } else if (normNivel === 'intermediario') {
+              borderClass = 'border-purple-400';
+            } else if (normNivel === 'professor') {
+              borderClass = 'border-orange-500';
+            }
 
-              {/* Horário de Inscrição HH:MM */}
-              <div className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-center">
-                <span className="block text-[8px] font-black uppercase text-white/30 tracking-widest mb-0.5">Inscrito às</span>
-                <span className="text-xs font-black text-white/80">{aluno.hora_inscricao}</span>
+            let levelTagStyle = 'bg-white/5 text-white border-white/10';
+            if (normNivel === 'aprendiz') {
+              levelTagStyle = 'bg-white/5 text-white border-white/10';
+            } else if (normNivel === 'iniciante') {
+              levelTagStyle = 'bg-green-500/10 text-green-400 border-green-500/20';
+            } else if (normNivel === 'iniciante avancado') {
+              levelTagStyle = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            } else if (normNivel === 'intermediario') {
+              levelTagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            } else if (normNivel === 'professor') {
+              levelTagStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+            }
+
+            return (
+              <div key={aluno.id} className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                
+                <div className="flex items-center gap-3 flex-1 text-left">
+                  <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
+                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
+                      {aluno.foto_url ? (
+                        <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs">👤</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
+                      {aluno.nome} {aluno.sobrenome}
+                    </h4>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border italic ${levelTagStyle}`}>
+                      {nivelDoBanco}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Horário de Inscrição HH:MM */}
+                <div className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-center">
+                  <span className="block text-[8px] font-black uppercase text-white/30 tracking-widest mb-0.5">Inscrito às</span>
+                  <span className="text-xs font-black text-white/80">{aluno.hora_inscricao}</span>
+                </div>
+                
               </div>
-              
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
