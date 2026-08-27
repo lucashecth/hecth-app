@@ -31,15 +31,19 @@ export function TagApelido({ apelido, nivel, levelStyle = '', mode, className = 
   if (mode === 'level') {
     const cleanNivel = nivel?.trim().toUpperCase() || '';
     const isGerencia = cleanNivel === 'GERENCIA' || cleanNivel === 'GERÊNCIA';
+    const isProfessor = cleanNivel === 'PROFESSOR';
 
-    // No nível, se for especial ou gerência, substitui o nível pelo crachá animado
-    if (isSpecial || isGerencia) {
+    // No nível, se for especial, gerência ou professor, substitui o nível pelo crachá correspondente
+    if (isSpecial || isGerencia || isProfessor) {
       let tagContent = '';
       let tagClass = '';
 
       if (isGerencia) {
         tagContent = '💼 Gerência';
         tagClass = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
+      } else if (isProfessor) {
+        tagContent = '🏐 Professor';
+        tagClass = 'bg-transparent border border-orange-500 text-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]';
       } else if (cleanApelido === 'PRESIDENTE') {
         tagContent = '👑 Presidente';
         tagClass = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
@@ -77,7 +81,7 @@ export function TagApelido({ apelido, nivel, levelStyle = '', mode, className = 
       );
     }
 
-    // Se não for especial nem gerência, renderiza o nível original padrão
+    // Se não for especial, gerência ou professor, renderiza o nível original padrão
     if (!nivel) return null;
     return (
       <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border italic inline-block shrink-0 ${levelStyle} ${className}`}>
