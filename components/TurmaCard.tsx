@@ -18,7 +18,10 @@ interface TurmaCardProps {
 export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClicada, acaoClicada, onAlternarPresenca, alunoJaMarcouAlguma, isHoje, limiteAtingido = false, onVerAlunos }: TurmaCardProps) {
 
   
+  const isTeacher = alunoDb?.nivel?.toUpperCase() === 'PROFESSOR';
+  const isAdmin = alunoDb?.nivel?.toUpperCase() === 'GERENCIA';
   const nivelAluno = alunoDb?.nivel || 'Aprendiz';
+
   
   const normNivel = String(nivelAluno).toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   let avatarBorderClass = 'border-white';
@@ -32,7 +35,10 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
     avatarBorderClass = 'border-purple-400';
   } else if (normNivel === 'professor') {
     avatarBorderClass = 'border-orange-500';
+  } else if (normNivel === 'gerencia') {
+    avatarBorderClass = 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
   }
+
 
   const obterBorderClass = (nivelStr: string) => {
     const norm = String(nivelStr || 'Aprendiz').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -41,6 +47,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
     if (norm === 'iniciante avancado') return 'border-blue-400';
     if (norm === 'intermediario') return 'border-purple-400';
     if (norm === 'professor') return 'border-orange-500';
+    if (norm === 'gerencia') return 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
     return 'border-white/20';
   };
 
@@ -51,6 +58,8 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
 
   const verificarAcesso = (nivelAluno: string, niveisTurma: string[]) => {
     const norm = (str: string) => str?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const n = norm(nivelAluno);
+    if (n === 'gerencia' || n === 'professor' || isTeacher || isAdmin) return true;
     
     // Pesos para garantir que níveis maiores acessem os menores, mas não o contrário
     const pesos: { [key: string]: number } = { 
@@ -60,13 +69,14 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       'intermediario': 4 
     };
 
-    const pesoAluno = pesos[norm(nivelAluno)] || 1;
+    const pesoAluno = pesos[n] || 1;
     
     // O aluno acessa se o peso dele for MAIOR OU IGUAL ao peso MÍNIMO exigido por qualquer uma das tags da turma
     const pesoMinimoExigido = Math.min(...niveisTurma.map(n => pesos[norm(n)] || 1));
     
     return pesoAluno >= pesoMinimoExigido;
   };
+
 
   const acessoLiberado = verificarAcesso(nivelAluno, niveisTurmaArray);
 

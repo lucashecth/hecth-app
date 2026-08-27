@@ -33,7 +33,11 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
   } else if (normNivel === 'professor') {
     levelStyle = 'bg-orange-500/20 text-orange-300 border-orange-500/30';
     avatarBorderClass = 'border-orange-500';
+  } else if (normNivel === 'gerencia' || normNivel === 'gerencia') {
+    levelStyle = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
+    avatarBorderClass = 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
   }
+
 
 
   return (
@@ -48,8 +52,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v1.5.2
+    v1.5.3
   </span>
+
 
 
 

@@ -138,6 +138,9 @@ export function AdminCriarAlunoView({ onVoltar }: AdminCriarAlunoViewProps) {
             <option value="INICIANTE">Iniciante</option>
             <option value="INICIANTE AVANÇADO">Iniciante Avançado</option>
             <option value="INTERMEDIÁRIO">Intermediário</option>
+            <option value="PROFESSOR">Professor</option>
+            <option value="GERENCIA">Gerência</option>
+
           </select>
         </div>
 

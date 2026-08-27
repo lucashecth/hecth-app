@@ -197,7 +197,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       borderClass = 'border-purple-400';
     } else if (normNivel === 'professor') {
       borderClass = 'border-orange-500';
+    } else if (normNivel === 'gerencia') {
+      borderClass = 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
     }
+
 
 
     return (
@@ -252,7 +255,10 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                     levelTagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
                   } else if (normNivel === 'professor') {
                     levelTagStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+                  } else if (normNivel === 'gerencia') {
+                    levelTagStyle = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
                   }
+
 
                   return (
                     <TagApelido 
@@ -351,6 +357,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 <option value="INICIANTE AVANÇADO">Iniciante Avançado</option>
                 <option value="INTERMEDIÁRIO">Intermediário</option>
                 <option value="PROFESSOR">Professor</option>
+                <option value="GERENCIA">Gerência</option>
+
               </select>
             </div>
 

@@ -17,6 +17,9 @@ export function RewardsView({ onVoltar, alunoDb }: RewardsViewProps) {
   else if (normNivel === 'iniciante') borderClass = 'border-green-400';
   else if (normNivel === 'iniciante avancado') borderClass = 'border-blue-400';
   else if (normNivel === 'intermediario') borderClass = 'border-purple-400';
+  else if (normNivel === 'professor') borderClass = 'border-orange-500';
+  else if (normNivel === 'gerencia') borderClass = 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
+
 
   // Badges Data (Insignias)
   const insignias = [

@@ -90,6 +90,8 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
               borderClass = 'border-purple-400';
             } else if (normNivel === 'professor') {
               borderClass = 'border-orange-500';
+            } else if (normNivel === 'gerencia') {
+              borderClass = 'animate-gold-shimmer border-yellow-500/40 shadow-[0_0_8px_rgba(255,215,0,0.4)]';
             }
 
             let levelTagStyle = 'bg-white/5 text-white border-white/10';
@@ -103,9 +105,12 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
               levelTagStyle = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
             } else if (normNivel === 'professor') {
               levelTagStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+            } else if (normNivel === 'gerencia') {
+              levelTagStyle = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
             }
 
             return (
+
               <div key={aluno.id} className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                 
                 <div className="flex items-center gap-3 flex-1 text-left">
