@@ -8,9 +8,11 @@ interface MenuCardsProps {
   totalMensagensNaoLidas?: number;
   totalPagamentosPendentes?: number;
   totalCadastrosPendentes?: number;
+  limiteAtingido?: boolean;
 }
 
-export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0 }: MenuCardsProps) {
+export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0, limiteAtingido = false }: MenuCardsProps) {
+
   
   // Função para forçar a atualização do PWA e limpar cache
   const atualizarApp = () => {
@@ -130,8 +132,8 @@ export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagen
 
       </button>
 
-      {/* 6: ADMIN (Sempre o último, na segunda linha, terceira posição) */}
-      {(isAdmin || isTeacher) && (
+      {/* 6: ADMIN ou AVULSO (Sempre o último, na segunda linha, terceira posição) */}
+      {isAdmin || isTeacher ? (
         <button 
           onClick={() => onNavegar('admin')}
           className="bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 group hover:border-[#ef3340]/30 relative"
@@ -148,7 +150,27 @@ export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagen
             </span>
           )}
         </button>
+      ) : (
+        <button 
+          onClick={() => {
+            if (limiteAtingido) {
+              onNavegar('avulso');
+            } else {
+              alert("🔒 Aulas Avulsas ficam disponíveis apenas após você agendar todos os seus treinos da semana!");
+            }
+          }}
+          className={`bg-[#121212] border border-white/5 rounded-2xl py-5 flex flex-col items-center justify-center gap-2 transition-all active:scale-95 relative ${!limiteAtingido ? 'opacity-40' : 'hover:border-orange-500/30'}`}
+        >
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-lg ${limiteAtingido ? 'bg-orange-500/10 text-orange-400' : 'bg-white/5 text-white/30'}`}>
+            {limiteAtingido ? '🎟️' : '🔒'}
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-white/60 flex items-center gap-1">
+            {!limiteAtingido && <span>🔒</span>}
+            Avulso
+          </span>
+        </button>
       )}
+
     </div>
   );
 }

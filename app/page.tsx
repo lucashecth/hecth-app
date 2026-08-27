@@ -29,6 +29,8 @@ import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
 import { AdminNotificacoesView } from '../components/AdminNotificacoesView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 import { AdminPrecosView } from '../components/AdminPrecosView';
+import { AvulsoView } from '../components/AvulsoView';
+
 
 import { obterStatusMensalidade } from '../utils/mensalidade';
 
@@ -48,7 +50,8 @@ export default function Home() {
   const [telaAtiva, setTelaAtiva] = useState<'inicio' | 'login' | 'cadastro'>('inicio');
   const [loading, setLoading] = useState(false);
   
-  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens' | 'rewards'>('arena');
+  const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens' | 'rewards' | 'avulso'>('arena');
+
   const [temNovoPagamento, setTemNovoPagamento] = useState(false);
   const [totalMensagensNaoLidas, setTotalMensagensNaoLidas] = useState(0);
   const [totalPagamentosPendentes, setTotalPagamentosPendentes] = useState(0);
@@ -545,20 +548,46 @@ export default function Home() {
         await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
         await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais - 1 }).eq('id', turmaId);
         
+        // Devolve o crédito avulso se a quantidade marcada for maior que o total do plano
+        if (!isTeacher && !isAdmin && progressoSemanal.marcadas > progressoSemanal.total) {
+          const novosCreditos = (alunoDb.creditos_avulsos || 0) + 1;
+          await supabase.from('alunos').update({ creditos_avulsos: novosCreditos }).eq('email', session.user.email);
+          setAlunoDb((prev: any) => prev ? { ...prev, creditos_avulsos: novosCreditos } : null);
+        }
+
         setTurmaIdClicada(null); setAcaoClicada(null);
       }, 400);
     } else {
+      let usouCredito = false;
       if (!isTeacher && !isAdmin && progressoSemanal.concluido) {
-        alert(`Você já atingiu seu limite de treinos semanal (${progressoSemanal.total}/${progressoSemanal.total} aulas agendadas)!`);
-        setTurmaIdClicada(null);
-        setAcaoClicada(null);
-        return;
+        const creditos = alunoDb.creditos_avulsos || 0;
+        if (creditos > 0) {
+          const usar = window.confirm(`Você já atingiu seu limite de treinos semanal. Deseja utilizar 1 dos seus ${creditos} crédito(s) avulso(s) para agendar esta aula?`);
+          if (!usar) {
+            setTurmaIdClicada(null);
+            setAcaoClicada(null);
+            return;
+          }
+          usouCredito = true;
+        } else {
+          alert(`Você já atingiu seu limite de treinos semanal (${progressoSemanal.total}/${progressoSemanal.total} aulas agendadas)!`);
+          setTurmaIdClicada(null);
+          setAcaoClicada(null);
+          return;
+        }
       }
       if (vagasAtuais >= vagasTotais) {
         setTurmaIdClicada(null);
         setAcaoClicada(null);
         return alert("Esta turma já está lotada!");
       }
+      
+      if (usouCredito) {
+        const novosCreditos = (alunoDb.creditos_avulsos || 0) - 1;
+        await supabase.from('alunos').update({ creditos_avulsos: novosCreditos }).eq('email', session.user.email);
+        setAlunoDb((prev: any) => prev ? { ...prev, creditos_avulsos: novosCreditos } : null);
+      }
+
       lancarBolasMikasa(e);
 
       
@@ -574,6 +603,7 @@ export default function Home() {
       
       setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
     }
+
   };
 
   if (!mounted) return null;
@@ -799,12 +829,26 @@ export default function Home() {
               totalMensagensNaoLidas={totalMensagensNaoLidas}
               totalPagamentosPendentes={totalPagamentosPendentes}
               totalCadastrosPendentes={totalCadastrosPendentes}
+              limiteAtingido={progressoSemanal.concluido}
             />
+
 
             {/* CARD DE PROGRESSO SEMANAL */}
             {session && alunoDb?.status === 'aprovado' && !isTeacher && !isAdmin && (
               <div className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 mb-4 shadow-xl">
+                {alunoDb?.creditos_avulsos > 0 && (
+                  <div className="mb-3 bg-gradient-to-r from-orange-600/10 to-[#ef3340]/10 border border-orange-500/20 rounded-xl p-3 flex items-center justify-between text-left">
+                    <div>
+                      <span className="text-[9px] font-black uppercase text-orange-400 block tracking-widest">Crédito de Aula Avulsa</span>
+                      <p className="text-[10px] text-white/70 font-semibold mt-0.5">Você possui créditos adicionais liberados para agendamento!</p>
+                    </div>
+                    <span className="text-xl font-black italic text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-lg px-2.5 py-0.5">
+                      +{alunoDb.creditos_avulsos}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center mb-3">
+
                   <div>
                     <h4 className="text-white text-xs font-black uppercase tracking-wider">
                       Frequência Semanal
@@ -960,6 +1004,15 @@ export default function Home() {
         {abaAtiva === 'rewards' && (
           <RewardsView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} />
         )}
+
+        {abaAtiva === 'avulso' && (
+          <AvulsoView 
+            onVoltar={() => setAbaAtiva('arena')} 
+            alunoDb={alunoDb} 
+            onAtualizarPerfil={() => carregarPerfil(session?.user?.email)} 
+          />
+        )}
+
 
 
         {abaAtiva === 'turma_alunos' && turmaDetalhe && (

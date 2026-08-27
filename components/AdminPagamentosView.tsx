@@ -19,22 +19,34 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
   }
 
   async function confirmarPagamento(aluno: any) {
-    if (!window.confirm(`Confirmar recebimento do PIX de ${aluno.nome}?`)) return;
+    const isAvulso = aluno.tipo_pagamento_pendente === 'avulso';
+    const msg = isAvulso 
+      ? `Confirmar recebimento do PIX de Aula Avulsa (R$ 25,00) de ${aluno.nome}?`
+      : `Confirmar recebimento do PIX de Mensalidade de ${aluno.nome}?`;
 
-    const novoMes = obterNovoMesPago(aluno);
+    if (!window.confirm(msg)) return;
 
-    const { error } = await supabase.from('alunos').update({ 
-      mensalidade_paga: true, 
+    const updates: any = { 
       pagamento_enviado: false,
-      ultimo_mes_pago: novoMes
-    }).eq('id', aluno.id);
+      tipo_pagamento_pendente: null
+    };
 
+    if (isAvulso) {
+      updates.creditos_avulsos = (aluno.creditos_avulsos || 0) + 1;
+    } else {
+      const novoMes = obterNovoMesPago(aluno);
+      updates.mensalidade_paga = true;
+      updates.ultimo_mes_pago = novoMes;
+    }
+
+    const { error } = await supabase.from('alunos').update(updates).eq('id', aluno.id);
 
     if (!error) {
       setAlunos(alunos.filter(a => a.id !== aluno.id));
       alert("✅ Pagamento confirmado!");
     }
   }
+
 
 
   return (
@@ -71,7 +83,12 @@ export function AdminPagamentosView({ onVoltar }: { onVoltar: () => void }) {
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <h4 className="font-black text-lg uppercase tracking-tighter text-white leading-none mb-1">{aluno.nome}</h4>
-                  <span className="text-[10px] font-black uppercase text-[#ef3340] italic">Plano {aluno.frequencia_semanal}x na semana</span>
+                  {aluno.tipo_pagamento_pendente === 'avulso' ? (
+                    <span className="text-[10px] font-black uppercase text-amber-400 italic bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Aula Avulsa (R$ 25,00)</span>
+                  ) : (
+                    <span className="text-[10px] font-black uppercase text-[#ef3340] italic">Plano {aluno.frequencia_semanal}x na semana</span>
+                  )}
+
                 </div>
                 <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/10 shrink-0">
                   <img src={aluno.foto_url} className="w-full h-full object-cover" />
