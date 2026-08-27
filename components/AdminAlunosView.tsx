@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
+import { TagApelido } from './TagApelido';
+
 import { obterNovoMesPago } from '../utils/mensalidade';
 
 
@@ -216,9 +218,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
 
           <div>
-            <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
-              {aluno.nome} {aluno.sobrenome} {aluno.apelido ? `(${aluno.apelido})` : ''}
+            <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight flex items-center gap-1.5 flex-wrap">
+              {aluno.nome} {aluno.sobrenome}
+              <TagApelido apelido={aluno.apelido} />
             </h4>
+
 
             <div className="flex flex-wrap gap-1 mt-1">
               {mostrarDia ? (

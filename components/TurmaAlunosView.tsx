@@ -2,6 +2,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { TagApelido } from './TagApelido';
+
 
 interface TurmaAlunosViewProps {
   turma: any;
@@ -117,9 +119,11 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight">
-                      {aluno.nome} {aluno.sobrenome} {aluno.apelido ? `(${aluno.apelido})` : ''}
+                    <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight flex items-center gap-1.5 flex-wrap">
+                      {aluno.nome} {aluno.sobrenome}
+                      <TagApelido apelido={aluno.apelido} />
                     </h4>
+
 
                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border italic ${levelTagStyle}`}>
                       {nivelDoBanco}
