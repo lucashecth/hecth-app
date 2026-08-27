@@ -48,8 +48,9 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           onClick={onGoHome}
         />
         <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
-    v1.5.1
+    v1.5.2
   </span>
+
 
 
 
@@ -84,13 +85,11 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
         <div className="flex flex-col items-start">
           <span className="text-sm font-bold leading-none text-white flex items-center gap-1.5 flex-wrap">
             Olá, {alunoDb?.nome?.split(' ')[0]}
-            <TagApelido apelido={alunoDb?.apelido} />
+            <TagApelido apelido={alunoDb?.apelido} mode="name" />
           </span>
 
+          <TagApelido apelido={alunoDb?.apelido} nivel={nivel} levelStyle={levelStyle} mode="level" />
 
-          <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border italic mt-1.5 ${levelStyle}`}>
-            {nivel}
-          </span>
         </div>
       </div>
 

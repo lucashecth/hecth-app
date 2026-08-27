@@ -200,13 +200,18 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
           
           <h3 className="text-xl font-black uppercase tracking-tighter text-white/90 leading-tight flex items-center gap-1.5 flex-wrap justify-center">
             {alunoDb?.nome} {alunoDb?.sobrenome}
-            <TagApelido apelido={alunoDb?.apelido} />
+            <TagApelido apelido={alunoDb?.apelido} mode="name" />
           </h3>
 
+          <div className="flex justify-center mb-6">
+            <TagApelido 
+              apelido={alunoDb?.apelido} 
+              nivel={alunoDb?.nivel || 'Atleta HECTH'} 
+              levelStyle="border-[#ef3340]/25 text-[#ef3340] bg-[#ef3340]/5" 
+              mode="level" 
+            />
+          </div>
 
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#ef3340] italic mt-1 mb-6">
-            {alunoDb?.nivel || 'Atleta HECTH'}
-          </p>
 
           <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={onFileChange} />
           <button 
