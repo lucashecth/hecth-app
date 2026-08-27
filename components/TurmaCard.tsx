@@ -143,7 +143,11 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           className="flex -space-x-3 items-center cursor-pointer active:scale-95 hover:opacity-80 transition-all"
         >
           {outrasFotos.map((p, idx) => {
-            const borderCls = obterBorderClass(p.nivel);
+            const isExp = p.aluno_email?.startsWith('experimental_');
+            const borderCls = isExp ? 'border-white/20' : obterBorderClass(p.nivel);
+            const nomeExp = isExp ? p.aluno_email.split('_').slice(2).join(' ') : '';
+            const inicial = isExp ? nomeExp.charAt(0).toUpperCase() : p.inicial;
+
             return (
               <div 
                 key={p.aluno_email} 
@@ -151,15 +155,16 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
                 className={`w-9 h-9 rounded-full border-2 flex items-center justify-center p-[1.5px] bg-[#121212] shadow-xl ${borderCls}`}
               >
                 <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
-                  {p.foto_url ? (
+                  {p.foto_url && !isExp ? (
                     <img src={p.foto_url} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-white font-black text-[10px]">{p.inicial}</span>
+                    <span className="text-white/60 font-black text-[10px]">{inicial}</span>
                   )}
                 </div>
               </div>
             );
           })}
+
 
           {(jaMarcou || sumindo) && (
             <div 

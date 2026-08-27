@@ -30,6 +30,8 @@ import { AdminNotificacoesView } from '../components/AdminNotificacoesView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 import { AdminPrecosView } from '../components/AdminPrecosView';
 import { AvulsoView } from '../components/AvulsoView';
+import { AdminExperimentalView } from '../components/AdminExperimentalView';
+
 
 
 import { obterStatusMensalidade } from '../utils/mensalidade';
@@ -59,7 +61,8 @@ export default function Home() {
 
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes' | 'precos'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes' | 'precos' | 'experimental'>('menu');
+
 
 
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
@@ -1239,6 +1242,20 @@ export default function Home() {
             </button>
           )}
 
+          {/* AULAS EXPERIMENTAIS */}
+          {(isAdmin || isTeacher) && (
+            <button onClick={() => setViewAdmin('experimental')} className="bg-[#121212] border border-orange-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400 text-lg">
+                🧪
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Aulas Experimentais</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Agendar Visitantes</p>
+              </div>
+            </button>
+          )}
+
+
 
         </div>
       </div>
@@ -1259,6 +1276,9 @@ export default function Home() {
       <AdminNotificacoesView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'precos' ? (
       <AdminPrecosView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'experimental' ? (
+      <AdminExperimentalView onVoltar={() => setViewAdmin('menu')} alunoDb={alunoDb} />
+
 
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />

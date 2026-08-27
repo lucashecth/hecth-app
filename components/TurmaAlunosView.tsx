@@ -29,18 +29,40 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
       const { data: alunosData } = await supabase.from('alunos').select('*').in('email', emails);
 
       // 3. Junta os dados com o horário de inscrição (formato HH:MM)
-      if (alunosData) {
-        const alunosMontados = alunosData.map(aluno => {
-          const registroPresenca = presencas.find(p => p.aluno_email === aluno.email);
-          let horaFormatada = "--:--";
-          if (registroPresenca?.created_at) {
-            const dataHora = new Date(registroPresenca.created_at);
-            horaFormatada = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-          }
-          return { ...aluno, hora_inscricao: horaFormatada };
-        });
-        setAlunosInscritos(alunosMontados);
-      }
+      const alunosMontados = presencas.map(p => {
+        const isExp = p.aluno_email?.startsWith('experimental_');
+        let horaFormatada = "--:--";
+        if (p.created_at) {
+          const dataHora = new Date(p.created_at);
+          horaFormatada = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        if (isExp) {
+          const parts = p.aluno_email.split('_');
+          const nomeVisitante = parts[2]?.replace(/-/g, ' ') || 'Visitante';
+          const primeiroNome = nomeVisitante.split(' ')[0];
+
+          return {
+            id: p.id,
+            nome: primeiroNome,
+            sobrenome: '(Experimental)',
+            apelido: '',
+            foto_url: null,
+            nivel: 'Aprendiz',
+            hora_inscricao: horaFormatada,
+            isExperimental: true
+          };
+        } else {
+          const aluno = alunosData?.find(a => a.email === p.aluno_email);
+          return {
+            ...(aluno || { id: p.id, nome: 'Usuário', sobrenome: 'Removido', foto_url: null, nivel: 'Aprendiz' }),
+            hora_inscricao: horaFormatada,
+            isExperimental: false
+          };
+        }
+      });
+      setAlunosInscritos(alunosMontados);
+
       setLoading(false);
     }
     
@@ -116,7 +138,7 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                 <div className="flex items-center gap-3 flex-1 text-left">
                   <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
                     <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
-                      {aluno.foto_url ? (
+                      {aluno.foto_url && !aluno.isExperimental ? (
                         <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-xs">👤</span>
@@ -129,7 +151,14 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                       <TagApelido apelido={aluno.apelido} mode="name" />
                     </h4>
 
-                    <TagApelido apelido={aluno.apelido} nivel={nivelDoBanco} levelStyle={levelTagStyle} mode="level" />
+                    {aluno.isExperimental ? (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border border-white/10 text-white/40 bg-white/5 italic">
+                        Aula Experimental
+                      </span>
+                    ) : (
+                      <TagApelido apelido={aluno.apelido} nivel={nivelDoBanco} levelStyle={levelTagStyle} mode="level" />
+                    )}
+
 
                   </div>
                 </div>
