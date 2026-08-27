@@ -21,7 +21,7 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Strings completas do PIX Copia e Cola
-  const planos = [
+  const [planos, setPlanos] = useState([
     { 
       freq: 2, 
       nome: "2x na Semana", 
@@ -52,9 +52,33 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       sombraNeon: "shadow-[0_0_40px_rgba(239,51,64,0.6)]", 
       brilhoFundo: "bg-[#ef3340]/20" 
     }
-  ];
+  ]);
 
   useEffect(() => {
+    async function carregarPrecosDinamicos() {
+      try {
+        const { data, error } = await supabase.from('precos_config').select('*');
+        if (error) throw error;
+        if (data && data.length > 0) {
+          const usarReajuste = !!alunoDb?.usar_preco_reajustado;
+          const novosPlanos = planos.map(plano => {
+            const dbPreco = data.find((d: any) => d.freq === plano.freq);
+            if (dbPreco) {
+              return {
+                ...plano,
+                preco: usarReajuste ? dbPreco.preco_reajustado : dbPreco.preco_normal,
+                pixCopiaECola: usarReajuste ? dbPreco.pix_reajustado : dbPreco.pix_normal
+              };
+            }
+            return plano;
+          });
+          setPlanos(novosPlanos);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar preços dinâmicos, usando fallbacks:", err);
+      }
+    }
+
     if (alunoDb) {
       if (alunoDb.mensalidade_paga) setEtapa('ativo');
       else if (alunoDb.pagamento_enviado) setEtapa('analise');
@@ -62,10 +86,13 @@ export function MensalidadeView({ onVoltar, alunoDb, onAtualizarPerfil }: Mensal
       const freqSalva = alunoDb.frequencia_semanal || 2;
       const idx = planos.findIndex(p => p.freq === freqSalva);
       if (idx !== -1) setPlanoIdx(idx);
+
+      carregarPrecosDinamicos();
     }
   }, [alunoDb]);
 
   const planoAtivo = planos[planoIdx];
+
 
   const avancarParaPagamento = async () => {
     try {

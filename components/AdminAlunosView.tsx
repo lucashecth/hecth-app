@@ -27,6 +27,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editPersonal, setEditPersonal] = useState<boolean>(false);
   const [editIsAdmin, setEditIsAdmin] = useState<boolean>(false);
   const [editApelido, setEditApelido] = useState<string>('');
+  const [editUsarPrecoReajustado, setEditUsarPrecoReajustado] = useState<boolean>(false);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
 
@@ -46,9 +47,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         .order('nome', { ascending: true });
 
       if (error) throw error;
-      if (data) setAlunos(data);
-    } catch (err: any) {
-      console.error("Erro ao carregar alunos:", err.message);
+      setAlunos(data || []);
+    } catch (e: any) {
+      alert(e.message);
     } finally {
       setLoading(false);
     }
@@ -62,6 +63,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setEditPersonal(!!aluno.personal);
     setEditIsAdmin(!!aluno.is_admin);
     setEditApelido(aluno.apelido || '');
+    setEditUsarPrecoReajustado(!!aluno.usar_preco_reajustado);
   }
 
 
@@ -75,7 +77,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         nivel: editNivel,
         personal: editPersonal,
         is_admin: editIsAdmin,
-        apelido: editApelido
+        apelido: editApelido,
+        usar_preco_reajustado: editUsarPrecoReajustado
       };
 
 
@@ -399,6 +402,20 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 Acesso de Gestor (Admin)
               </label>
             </div>
+
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <input 
+                type="checkbox" 
+                id="checkbox-reajustado"
+                checked={editUsarPrecoReajustado}
+                onChange={(e) => setEditUsarPrecoReajustado(e.target.checked)}
+                className="w-5 h-5 rounded border-white/20 bg-[#1a1a1a] text-[#ef3340] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              />
+              <label htmlFor="checkbox-reajustado" className="text-xs font-black uppercase tracking-wider text-white/80 cursor-pointer select-none">
+                Usar Preço Reajustado (Alunos Novos)
+              </label>
+            </div>
+
 
 
             <div>

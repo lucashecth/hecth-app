@@ -28,8 +28,10 @@ import { RewardsView } from '../components/RewardsView';
 import { AdminDeletarAlunoView } from '../components/AdminDeletarAlunoView';
 import { AdminNotificacoesView } from '../components/AdminNotificacoesView';
 import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
+import { AdminPrecosView } from '../components/AdminPrecosView';
 
 import { obterStatusMensalidade } from '../utils/mensalidade';
+
 import { comprimirImagem } from '../utils/imagem';
 import { enviarParaGoogleSheets } from '../utils/googleSheets';
 
@@ -54,7 +56,8 @@ export default function Home() {
 
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes' | 'precos'>('menu');
+
 
   const [showQrCodeModal, setShowQrCodeModal] = useState(false);
   const [showQrCodeBaixarModal, setShowQrCodeBaixarModal] = useState(false);
@@ -1170,6 +1173,20 @@ export default function Home() {
             </button>
           )}
 
+          {/* CONFIGURAR PREÇOS */}
+          {isAdmin && (
+            <button onClick={() => setViewAdmin('precos')} className="bg-[#121212] border border-yellow-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Configurar Preços</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Tabela de Preços & PIX</p>
+              </div>
+            </button>
+          )}
+
+
         </div>
       </div>
 
@@ -1187,6 +1204,9 @@ export default function Home() {
       <AdminDeletarAlunoView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'notificacoes' ? (
       <AdminNotificacoesView onVoltar={() => setViewAdmin('menu')} />
+    ) : viewAdmin === 'precos' ? (
+      <AdminPrecosView onVoltar={() => setViewAdmin('menu')} />
+
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
 
