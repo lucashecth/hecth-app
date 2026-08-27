@@ -39,11 +39,11 @@ export function TagApelido({ apelido, nivel, levelStyle = '', mode, className = 
       let tagClass = '';
 
       if (isGerencia) {
-        tagContent = '💼 Gerência';
+        tagContent = 'Gerência';
         tagClass = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
       } else if (isProfessor) {
-        tagContent = '🏐 Professor';
-        tagClass = 'bg-transparent border border-orange-500 text-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.3)]';
+        tagContent = 'Professor';
+        tagClass = 'bg-orange-500 text-white border-orange-600 shadow-[0_0_8px_rgba(249,115,22,0.3)]';
       } else if (cleanApelido === 'PRESIDENTE') {
         tagContent = '👑 Presidente';
         tagClass = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
@@ -51,9 +51,10 @@ export function TagApelido({ apelido, nivel, levelStyle = '', mode, className = 
         tagContent = '🥈 Vice-Presidente';
         tagClass = 'animate-silver-shimmer text-black border-gray-400/20 shadow-[0_0_10px_rgba(169,169,169,0.4)]';
       } else {
-        tagContent = '📢 Marketing';
+        tagContent = 'Marketing';
         tagClass = 'bg-gradient-to-r from-pink-500 to-rose-400 text-white border-pink-500/20 shadow-[0_0_8px_rgba(244,63,94,0.3)]';
       }
+
 
       return (
         <>
