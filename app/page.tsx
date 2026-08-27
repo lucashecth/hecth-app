@@ -577,12 +577,26 @@ export default function Home() {
 
   if (session && !alunoDb) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-white/50 font-bold animate-pulse tracking-widest uppercase text-sm">Carregando...</p>
-        <button onClick={fazerLogout} className="text-red-500/50 hover:text-red-500 text-[10px] font-black uppercase tracking-widest underline transition-colors absolute bottom-10">Sair</button>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-center">
+        <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/10 max-w-sm w-full flex flex-col items-center gap-6 shadow-xl">
+          <div className="w-10 h-10 rounded-full border-t-2 border-r-2 border-[#ef3340] animate-spin" />
+          <div>
+            <h3 className="text-white font-black uppercase tracking-wider text-sm">Carregando Perfil...</h3>
+            <p className="text-white/40 text-[9px] uppercase font-bold tracking-wider mt-1.5 leading-relaxed">
+              Se demorar muito, seu cadastro pode ter falhado.
+            </p>
+          </div>
+          <button 
+            onClick={fazerLogout} 
+            className="w-full bg-[#ef3340]/25 hover:bg-[#ef3340]/35 border border-[#ef3340]/40 text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-xl transition-all active:scale-95"
+          >
+            Sair / Repetir Cadastro
+          </button>
+        </div>
       </div>
     );
   }
+
 
   if (session && alunoDb?.status === 'pendente') {
     return (
