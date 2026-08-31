@@ -991,9 +991,16 @@ export default function Home() {
             </form>
 
           )}
+          
+          <div className="mt-6 text-center">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
+              Versão 1.8.6
+            </span>
+          </div>
         </div>
 
         {modalRedefinirSenha && (
+
           <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
             <div className="bg-[#1a1a1a] border border-[#ef3340]/40 p-8 rounded-[2rem] max-w-sm w-full animacao-entrada text-left shadow-[0_0_50px_rgba(239,51,64,0.2)]">
               <div className="text-center mb-6">
