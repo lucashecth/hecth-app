@@ -73,6 +73,40 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
     }
   };
 
+  const [modalSenha, setModalSenha] = useState(false);
+  const [novaSenhaInput, setNovaSenhaInput] = useState('');
+  const [confirmSenhaInput, setConfirmSenhaInput] = useState('');
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+
+  const handleAlterarSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novaSenhaInput || !confirmSenhaInput) {
+      return alert('Por favor, preencha todos os campos!');
+    }
+    if (novaSenhaInput.length < 6) {
+      return alert('A senha deve ter pelo menos 6 caracteres!');
+    }
+    if (novaSenhaInput !== confirmSenhaInput) {
+      return alert('As senhas não coincidem!');
+    }
+
+    setSalvandoSenha(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: novaSenhaInput });
+      if (error) throw error;
+
+      alert('✅ Senha alterada com sucesso!');
+      setModalSenha(false);
+      setNovaSenhaInput('');
+      setConfirmSenhaInput('');
+    } catch (err: any) {
+      alert('Erro ao alterar senha: ' + err.message);
+    } finally {
+      setSalvandoSenha(false);
+    }
+  };
+
+
 
   // Estados para o Cropper
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -235,8 +269,86 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
               {alunoDb?.status === 'aprovado' ? 'Ativo' : alunoDb?.status}
             </span>
           </div>
+
+          <button
+            onClick={() => setModalSenha(true)}
+            className="w-full bg-[#1a1a1a] hover:bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between text-left transition-all active:scale-[0.99] mt-2"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center text-sm font-black">
+                🔐
+              </div>
+              <div>
+                <span className="text-xs font-black uppercase text-white/90 block leading-tight">Alterar Senha</span>
+                <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">Definir nova senha de acesso</span>
+              </div>
+            </div>
+            <span className="text-white/30 text-xs">›</span>
+          </button>
         </div>
+
+        {modalSenha && (
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#1a1a1a] border border-[#ef3340]/40 p-8 rounded-[2rem] max-w-sm w-full animacao-entrada text-left shadow-[0_0_50px_rgba(239,51,64,0.2)]">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-[#ef3340]/10 border border-[#ef3340]/30 flex items-center justify-center text-2xl mx-auto mb-3">
+                  🔐
+                </div>
+                <h3 className="text-white font-black uppercase tracking-tight text-xl leading-none">Alterar Senha</h3>
+                <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-2 leading-relaxed">
+                  Digite e confirme sua nova senha.
+                </p>
+              </div>
+
+              <form onSubmit={handleAlterarSenha} className="flex flex-col gap-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nova Senha (mín. 6 caracteres)</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={novaSenhaInput}
+                    onChange={(e) => setNovaSenhaInput(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Confirmar Nova Senha</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={confirmSenhaInput}
+                    onChange={(e) => setConfirmSenhaInput(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={salvandoSenha} 
+                  className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
+                >
+                  {salvandoSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setModalSenha(false);
+                    setNovaSenhaInput('');
+                    setConfirmSenhaInput('');
+                  }} 
+                  className="w-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all active:scale-95 text-center"
+                >
+                  Cancelar
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+}

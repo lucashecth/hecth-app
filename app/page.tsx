@@ -111,12 +111,32 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     
-    // 1. Checa se o link do email veio com token de recuperação na URL (hash # ou query ?)
+    // 1. Checa se o link do email veio com token/code de recuperação na URL (hash # ou query ?)
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      const search = window.location.search;
-      if (hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token')) {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+      const urlParams = new URLSearchParams(search);
+      const hashParams = new URLSearchParams(hash.replace('#', ''));
+      
+      const code = urlParams.get('code') || hashParams.get('code');
+      const type = urlParams.get('type') || hashParams.get('type');
+      const token = urlParams.get('token') || hashParams.get('token');
+
+      if (type === 'recovery' || hash.includes('type=recovery') || search.includes('type=recovery') || token) {
         setModalRedefinirSenha(true);
+      }
+
+      // Se o Supabase usou o fluxo PKCE com 'code'
+      if (code) {
+        supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+          if (!error && data?.session) {
+            setSession(data.session);
+            carregarPerfil(data.session.user.email);
+            if (type === 'recovery' || search.includes('recovery')) {
+              setModalRedefinirSenha(true);
+            }
+          }
+        });
       }
     }
 
@@ -127,8 +147,8 @@ export default function Home() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
-      if (event === 'PASSWORD_RECOVERY') {
-        setModalRedefinirSenha(true);
+      if (event === 'PASSWORD_RECOVERY' || event === 'USER_UPDATED') {
+        if (event === 'PASSWORD_RECOVERY') setModalRedefinirSenha(true);
       }
       if (newSession) {
         carregarPerfil(newSession.user.email);
@@ -136,6 +156,7 @@ export default function Home() {
         setAlunoDb(null);
       }
     });
+
 
 
 
