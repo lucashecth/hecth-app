@@ -49,8 +49,17 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [alunoDb, setAlunoDb] = useState<any>(null);
+  const [perfilNaoEncontrado, setPerfilNaoEncontrado] = useState(false);
   const [telaAtiva, setTelaAtiva] = useState<'inicio' | 'login' | 'cadastro'>('inicio');
   const [loading, setLoading] = useState(false);
+  const [completandoPerfil, setCompletandoPerfil] = useState(false);
+
+  const [selfNome, setSelfNome] = useState('');
+  const [selfSobrenome, setSelfSobrenome] = useState('');
+  const [selfDataNascimento, setSelfDataNascimento] = useState('');
+  const [selfFoto, setSelfFoto] = useState<File | null>(null);
+
+
   
   const [abaAtiva, setAbaAtiva] = useState<'arena' | 'mensalidade' | 'uniformes' | 'perfil' | 'admin' | 'turma_alunos' | 'mensagens' | 'rewards' | 'avulso'>('arena');
 
@@ -485,16 +494,67 @@ export default function Home() {
 
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
-    const { data } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
-    if (data) setAlunoDb(data);
+    const { data, error } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
+    if (data) {
+      setAlunoDb(data);
+      setPerfilNaoEncontrado(false);
+    } else {
+      console.warn("Perfil nao encontrado:", error);
+      setPerfilNaoEncontrado(true);
+    }
   };
+
+  const salvarPerfilAutocuracao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user?.email) return;
+    if (!selfNome || !selfSobrenome || !selfDataNascimento || !selfFoto) {
+      return alert('Por favor, preencha todos os campos e selecione sua foto!');
+    }
+    setCompletandoPerfil(true);
+    try {
+      // 1. Comprime a imagem de perfil
+      const fotoComprimida = await comprimirImagem(selfFoto, 600, 0.75);
+      const fileExt = fotoComprimida.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, fotoComprimida);
+      if (uploadError) throw uploadError;
+
+      // 2. Obtem url publica
+      const { data: publicUrlData } = supabase.storage.from('avatares').getPublicUrl(fileName);
+
+      // 3. Insere o aluno
+      const novoAluno = {
+        nome: selfNome,
+        sobrenome: selfSobrenome,
+        email: session.user.email,
+        foto_url: publicUrlData.publicUrl,
+        status: 'pendente',
+        data_nascimento: selfDataNascimento || null
+      };
+
+      const { error: insertError } = await supabase.from('alunos').insert([novoAluno]);
+      if (insertError) throw insertError;
+
+      setPerfilNaoEncontrado(false);
+      setAlunoDb(novoAluno);
+      alert('✓ Perfil criado com sucesso! Aguarde a aprovação do seu cadastro.');
+    } catch (err: any) {
+      alert('Erro ao salvar perfil: ' + err.message);
+    } finally {
+      setCompletandoPerfil(false);
+    }
+  };
+
+
 
   const fazerLogout = async () => {
     setAlunoDb(null);
+    setPerfilNaoEncontrado(false);
     setSession(null);
     await supabase.auth.signOut();
     setTelaAtiva('inicio');
   };
+
 
   const fazerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -612,6 +672,84 @@ export default function Home() {
   if (!mounted) return null;
 
   if (session && !alunoDb) {
+    if (perfilNaoEncontrado) {
+      return (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-white">
+          <form onSubmit={salvarPerfilAutocuracao} className="bg-[#1a1a1a] p-8 rounded-[2rem] border border-white/10 max-w-sm w-full flex flex-col gap-4 shadow-xl text-left animacao-entrada">
+            <div className="text-center mb-2">
+              <span className="text-3xl">⚠️</span>
+              <h3 className="text-white font-black uppercase tracking-tight text-lg mt-2 leading-none">Perfil não Encontrado</h3>
+              <p className="text-white/40 text-[9px] uppercase font-black tracking-widest mt-1.5 leading-relaxed">
+                Complete seus dados abaixo para ativar e salvar o seu cadastro.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nome</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Lucas" 
+                value={selfNome}
+                onChange={(e) => setSelfNome(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-xs font-bold"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Sobrenome</label>
+              <input 
+                type="text" 
+                placeholder="Ex: Silva" 
+                value={selfSobrenome}
+                onChange={(e) => setSelfSobrenome(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-xs font-bold"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Data de Nascimento</label>
+              <input 
+                type="date" 
+                value={selfDataNascimento}
+                onChange={(e) => setSelfDataNascimento(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-xs font-bold"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Foto de Perfil</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setSelfFoto(e.target.files?.[0] || null)}
+                className="w-full text-xs text-white/60 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-[#ef3340] file:text-white file:cursor-pointer"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit"
+              disabled={completandoPerfil}
+              className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
+            >
+              {completandoPerfil ? 'Salvando...' : 'Salvar Perfil'}
+            </button>
+
+            <button 
+              type="button"
+              onClick={fazerLogout}
+              className="w-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest py-3.5 rounded-xl transition-all active:scale-95 text-center"
+            >
+              Voltar / Sair
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-center">
         <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/10 max-w-sm w-full flex flex-col items-center gap-6 shadow-xl">
@@ -632,6 +770,7 @@ export default function Home() {
       </div>
     );
   }
+
 
 
   if (session && alunoDb?.status === 'pendente') {
