@@ -128,17 +128,27 @@ export default function Home() {
 
       // Se o Supabase usou o fluxo PKCE com 'code'
       if (code) {
+        // Limpa a URL imediatamente para não quebrar o router do navegador
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
         supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
           if (!error && data?.session) {
             setSession(data.session);
             carregarPerfil(data.session.user.email);
-            if (type === 'recovery' || search.includes('recovery')) {
-              setModalRedefinirSenha(true);
-            }
+            setModalRedefinirSenha(true);
           }
+        }).catch((e) => {
+          console.error("Erro no exchangeCode:", e);
         });
+      } else if (hash.includes('access_token')) {
+        // Limpa a hash da URL
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
       }
     }
+
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
