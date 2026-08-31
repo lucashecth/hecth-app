@@ -88,6 +88,13 @@ export default function Home() {
   
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [modalRedefinirSenha, setModalRedefinirSenha] = useState(false);
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmNovaSenha, setConfirmNovaSenha] = useState('');
+  const [salvandoNovaSenha, setSalvandoNovaSenha] = useState(false);
+  const [modalEsqueciSenha, setModalEsqueciSenha] = useState(false);
+  const [emailRecuperacao, setEmailRecuperacao] = useState('');
+  const [enviandoRecuperacao, setEnviandoRecuperacao] = useState(false);
   const [dataNascimento, setDataNascimento] = useState('');
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
@@ -109,14 +116,18 @@ export default function Home() {
       if (session) carregarPerfil(session.user.email);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      if (event === 'PASSWORD_RECOVERY') {
+        setModalRedefinirSenha(true);
+      }
       if (newSession) {
         carregarPerfil(newSession.user.email);
       } else {
         setAlunoDb(null);
       }
     });
+
 
     carregarArena();
 
@@ -550,11 +561,63 @@ export default function Home() {
   const fazerLogout = async () => {
     setAlunoDb(null);
     setPerfilNaoEncontrado(false);
+    setModalRedefinirSenha(false);
     setSession(null);
     await supabase.auth.signOut();
     setTelaAtiva('inicio');
   };
 
+  const salvarNovaSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novaSenha || !confirmNovaSenha) {
+      return alert('Por favor, preencha todos os campos!');
+    }
+    if (novaSenha.length < 6) {
+      return alert('A senha deve ter pelo menos 6 caracteres!');
+    }
+    if (novaSenha !== confirmNovaSenha) {
+      return alert('As senhas não coincidem!');
+    }
+
+    setSalvandoNovaSenha(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: novaSenha });
+      if (error) throw error;
+
+      alert('✅ Senha atualizada com sucesso!');
+      setModalRedefinirSenha(false);
+      setNovaSenha('');
+      setConfirmNovaSenha('');
+    } catch (err: any) {
+      alert('Erro ao redefinir senha: ' + err.message);
+    } finally {
+      setSalvandoNovaSenha(false);
+    }
+  };
+
+  const enviarEmailRecuperacao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailRecuperacao.trim()) {
+      return alert('Por favor, informe seu e-mail cadastrado!');
+    }
+
+    setEnviandoRecuperacao(true);
+    try {
+      const redirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(emailRecuperacao.trim(), {
+        redirectTo: redirectTo
+      });
+      if (error) throw error;
+
+      alert('✉️ E-mail de redefinição enviado! Verifique sua caixa de entrada (e pasta de spam).');
+      setModalEsqueciSenha(false);
+      setEmailRecuperacao('');
+    } catch (err: any) {
+      alert('Erro ao solicitar redefinição: ' + err.message);
+    } finally {
+      setEnviandoRecuperacao(false);
+    }
+  };
 
   const fazerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -563,6 +626,7 @@ export default function Home() {
     if (error) alert('Erro no login: ' + error.message);
     setLoading(false);
   };
+
 
   const fazerCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -808,13 +872,69 @@ export default function Home() {
               <button onClick={() => setTelaAtiva('cadastro')} className="w-full bg-transparent text-white font-bold py-4 rounded-xl border border-white/20 hover:bg-white/5 transition-all">Primeiro acesso</button>
             </div>
           ) : telaAtiva === 'login' ? (
-            <form onSubmit={fazerLogin} className="flex flex-col gap-4">
-              <input type="email" placeholder="E-mail" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-2 focus:ring-red-500" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <input type="password" placeholder="Senha" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-2 focus:ring-red-500" value={senha} onChange={(e) => setSenha(e.target.value)} />
-              <button className="w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-50" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
-              <button type="button" onClick={() => setTelaAtiva('inicio')} className="text-gray-400 text-sm font-bold uppercase mt-2">Voltar</button>
-            </form>
+            <>
+              <form onSubmit={fazerLogin} className="flex flex-col gap-4">
+                <input type="email" placeholder="E-mail" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-2 focus:ring-red-500" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input type="password" placeholder="Senha" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5 outline-none focus:ring-2 focus:ring-red-500" value={senha} onChange={(e) => setSenha(e.target.value)} />
+                <div className="flex justify-end">
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setEmailRecuperacao(email || '');
+                      setModalEsqueciSenha(true);
+                    }} 
+                    className="text-[11px] font-bold text-red-400 hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
+                <button className="w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-50" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+                <button type="button" onClick={() => setTelaAtiva('inicio')} className="text-gray-400 text-sm font-bold uppercase mt-2">Voltar</button>
+              </form>
+
+              {modalEsqueciSenha && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                  <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-3xl max-w-sm w-full animacao-entrada text-left shadow-2xl">
+                    <div className="text-center mb-4">
+                      <span className="text-3xl">🔑</span>
+                      <h3 className="text-white font-black uppercase tracking-tight text-lg mt-2 leading-none">Recuperar Senha</h3>
+                      <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-1.5 leading-relaxed">
+                        Informe seu e-mail cadastrado para receber o link de redefinição.
+                      </p>
+                    </div>
+                    <form onSubmit={enviarEmailRecuperacao} className="flex flex-col gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1 block">Seu E-mail</label>
+                        <input 
+                          type="email" 
+                          required 
+                          placeholder="seuemail@exemplo.com"
+                          value={emailRecuperacao}
+                          onChange={(e) => setEmailRecuperacao(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-xs font-bold"
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        disabled={enviandoRecuperacao} 
+                        className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50"
+                      >
+                        {enviandoRecuperacao ? 'Enviando link...' : 'Enviar Link de Redefinição'}
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setModalEsqueciSenha(false)} 
+                        className="w-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all active:scale-95 text-center"
+                      >
+                        Cancelar
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
+
             <form onSubmit={fazerCadastro} className="flex flex-col gap-3">
               <input type="text" placeholder="Nome" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5" value={nome} onChange={(e) => setNome(e.target.value)} />
               <input type="text" placeholder="Sobrenome" required className="w-full border rounded-xl px-4 py-3 text-white bg-white/5" value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} />
@@ -1487,6 +1607,64 @@ export default function Home() {
         )}
 
 
+
+        {modalRedefinirSenha && (
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#1a1a1a] border border-[#ef3340]/40 p-8 rounded-[2rem] max-w-sm w-full animacao-entrada text-left shadow-[0_0_50px_rgba(239,51,64,0.2)]">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-[#ef3340]/10 border border-[#ef3340]/30 flex items-center justify-center text-2xl mx-auto mb-3">
+                  🔐
+                </div>
+                <h3 className="text-white font-black uppercase tracking-tight text-xl leading-none">Criar Nova Senha</h3>
+                <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-2 leading-relaxed">
+                  Digite e confirme sua nova senha para continuar usando o app.
+                </p>
+              </div>
+
+              <form onSubmit={salvarNovaSenha} className="flex flex-col gap-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nova Senha (mín. 6 caracteres)</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={novaSenha}
+                    onChange={(e) => setNovaSenha(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Confirmar Nova Senha</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={confirmNovaSenha}
+                    onChange={(e) => setConfirmNovaSenha(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={salvandoNovaSenha} 
+                  className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
+                >
+                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={() => setModalRedefinirSenha(false)} 
+                  className="w-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all active:scale-95 text-center"
+                >
+                  Fechar
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         <PixQrCodeModal 
           isOpen={!!pixModalTipo} 
