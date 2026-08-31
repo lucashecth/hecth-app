@@ -111,6 +111,15 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
     
+    // 1. Checa se o link do email veio com token de recuperação na URL (hash # ou query ?)
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (hash.includes('type=recovery') || search.includes('type=recovery') || hash.includes('access_token')) {
+        setModalRedefinirSenha(true);
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) carregarPerfil(session.user.email);
@@ -127,6 +136,7 @@ export default function Home() {
         setAlunoDb(null);
       }
     });
+
 
 
     carregarArena();
@@ -951,6 +961,64 @@ export default function Home() {
 
           )}
         </div>
+
+        {modalRedefinirSenha && (
+          <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#1a1a1a] border border-[#ef3340]/40 p-8 rounded-[2rem] max-w-sm w-full animacao-entrada text-left shadow-[0_0_50px_rgba(239,51,64,0.2)]">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-[#ef3340]/10 border border-[#ef3340]/30 flex items-center justify-center text-2xl mx-auto mb-3">
+                  🔐
+                </div>
+                <h3 className="text-white font-black uppercase tracking-tight text-xl leading-none">Criar Nova Senha</h3>
+                <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-2 leading-relaxed">
+                  Digite e confirme sua nova senha para continuar usando o app.
+                </p>
+              </div>
+
+              <form onSubmit={salvarNovaSenha} className="flex flex-col gap-4">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nova Senha (mín. 6 caracteres)</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={novaSenha}
+                    onChange={(e) => setNovaSenha(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Confirmar Nova Senha</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••"
+                    value={confirmNovaSenha}
+                    onChange={(e) => setConfirmNovaSenha(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  disabled={salvandoNovaSenha} 
+                  className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
+                >
+                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={() => setModalRedefinirSenha(false)} 
+                  className="w-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all active:scale-95 text-center"
+                >
+                  Fechar
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
