@@ -172,30 +172,35 @@ export default function Home() {
 
     carregarArena();
 
-    const canalPresencas = supabase.channel('realtime_presencas')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => carregarArena())
-      .subscribe();
+    // Cria APENAS 1 canal Realtime unificado e leve para não sobrecarregar o Supabase
+    let arenaTimeout: any = null;
+    let notifTimeout: any = null;
 
-    const canalTurmas = supabase.channel('realtime_turmas')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, () => carregarArena())
-      .subscribe();
+    const triggerArenaDebounced = () => {
+      if (arenaTimeout) clearTimeout(arenaTimeout);
+      arenaTimeout = setTimeout(() => carregarArena(), 500);
+    };
 
-    const canalMensagens = supabase.channel('realtime_mensagens')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens' }, () => carregarNotificacoes())
-      .subscribe();
+    const triggerNotifDebounced = () => {
+      if (notifTimeout) clearTimeout(notifTimeout);
+      notifTimeout = setTimeout(() => carregarNotificacoes(), 500);
+    };
 
-    const canalAlunos = supabase.channel('realtime_alunos')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => carregarNotificacoes())
+    const canalUnificado = supabase.channel('realtime_hecth_global')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, triggerArenaDebounced)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, triggerArenaDebounced)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens' }, triggerNotifDebounced)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, triggerNotifDebounced)
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(canalPresencas);
-      supabase.removeChannel(canalTurmas);
-      supabase.removeChannel(canalMensagens);
-      supabase.removeChannel(canalAlunos);
+      if (arenaTimeout) clearTimeout(arenaTimeout);
+      if (notifTimeout) clearTimeout(notifTimeout);
+      supabase.removeChannel(canalUnificado);
     };
   }, []);
+
 
 
   // Recarrega as notificacoes sempre que o usuario mudar de aba ou de tela de gestao
@@ -1026,9 +1031,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.8.7
+              Versão 1.8.8
             </span>
           </div>
+
 
         </div>
 
