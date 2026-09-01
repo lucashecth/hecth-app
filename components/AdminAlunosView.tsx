@@ -14,7 +14,8 @@ interface AdminAlunosViewProps {
 
 export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<'todos' | 'vencimento' | 'ativos' | 'evasoes'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'vencimento' | 'ativos' | 'evasoes'>('ativos');
+
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -161,26 +162,33 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const ativosAlunos = alunos.filter(a => a.mensalidade_paga).length;
 
   const getAlunosFiltrados = () => {
-    const list = alunos.filter(aluno =>
-      `${aluno.nome} ${aluno.sobrenome}`.toLowerCase().includes(busca.toLowerCase())
-    );
+    const termo = busca.toLowerCase().trim();
+    let list = alunos.filter(aluno => {
+      const nomeCompleto = `${aluno.nome || ''} ${aluno.sobrenome || ''}`.toLowerCase();
+      const apelido = String(aluno.apelido || '').toLowerCase();
+      return nomeCompleto.includes(termo) || apelido.includes(termo);
+    });
 
     if (filtro === 'ativos') {
-      return list.filter(a => a.mensalidade_paga);
+      list = list.filter(a => a.mensalidade_paga);
     }
 
     if (filtro === 'evasoes') {
-      return list
-        .sort((a, b) => {
-          const timeA = a.ultima_inscricao ? new Date(a.ultima_inscricao).getTime() : 0;
-          const timeB = b.ultima_inscricao ? new Date(b.ultima_inscricao).getTime() : 0;
-          return timeA - timeB; // Ascending: oldest first
-        });
+      return list.sort((a, b) => {
+        const timeA = a.ultima_inscricao ? new Date(a.ultima_inscricao).getTime() : 0;
+        const timeB = b.ultima_inscricao ? new Date(b.ultima_inscricao).getTime() : 0;
+        return timeA - timeB; // Ascending: oldest first
+      });
     }
 
-
-    return list;
+    // Ordenação alfabética estrita A-Z para 'todos', 'ativos' e 'vencimento'
+    return list.sort((a, b) => {
+      const nomeA = `${a.nome || ''} ${a.sobrenome || ''}`.trim();
+      const nomeB = `${b.nome || ''} ${b.sobrenome || ''}`.trim();
+      return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+    });
   };
+
 
   const alunosFiltrados = getAlunosFiltrados();
 

@@ -90,7 +90,18 @@ class QueryBuilder {
         q = query(colRef, ...firestoreConstraints);
       }
       const snap = await getDocs(q);
-      const data = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+      let data = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+      if (this.orderField) {
+        const field = this.orderField;
+        const dir = this.orderDir;
+        data.sort((a, b) => {
+          const valA = String(a[field] || '');
+          const valB = String(b[field] || '');
+          const comp = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+          return dir === 'desc' ? -comp : comp;
+        });
+      }
 
       return { data, error: null };
     } catch (err: any) {
@@ -104,11 +115,22 @@ class QueryBuilder {
             items = items.filter(it => String(it[f.field] || '').toLowerCase() !== String(f.val || '').toLowerCase());
           }
         }
+        if (this.orderField) {
+          const field = this.orderField;
+          const dir = this.orderDir;
+          items.sort((a, b) => {
+            const valA = String(a[field] || '');
+            const valB = String(b[field] || '');
+            const comp = valA.localeCompare(valB, 'pt-BR', { sensitivity: 'base' });
+            return dir === 'desc' ? -comp : comp;
+          });
+        }
         return { data: items, error: null };
       } catch (fallbackErr: any) {
         return { data: [], error: fallbackErr };
       }
     }
+
   }
 
   then(resolve: (value: any) => void) {
