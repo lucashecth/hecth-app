@@ -9,15 +9,24 @@ export function useAdmin() {
     async function checkAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
+      if (user && user.email) {
+        const emailLimpo = user.email.trim().toLowerCase();
+        if (emailLimpo === 'lucas.hecth@gmail.com') {
+          setIsAdmin(true);
+          setLoading(false);
+          return;
+        }
+
         const { data } = await supabase
           .from('alunos')
-          .select('is_admin')
-          .eq('email', user.email)
-          .single();
+          .select('is_admin, nivel')
+          .eq('email', emailLimpo)
+          .maybeSingle();
         
-        setIsAdmin(data?.is_admin || false);
+        const nivel = String(data?.nivel || '').toLowerCase();
+        setIsAdmin(Boolean(data?.is_admin || nivel.includes('gerencia')));
       }
+
       setLoading(false);
     }
     checkAdmin();

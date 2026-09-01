@@ -51,9 +51,10 @@ export function Header({ alunoDb, onLogout, onGoHome, onGoToProfile }: HeaderPro
           className="h-8 w-auto cursor-pointer hover:opacity-85 active:scale-95 transition-all"
           onClick={onGoHome}
         />
-        <span className="text-[10px] not-italic font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full tracking-normal">
-    v2.0.0 (Google Cloud)
+        <span className="text-[10px] not-italic font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-full tracking-normal">
+    v2.0.0
   </span>
+
 
 
 

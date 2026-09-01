@@ -1017,10 +1017,11 @@ export default function Home() {
           )}
           
           <div className="mt-6 text-center">
-            <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-              Versão 2.0.0 (Google Cloud)
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
+              Versão 2.0.0
             </span>
           </div>
+
 
 
 
@@ -1176,7 +1177,10 @@ export default function Home() {
   });
   const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
   const statusMensalidade = obterStatusMensalidade(alunoDb);
-  const isTeacher = String(alunoDb?.nivel || '').toLowerCase().includes('professor');
+  const nivelNorm = String(alunoDb?.nivel || '').toLowerCase();
+  const isAdminEfetivo = Boolean(isAdmin || alunoDb?.is_admin || nivelNorm.includes('gerencia') || session?.user?.email === 'lucas.hecth@gmail.com');
+  const isTeacher = nivelNorm.includes('professor');
+
 
   // Obtém presenças da semana atual (Segunda a Domingo)
   const obterContagemSemanal = () => {
@@ -1223,7 +1227,7 @@ export default function Home() {
           <div className="px-5">
             <MenuCards 
               onNavegar={setAbaAtiva} 
-              isAdmin={isAdmin} 
+              isAdmin={isAdminEfetivo} 
               isTeacher={isTeacher}
               totalMensagensNaoLidas={totalMensagensNaoLidas}
               totalPagamentosPendentes={totalPagamentosPendentes}
@@ -1233,7 +1237,8 @@ export default function Home() {
 
 
             {/* CARD DE PROGRESSO SEMANAL */}
-            {session && alunoDb?.status === 'aprovado' && !isTeacher && !isAdmin && (
+            {session && alunoDb?.status === 'aprovado' && !isTeacher && !isAdminEfetivo && (
+
               <div className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 mb-4 shadow-xl">
                 {alunoDb?.creditos_avulsos > 0 && (
                   <div className="mb-3 bg-gradient-to-r from-orange-600/10 to-[#ef3340]/10 border border-orange-500/20 rounded-xl p-3 flex items-center justify-between text-left">
