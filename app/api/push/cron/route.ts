@@ -60,7 +60,8 @@ export async function POST(request: Request) {
 
       try {
         const payload = JSON.stringify({ title: titulo, body: conteudo, url: '/' });
-        await webpush.sendNotification(sub, payload);
+        await webpush.sendNotification(sub as any, payload);
+
         
         // Salva log de disparo
         await supabase.from('notificacoes_logs').insert({

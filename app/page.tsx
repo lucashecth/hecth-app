@@ -1017,10 +1017,11 @@ export default function Home() {
           )}
           
           <div className="mt-6 text-center">
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.9.2
+            <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
+              Versão 2.0.0 (Google Cloud)
             </span>
           </div>
+
 
 
 
