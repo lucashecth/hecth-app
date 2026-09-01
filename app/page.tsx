@@ -96,7 +96,9 @@ export default function Home() {
   const [emailRecuperacao, setEmailRecuperacao] = useState('');
   const [enviandoRecuperacao, setEnviandoRecuperacao] = useState(false);
   const [dataNascimento, setDataNascimento] = useState('');
+  const [dataNascimentoPrimeiroLogin, setDataNascimentoPrimeiroLogin] = useState('');
   const [nome, setNome] = useState('');
+
   const [sobrenome, setSobrenome] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
   const [aniversariantesHoje, setAniversariantesHoje] = useState<any[]>([]);
@@ -560,10 +562,16 @@ export default function Home() {
       if (data) {
         setAlunoDb(data);
         setPerfilNaoEncontrado(false);
+
+        // Se ainda não concluiu o primeiro login (e não é o admin principal), abre o modal de validação de nascimento e troca de senha
+        if (!data.primeiro_login_concluido && emailLimpo !== 'lucas.hecth@gmail.com') {
+          setModalRedefinirSenha(true);
+        }
       } else {
         console.warn("Perfil não encontrado no banco para:", emailLimpo, error);
         setPerfilNaoEncontrado(true);
       }
+
     } catch (e) {
       console.error("Erro ao carregar perfil:", e);
     }
@@ -625,8 +633,13 @@ export default function Home() {
 
   const salvarNovaSenha = async (e: React.FormEvent) => {
     e.preventDefault();
+    const dataNascimentoFinal = alunoDb?.data_nascimento || dataNascimentoPrimeiroLogin;
+
+    if (!dataNascimentoFinal) {
+      return alert('Por favor, informe sua Data de Nascimento!');
+    }
     if (!novaSenha || !confirmNovaSenha) {
-      return alert('Por favor, preencha todos os campos!');
+      return alert('Por favor, preencha todos os campos de senha!');
     }
     if (novaSenha.length < 6) {
       return alert('A senha deve ter pelo menos 6 caracteres!');
@@ -637,19 +650,36 @@ export default function Home() {
 
     setSalvandoNovaSenha(true);
     try {
+      // 1. Atualiza senha no Firebase Auth
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
 
-      alert('✅ Senha atualizada com sucesso!');
+      // 2. Salva data de nascimento e marca primeiro login concluído no Firestore
+      const emailUsuario = session?.user?.email || alunoDb?.email;
+      if (emailUsuario) {
+        const updatePayload: any = {
+          primeiro_login_concluido: true
+        };
+        if (!alunoDb?.data_nascimento && dataNascimentoPrimeiroLogin) {
+          updatePayload.data_nascimento = dataNascimentoPrimeiroLogin;
+        }
+
+        await supabase.from('alunos').update(updatePayload).eq('email', emailUsuario);
+        setAlunoDb((prev: any) => prev ? { ...prev, ...updatePayload } : null);
+      }
+
+      alert('✅ Senha e cadastro atualizados com sucesso!');
       setModalRedefinirSenha(false);
       setNovaSenha('');
       setConfirmNovaSenha('');
+      setDataNascimentoPrimeiroLogin('');
     } catch (err: any) {
-      alert('Erro ao redefinir senha: ' + err.message);
+      alert('Erro ao salvar alterações: ' + err.message);
     } finally {
       setSalvandoNovaSenha(false);
     }
   };
+
 
   const enviarEmailRecuperacao = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1018,9 +1048,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.0.3
+              Versão 2.0.4
             </span>
           </div>
+
 
 
 
@@ -1047,6 +1078,41 @@ export default function Home() {
               </div>
 
               <form onSubmit={salvarNovaSenha} className="flex flex-col gap-4">
+                {/* CAMPO DE DATA DE NASCIMENTO (ESMAECIDO SE JÁ EXISTE, OBRIGATÓRIO SE NÃO HOUVER) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40 block">Data de Nascimento</label>
+                    {alunoDb?.data_nascimento && (
+                      <span className="text-[9px] font-bold text-green-400/80 bg-green-500/10 px-2 py-0.5 rounded-full">Já Cadastrado</span>
+                    )}
+                  </div>
+                  {alunoDb?.data_nascimento ? (
+                    <input 
+                      type="text" 
+                      disabled 
+                      value={(() => {
+                        const parts = String(alunoDb.data_nascimento).split('-');
+                        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        return alunoDb.data_nascimento;
+                      })()}
+                      className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3.5 text-white/40 cursor-not-allowed text-sm font-bold opacity-60"
+                    />
+                  ) : (
+                    <input 
+                      type="date" 
+                      required 
+                      value={dataNascimentoPrimeiroLogin}
+                      onChange={(e) => setDataNascimentoPrimeiroLogin(e.target.value)}
+                      className="w-full bg-white/5 border border-[#ef3340]/40 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                    />
+                  )}
+                  {!alunoDb?.data_nascimento && (
+                    <span className="text-[8px] font-bold text-amber-400/80 mt-1 block">
+                      * Campo obrigatório para confirmação do seu cadastro
+                    </span>
+                  )}
+                </div>
+
                 <div>
                   <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nova Senha (mín. 6 caracteres)</label>
                   <input 
@@ -1076,8 +1142,9 @@ export default function Home() {
                   disabled={salvandoNovaSenha} 
                   className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
                 >
-                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar e Acessar'}
                 </button>
+
 
                 <button 
                   type="button" 
