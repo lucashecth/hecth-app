@@ -136,36 +136,38 @@ class QueryBuilder {
         try {
           const valStr = String(val).toLowerCase().trim();
           
-          // 1. Tenta atualizar direto pelo docId
-          const directRef = doc(db, this.colName, valStr);
-          try {
-            await updateDoc(directRef, fields);
-            return { error: null };
-          } catch (directErr) {
-            // Se não existe documento com esse docId, busca pelo campo (ex: campo 'id' numérico ou 'email')
-          }
-
-          // 2. Busca pelo campo especificado
-          const res = await this.eq(field, val).execute();
-          if (res.data && res.data.length > 0) {
-            for (const it of res.data) {
-              const itemDocId = it.doc_id || it.id;
-              await updateDoc(doc(db, this.colName, String(itemDocId)), fields);
-            }
-            return { error: null };
-          }
-
-          // 3. Fallback: se buscou por 'id' numérico, varre a coleção
-          if (field === 'id') {
-            const snap = await getDocs(collection(db, this.colName));
-            const match = snap.docs.find(d => String(d.data().id) === String(val));
-            if (match) {
-              await updateDoc(doc(db, this.colName, match.id), fields);
+          // 1. Tenta atualizar direto pelo docId (ex: quando val é email)
+          if (field === 'email' || (typeof val === 'string' && val.includes('@'))) {
+            try {
+              await updateDoc(doc(db, this.colName, valStr), fields);
               return { error: null };
-            }
+            } catch (err) {}
           }
 
-          return { error: null };
+          // 2. Busca o documento no Firestore pelo campo (ex: 'id', 'email', etc)
+          const snap = await getDocs(collection(db, this.colName));
+          const matchedDocs = snap.docs.filter(d => {
+            const data = d.data();
+            if (d.id.toLowerCase() === valStr) return true;
+            if (String(data[field]).toLowerCase() === valStr) return true;
+            if (field === 'id' && String(data.id) === String(val)) return true;
+            return false;
+          });
+
+          if (matchedDocs.length > 0) {
+            for (const d of matchedDocs) {
+              await updateDoc(doc(db, this.colName, d.id), fields);
+            }
+            return { error: null };
+          }
+
+          // 3. Fallback: tenta atualizar direto caso docId seja exatamente o val
+          try {
+            await updateDoc(doc(db, this.colName, valStr), fields);
+            return { error: null };
+          } catch (e: any) {
+            return { error: e };
+          }
         } catch (e: any) {
           return { error: e };
         }
@@ -179,31 +181,27 @@ class QueryBuilder {
         try {
           const valStr = String(val).toLowerCase().trim();
           
-          // 1. Tenta deletar direto pelo docId
+          // 1. Busca os documentos correspondentes
+          const snap = await getDocs(collection(db, this.colName));
+          const matchedDocs = snap.docs.filter(d => {
+            const data = d.data();
+            if (d.id.toLowerCase() === valStr) return true;
+            if (String(data[field]).toLowerCase() === valStr) return true;
+            if (field === 'id' && String(data.id) === String(val)) return true;
+            return false;
+          });
+
+          if (matchedDocs.length > 0) {
+            for (const d of matchedDocs) {
+              await deleteDoc(doc(db, this.colName, d.id));
+            }
+            return { error: null };
+          }
+
+          // 2. Fallback direto pelo docId
           try {
             await deleteDoc(doc(db, this.colName, valStr));
-            return { error: null };
-          } catch (directErr) {}
-
-          // 2. Busca pelo campo
-          const res = await this.eq(field, val).execute();
-          if (res.data && res.data.length > 0) {
-            for (const it of res.data) {
-              const itemDocId = it.doc_id || it.id;
-              await deleteDoc(doc(db, this.colName, String(itemDocId)));
-            }
-            return { error: null };
-          }
-
-          // 3. Fallback por id numérico
-          if (field === 'id') {
-            const snap = await getDocs(collection(db, this.colName));
-            const match = snap.docs.find(d => String(d.data().id) === String(val));
-            if (match) {
-              await deleteDoc(doc(db, this.colName, match.id));
-              return { error: null };
-            }
-          }
+          } catch (e) {}
 
           return { error: null };
         } catch (e: any) {
@@ -223,6 +221,7 @@ class QueryBuilder {
       }
     };
   }
+
 
 }
 
