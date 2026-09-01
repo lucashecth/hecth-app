@@ -1424,25 +1424,26 @@ export default function Home() {
         )}
 
         {abaAtiva === 'mensagens' && (
-          isAdmin ? (
+          (isAdminEfetivo || isAdmin) ? (
             <ChatAdminView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} session={session} />
           ) : (
             <ChatAlunoView onVoltar={() => setAbaAtiva('arena')} alunoDb={alunoDb} session={session} />
           )
         )}
 
-        {abaAtiva === 'admin' && (isAdmin || isTeacher) && (
+        {abaAtiva === 'admin' && (isAdminEfetivo || isAdmin || isTeacher) && (
 
   <div className="w-full"> 
     {viewAdmin === 'menu' ? (
       <div className="animacao-entrada px-5 pb-20 pt-4">
         <div className="flex items-center justify-between mb-8">
            <h2 className="text-2xl font-black uppercase italic tracking-tighter text-[#ef3340]">Gestão HECTH</h2>
+
            <button onClick={() => setAbaAtiva('arena')} className="text-[10px] font-black uppercase text-white/30">Sair</button>
         </div>
         <div className="grid grid-cols-1 gap-4">
           {/* BOTÃO NOVO: CADASTRAR ALUNO */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('criar')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
               <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
@@ -1455,7 +1456,7 @@ export default function Home() {
           )}
 
           {/* BOTÃO EXCLUIR ALUNO */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('deletar_aluno')} className="bg-[#121212] border border-red-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
               <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
@@ -1481,7 +1482,7 @@ export default function Home() {
 
 
           {/* MENSAGENS / CENTRAL DE CHAT */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('mensagens')} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1494,7 +1495,7 @@ export default function Home() {
           )}
 
           {/* BOTÃO NOVO: APROVAR ALUNOS */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('aprovar')} className="bg-[#121212] border border-white/10 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg relative">
               <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
@@ -1513,7 +1514,7 @@ export default function Home() {
 
 
           {/* BASE DE ATLETAS */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('alunos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
               <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -1526,7 +1527,7 @@ export default function Home() {
           )}
 
           {/* NOVOS PAGAMENTOS */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('pagamentos')} className="bg-[#121212] border border-white/5 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group relative">
               <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -1545,7 +1546,7 @@ export default function Home() {
 
 
           {/* QR CODE DO APP */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setShowQrCodeModal(true)} className="bg-[#121212] border border-purple-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -1570,7 +1571,7 @@ export default function Home() {
 
 
           {/* QR CODE PIX UNIFORMES */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setPixModalTipo('uniformes')} className="bg-[#121212] border border-teal-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
               <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 font-black text-xl">
                 ❖
@@ -1583,7 +1584,7 @@ export default function Home() {
           )}
 
           {/* QR CODE PIX MENSALIDADE */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setPixModalTipo('mensalidade')} className="bg-[#121212] border border-emerald-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl">
                 ❖
@@ -1596,7 +1597,7 @@ export default function Home() {
           )}
 
           {/* EXPORTAR PLANILHA EXCEL */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <>
               <input 
                 type="file" 
@@ -1618,7 +1619,7 @@ export default function Home() {
           )}
 
           {/* CENTRAL PUSH */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('notificacoes')} className="bg-[#121212] border border-[#ef3340]/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
               <div className="w-12 h-12 rounded-2xl bg-[#ef3340]/10 flex items-center justify-center text-[#ef3340]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1631,7 +1632,7 @@ export default function Home() {
           )}
 
           {/* CONFIGURAR PREÇOS */}
-          {isAdmin && (
+          {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('precos')} className="bg-[#121212] border border-yellow-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
               <div className="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-yellow-400">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1642,6 +1643,7 @@ export default function Home() {
               </div>
             </button>
           )}
+
 
           {/* AULAS EXPERIMENTAIS */}
           {(isAdmin || isTeacher) && (
