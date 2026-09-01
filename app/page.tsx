@@ -538,10 +538,6 @@ export default function Home() {
     if (!emailUsuario) return;
     const emailLimpo = emailUsuario.trim().toLowerCase();
 
-    // Timeout de segurança de 4 segundos para NUNCA travar a tela
-    const timer = setTimeout(() => {
-      setPerfilNaoEncontrado(true);
-    }, 4000);
 
     try {
       // 1. Tenta buscar exato
@@ -561,8 +557,6 @@ export default function Home() {
         data = dataIlike;
       }
 
-      clearTimeout(timer);
-
       if (data) {
         setAlunoDb(data);
         setPerfilNaoEncontrado(false);
@@ -571,11 +565,10 @@ export default function Home() {
         setPerfilNaoEncontrado(true);
       }
     } catch (e) {
-      clearTimeout(timer);
       console.error("Erro ao carregar perfil:", e);
-      setPerfilNaoEncontrado(true);
     }
   };
+
 
 
   const salvarPerfilAutocuracao = async (e: React.FormEvent) => {
@@ -879,24 +872,33 @@ export default function Home() {
 
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-center">
-        <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/10 max-w-sm w-full flex flex-col items-center gap-6 shadow-xl">
+        <div className="bg-[#1a1a1a] p-8 rounded-3xl border border-white/10 max-w-sm w-full flex flex-col items-center gap-5 shadow-xl animacao-entrada">
           <div className="w-10 h-10 rounded-full border-t-2 border-r-2 border-[#ef3340] animate-spin" />
           <div>
             <h3 className="text-white font-black uppercase tracking-wider text-sm">Carregando Perfil...</h3>
             <p className="text-white/40 text-[9px] uppercase font-bold tracking-wider mt-1.5 leading-relaxed">
-              Se demorar muito, seu cadastro pode ter falhado.
+              Buscando dados no CT HECTH...
             </p>
           </div>
           <button 
-            onClick={fazerLogout} 
-            className="w-full bg-[#ef3340]/25 hover:bg-[#ef3340]/35 border border-[#ef3340]/40 text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-xl transition-all active:scale-95"
+            onClick={() => {
+              if (session?.user?.email) carregarPerfil(session.user.email);
+            }} 
+            className="w-full bg-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-3.5 rounded-xl transition-all active:scale-95 shadow-[0_0_15px_rgba(239,51,64,0.3)]"
           >
-            Sair / Repetir Cadastro
+            Tentar Novamente
+          </button>
+          <button 
+            onClick={fazerLogout} 
+            className="w-full bg-white/5 border border-white/10 text-white/50 text-[10px] font-black uppercase tracking-widest py-3 rounded-xl transition-all active:scale-95 hover:bg-white/10"
+          >
+            Sair
           </button>
         </div>
       </div>
     );
   }
+
 
 
 
@@ -1016,9 +1018,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.9.1
+              Versão 1.9.2
             </span>
           </div>
+
 
 
 
