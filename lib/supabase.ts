@@ -213,13 +213,30 @@ export const supabase: any = {
     },
 
     async signInWithPassword({ email, password }: any) {
+      const emailLimpo = email.trim().toLowerCase();
       try {
-        const cred = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+        const cred = await signInWithEmailAndPassword(auth, emailLimpo, password);
         return { data: { user: cred.user }, error: null };
       } catch (err: any) {
+        // Se a conta de Auth ainda não existe no Firebase, mas o aluno já está cadastrado no banco:
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') {
+          try {
+            // Verifica se o aluno existe no banco Firestore
+            const snap = await getDocs(query(collection(db, 'alunos'), where('email', '==', emailLimpo)));
+            if (!snap.empty) {
+              // Cria a conta do aluno no Firebase Auth na hora com a senha digitada
+              const novaCred = await createUserWithEmailAndPassword(auth, emailLimpo, password);
+              return { data: { user: novaCred.user }, error: null };
+            }
+          } catch (autoErr: any) {
+            // Se falhar a criação automática (ex: já existia e a senha digitada estava errada)
+            return { data: null, error: { message: 'E-mail ou senha incorretos.' } };
+          }
+        }
         return { data: null, error: { message: err.message } };
       }
     },
+
 
     async signUp({ email, password }: any) {
       try {
