@@ -1048,9 +1048,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.0.5
+              Versão 2.0.6
             </span>
           </div>
+
 
 
 
@@ -1828,13 +1829,48 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-full bg-[#ef3340]/10 border border-[#ef3340]/30 flex items-center justify-center text-2xl mx-auto mb-3">
                   🔐
                 </div>
-                <h3 className="text-white font-black uppercase tracking-tight text-xl leading-none">Criar Nova Senha</h3>
+                <h3 className="text-white font-black uppercase tracking-tight text-xl leading-none">Confirmação de Acesso</h3>
                 <p className="text-white/40 text-[10px] uppercase font-black tracking-widest mt-2 leading-relaxed">
-                  Digite e confirme sua nova senha para continuar usando o app.
+                  Confirme seus dados e crie sua senha pessoal para continuar.
                 </p>
               </div>
 
               <form onSubmit={salvarNovaSenha} className="flex flex-col gap-4">
+                {/* CAMPO DE DATA DE NASCIMENTO */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-white/40 block">Data de Nascimento</label>
+                    {alunoDb?.data_nascimento && (
+                      <span className="text-[9px] font-bold text-green-400/80 bg-green-500/10 px-2 py-0.5 rounded-full">Já Cadastrado</span>
+                    )}
+                  </div>
+                  {alunoDb?.data_nascimento ? (
+                    <input 
+                      type="text" 
+                      disabled 
+                      value={(() => {
+                        const parts = String(alunoDb.data_nascimento).split('-');
+                        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        return alunoDb.data_nascimento;
+                      })()}
+                      className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3.5 text-white/40 cursor-not-allowed text-sm font-bold opacity-60"
+                    />
+                  ) : (
+                    <input 
+                      type="date" 
+                      required 
+                      value={dataNascimentoPrimeiroLogin}
+                      onChange={(e) => setDataNascimentoPrimeiroLogin(e.target.value)}
+                      className="w-full bg-white/5 border border-[#ef3340]/40 rounded-xl px-4 py-3.5 text-white outline-none focus:ring-1 focus:ring-[#ef3340] text-sm font-bold"
+                    />
+                  )}
+                  {!alunoDb?.data_nascimento && (
+                    <span className="text-[8px] font-bold text-amber-400/80 mt-1 block">
+                      * Campo obrigatório para confirmação do seu cadastro
+                    </span>
+                  )}
+                </div>
+
                 <div>
                   <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 block">Nova Senha (mín. 6 caracteres)</label>
                   <input 
@@ -1864,7 +1900,7 @@ export default function Home() {
                   disabled={salvandoNovaSenha} 
                   className="w-full bg-gradient-to-r from-orange-500 to-[#ef3340] text-white text-[11px] font-black uppercase tracking-widest py-4 rounded-xl active:scale-95 transition-all shadow-[0_0_15px_rgba(239,51,64,0.3)] disabled:opacity-50 mt-2"
                 >
-                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                  {salvandoNovaSenha ? 'Salvando...' : 'Salvar e Acessar'}
                 </button>
 
                 <button 
@@ -1878,6 +1914,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
 
         <PixQrCodeModal 
           isOpen={!!pixModalTipo} 
