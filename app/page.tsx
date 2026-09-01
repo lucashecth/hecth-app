@@ -546,15 +546,47 @@ export default function Home() {
 
   const carregarPerfil = async (emailUsuario: string | undefined) => {
     if (!emailUsuario) return;
-    const { data, error } = await supabase.from('alunos').select('*').eq('email', emailUsuario).single();
-    if (data) {
-      setAlunoDb(data);
-      setPerfilNaoEncontrado(false);
-    } else {
-      console.warn("Perfil nao encontrado:", error);
+    const emailLimpo = emailUsuario.trim().toLowerCase();
+
+    // Timeout de segurança de 4 segundos para NUNCA travar a tela
+    const timer = setTimeout(() => {
+      setPerfilNaoEncontrado(true);
+    }, 4000);
+
+    try {
+      // 1. Tenta buscar exato
+      let { data, error } = await supabase
+        .from('alunos')
+        .select('*')
+        .eq('email', emailLimpo)
+        .maybeSingle();
+
+      // 2. Se não achou (ex: cadastrado com letra maiúscula), busca insensível a maiúsculas/minúsculas
+      if (!data) {
+        const { data: dataIlike } = await supabase
+          .from('alunos')
+          .select('*')
+          .ilike('email', emailLimpo)
+          .maybeSingle();
+        data = dataIlike;
+      }
+
+      clearTimeout(timer);
+
+      if (data) {
+        setAlunoDb(data);
+        setPerfilNaoEncontrado(false);
+      } else {
+        console.warn("Perfil não encontrado no banco para:", emailLimpo, error);
+        setPerfilNaoEncontrado(true);
+      }
+    } catch (e) {
+      clearTimeout(timer);
+      console.error("Erro ao carregar perfil:", e);
       setPerfilNaoEncontrado(true);
     }
   };
+
 
   const salvarPerfilAutocuracao = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -994,9 +1026,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.8.6
+              Versão 1.8.7
             </span>
           </div>
+
         </div>
 
         {modalRedefinirSenha && (
