@@ -134,18 +134,37 @@ class QueryBuilder {
     return {
       eq: async (field: string, val: any) => {
         try {
-          if (field === 'id' || field === 'email') {
-            const docId = String(val).toLowerCase().trim();
-            const ref = doc(db, this.colName, docId);
-            await updateDoc(ref, fields);
-          } else {
-            const res = await this.eq(field, val).execute();
-            if (res.data) {
-              for (const it of res.data) {
-                await updateDoc(doc(db, this.colName, String(it.id)), fields);
-              }
+          const valStr = String(val).toLowerCase().trim();
+          
+          // 1. Tenta atualizar direto pelo docId
+          const directRef = doc(db, this.colName, valStr);
+          try {
+            await updateDoc(directRef, fields);
+            return { error: null };
+          } catch (directErr) {
+            // Se não existe documento com esse docId, busca pelo campo (ex: campo 'id' numérico ou 'email')
+          }
+
+          // 2. Busca pelo campo especificado
+          const res = await this.eq(field, val).execute();
+          if (res.data && res.data.length > 0) {
+            for (const it of res.data) {
+              const itemDocId = it.doc_id || it.id;
+              await updateDoc(doc(db, this.colName, String(itemDocId)), fields);
+            }
+            return { error: null };
+          }
+
+          // 3. Fallback: se buscou por 'id' numérico, varre a coleção
+          if (field === 'id') {
+            const snap = await getDocs(collection(db, this.colName));
+            const match = snap.docs.find(d => String(d.data().id) === String(val));
+            if (match) {
+              await updateDoc(doc(db, this.colName, match.id), fields);
+              return { error: null };
             }
           }
+
           return { error: null };
         } catch (e: any) {
           return { error: e };
@@ -158,16 +177,34 @@ class QueryBuilder {
     return {
       eq: async (field: string, val: any) => {
         try {
-          if (field === 'id' || field === 'email') {
-            await deleteDoc(doc(db, this.colName, String(val).toLowerCase().trim()));
-          } else if (this.colName === 'presencas') {
-            const res = await this.eq(field, val).execute();
-            if (res.data) {
-              for (const it of res.data) {
-                await deleteDoc(doc(db, this.colName, String(it.id)));
-              }
+          const valStr = String(val).toLowerCase().trim();
+          
+          // 1. Tenta deletar direto pelo docId
+          try {
+            await deleteDoc(doc(db, this.colName, valStr));
+            return { error: null };
+          } catch (directErr) {}
+
+          // 2. Busca pelo campo
+          const res = await this.eq(field, val).execute();
+          if (res.data && res.data.length > 0) {
+            for (const it of res.data) {
+              const itemDocId = it.doc_id || it.id;
+              await deleteDoc(doc(db, this.colName, String(itemDocId)));
+            }
+            return { error: null };
+          }
+
+          // 3. Fallback por id numérico
+          if (field === 'id') {
+            const snap = await getDocs(collection(db, this.colName));
+            const match = snap.docs.find(d => String(d.data().id) === String(val));
+            if (match) {
+              await deleteDoc(doc(db, this.colName, match.id));
+              return { error: null };
             }
           }
+
           return { error: null };
         } catch (e: any) {
           return { error: e };
@@ -186,6 +223,7 @@ class QueryBuilder {
       }
     };
   }
+
 }
 
 export const supabase: any = {
