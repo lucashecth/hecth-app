@@ -1008,9 +1008,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.8.9
+              Versão 1.9.0
             </span>
           </div>
+
 
 
 

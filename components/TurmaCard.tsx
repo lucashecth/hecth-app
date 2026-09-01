@@ -91,7 +91,8 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
 
   const jaMarcou = presencasTurma.some(p => p.aluno_email === session?.user?.email);
   const outrasFotos = presencasTurma.filter(p => p.aluno_email !== session?.user?.email);
-  const lotou = turma.vagas_ocupadas >= turma.vagas_totais;
+  const vagasOcupadasReais = presencasTurma.length;
+  const lotou = vagasOcupadasReais >= turma.vagas_totais;
   const sumindo = turmaIdClicada === turma.id && acaoClicada === 'desmarcar';
   const surgindo = turmaIdClicada === turma.id && acaoClicada === 'marcar';
 
@@ -186,12 +187,13 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
         <div className="text-right">
           <span className="text-white/20 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>
           <span className="text-white font-black text-xl tracking-tighter italic">
-            <span className={lotou ? 'text-white/40' : 'text-[#ef3340]'}>{turma.vagas_ocupadas}</span>
+            <span className={lotou ? 'text-white/40' : 'text-[#ef3340]'}>{vagasOcupadasReais}</span>
             <span className="text-white/10 mx-0.5">/</span>
             <span className="text-white/40">{turma.vagas_totais}</span>
           </span>
         </div>
       </div>
+
 
       {aulaEncerrada ? (
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-white/5 text-white/20 flex items-center justify-center gap-2 border border-white/5 italic">
