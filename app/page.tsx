@@ -172,34 +172,11 @@ export default function Home() {
 
     carregarArena();
 
-    // Cria APENAS 1 canal Realtime unificado e leve para não sobrecarregar o Supabase
-    let arenaTimeout: any = null;
-    let notifTimeout: any = null;
-
-    const triggerArenaDebounced = () => {
-      if (arenaTimeout) clearTimeout(arenaTimeout);
-      arenaTimeout = setTimeout(() => carregarArena(), 500);
-    };
-
-    const triggerNotifDebounced = () => {
-      if (notifTimeout) clearTimeout(notifTimeout);
-      notifTimeout = setTimeout(() => carregarNotificacoes(), 500);
-    };
-
-    const canalUnificado = supabase.channel('realtime_hecth_global')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, triggerArenaDebounced)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'turmas' }, triggerArenaDebounced)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'mensagens' }, triggerNotifDebounced)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, triggerNotifDebounced)
-      .subscribe();
-
     return () => {
       subscription.unsubscribe();
-      if (arenaTimeout) clearTimeout(arenaTimeout);
-      if (notifTimeout) clearTimeout(notifTimeout);
-      supabase.removeChannel(canalUnificado);
     };
   }, []);
+
 
 
 
@@ -1031,9 +1008,10 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 1.8.8
+              Versão 1.8.9
             </span>
           </div>
+
 
 
         </div>
