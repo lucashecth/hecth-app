@@ -16,8 +16,10 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy
+  orderBy,
+  onSnapshot
 } from 'firebase/firestore';
+
 
 class QueryBuilder {
   private colName: string;
@@ -349,16 +351,36 @@ export const supabase: any = {
     }
   },
 
-  channel(_channelName: string) {
+  channel(channelName: string) {
+    const unsubscribers: Array<() => void> = [];
     return {
-      on(_event: string, _opts: any, _cb: any) {
+      on(event: string, opts: any, callback: (payload: any) => void) {
+        const table = opts?.table || (typeof opts === 'string' ? opts : null) || 'presencas';
+        try {
+          const unsub = onSnapshot(collection(db, table), (snap) => {
+            callback({ eventType: '*', new: {}, old: {}, schema: 'public', table });
+          });
+          unsubscribers.push(unsub);
+        } catch (e) {
+          console.error('Erro realtime channel:', e);
+        }
         return this;
       },
-      subscribe() {
-        return this;
+      subscribe(cb?: (status: string) => void) {
+        if (cb) cb('SUBSCRIBED');
+        return {
+          unsubscribe() {
+            unsubscribers.forEach(u => u());
+          }
+        };
       }
     };
   },
 
-  removeChannel(_ch: any) {}
+  removeChannel(ch: any) {
+    if (ch && typeof ch.unsubscribe === 'function') {
+      ch.unsubscribe();
+    }
+  }
+
 };

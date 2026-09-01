@@ -175,10 +175,20 @@ export default function Home() {
 
     carregarArena();
 
+    // 3. Listener Realtime para a Arena (Presenças e Turmas)
+    const arenaChannel = supabase
+      .channel('realtime-arena')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => {
+        carregarArena();
+      })
+      .subscribe();
+
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(arenaChannel);
     };
   }, []);
+
 
 
 
@@ -1037,8 +1047,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.0
+              Versão 2.1.1
             </span>
+
 
           </div>
 
