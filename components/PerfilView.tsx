@@ -1,7 +1,9 @@
 "use client";
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { fileToBase64 } from '../utils/imagem';
 import Cropper from 'react-easy-crop';
+
 import { TagApelido } from './TagApelido';
 
 
@@ -136,14 +138,11 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
       // Gera a imagem final recortada
       const croppedImageBlob = await getCroppedImg(imageSrc as string, croppedAreaPixels);
       
-      // Upload para o Supabase
-      const fileName = `perfil-${alunoDb.id}-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, croppedImageBlob);
-      if (uploadError) throw uploadError;
+      // Converte para Base64 DataURL ultraleve
+      const fotoUrl = await fileToBase64(croppedImageBlob, 350, 0.7);
       
-      // Pega URL Pública e atualiza o banco
-      const { data: publicUrlData } = supabase.storage.from('avatares').getPublicUrl(fileName);
-      await supabase.from('alunos').update({ foto_url: publicUrlData.publicUrl }).eq('id', alunoDb.id);
+      const { error } = await supabase.from('alunos').update({ foto_url: fotoUrl }).eq('email', alunoDb.email);
+      if (error) throw error;
       
       alert("✅ Foto atualizada com sucesso!");
       window.location.reload(); // Recarrega para aplicar a foto
@@ -153,6 +152,7 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
       setUploading(false);
     }
   };
+
 
   return (
     <div className="animacao-entrada w-full pb-20 pt-4">

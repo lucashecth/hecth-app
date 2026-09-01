@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { fileToBase64 } from '../utils/imagem';
 
 interface FotoObrigatoriaViewProps {
   alunoDb: any;
@@ -32,28 +33,13 @@ export function FotoObrigatoriaView({ alunoDb, onFotoEnviada, onLogout }: FotoOb
 
     setLoading(true);
     try {
-      const fileExt = foto.name.split('.').pop();
-      const fileName = `avatar_${alunoDb.id}_${Date.now()}.${fileExt}`;
+      const fotoUrl = await fileToBase64(foto, 350, 0.7);
 
-      const { error: uploadError } = await supabase
-        .storage
-        .from('avatares')
-        .upload(fileName, foto);
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase
-        .storage
-        .from('avatares')
-        .getPublicUrl(fileName);
-
-      const fotoUrl = publicUrlData.publicUrl;
-
-      // Update student profile in Supabase
+      // Update student profile
       const { error: updateError } = await supabase
         .from('alunos')
         .update({ foto_url: fotoUrl })
-        .eq('id', alunoDb.id);
+        .eq('email', alunoDb.email);
 
       if (updateError) throw updateError;
 
@@ -65,6 +51,7 @@ export function FotoObrigatoriaView({ alunoDb, onFotoEnviada, onLogout }: FotoOb
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-white font-sans">

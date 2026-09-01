@@ -36,8 +36,9 @@ import { AdminExperimentalView } from '../components/AdminExperimentalView';
 
 import { obterStatusMensalidade } from '../utils/mensalidade';
 
-import { comprimirImagem } from '../utils/imagem';
+import { comprimirImagem, fileToBase64 } from '../utils/imagem';
 import { enviarParaGoogleSheets } from '../utils/googleSheets';
+
 
 
 
@@ -587,27 +588,21 @@ export default function Home() {
     }
     setCompletandoPerfil(true);
     try {
-      // 1. Comprime a imagem de perfil
-      const fotoComprimida = await comprimirImagem(selfFoto, 600, 0.75);
-      const fileExt = fotoComprimida.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, fotoComprimida);
-      if (uploadError) throw uploadError;
+      // 1. Converte a foto comprimida para DataURL Base64 ultraleve
+      const fotoUrl = await fileToBase64(selfFoto, 350, 0.7);
 
-      // 2. Obtem url publica
-      const { data: publicUrlData } = supabase.storage.from('avatares').getPublicUrl(fileName);
-
-      // 3. Insere o aluno
+      // 2. Insere o aluno
       const novoAluno = {
         nome: selfNome,
         sobrenome: selfSobrenome,
         email: session.user.email,
-        foto_url: publicUrlData.publicUrl,
+        foto_url: fotoUrl,
         status: 'pendente',
         data_nascimento: selfDataNascimento || null
       };
 
       const { error: insertError } = await supabase.from('alunos').insert([novoAluno]);
+
       if (insertError) throw insertError;
 
       setPerfilNaoEncontrado(false);
@@ -719,16 +714,9 @@ export default function Home() {
     if (!nome || !sobrenome || !email || !senha || !foto || !dataNascimento) return alert('Preencha tudo e selecione a foto!');
     setLoading(true);
     try {
-      // Comprime a imagem de perfil antes do upload
-      const fotoComprimida = await comprimirImagem(foto, 600, 0.75);
+      // Converte a foto para DataURL Base64 ultraleve
+      const fotoUrl = await fileToBase64(foto, 350, 0.7);
       
-      const fileExt = fotoComprimida.name.split('.').pop() || 'jpg';
-      const fileName = `${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('avatares').upload(fileName, fotoComprimida);
-      if (uploadError) throw uploadError;
-
-      
-      const { data: publicUrlData } = supabase.storage.from('avatares').getPublicUrl(fileName);
       const { error: authError } = await supabase.auth.signUp({ email, password: senha });
       if (authError) throw authError;
       
@@ -736,13 +724,14 @@ export default function Home() {
         nome, 
         sobrenome, 
         email, 
-        foto_url: publicUrlData.publicUrl, 
+        foto_url: fotoUrl, 
         status: 'pendente',
         data_nascimento: dataNascimento || null
       };
       await supabase.from('alunos').insert([novoAluno]);
       setAlunoDb(novoAluno);
     } catch (err: any) { alert('Erro: ' + err.message); }
+
     setLoading(false);
   };
 
@@ -1048,8 +1037,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.0.9
+              Versão 2.1.0
             </span>
+
           </div>
 
 
