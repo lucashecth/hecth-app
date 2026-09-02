@@ -24,12 +24,33 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
         return;
       }
 
+      // Filtra apenas presenças pertencentes ao ciclo de exibição atual (corte 20:30)
+      const agoraCheck = new Date();
+      const inicioCiclo = new Date(agoraCheck);
+      if (agoraCheck.getHours() > 20 || (agoraCheck.getHours() === 20 && agoraCheck.getMinutes() >= 30)) {
+        inicioCiclo.setHours(20, 30, 0, 0);
+      } else {
+        inicioCiclo.setDate(inicioCiclo.getDate() - 1);
+        inicioCiclo.setHours(20, 30, 0, 0);
+      }
+
+      const presencasFiltradas = presencas.filter((p: any) => {
+        if (!p.created_at) return true;
+        return new Date(p.created_at) >= inicioCiclo;
+      });
+
+      if (presencasFiltradas.length === 0) {
+        setLoading(false);
+        return;
+      }
+
       // 2. Busca os dados completos dos alunos inscritos
-      const emails = presencas.map(p => p.aluno_email);
+      const emails = presencasFiltradas.map(p => p.aluno_email);
       const { data: alunosData } = await supabase.from('alunos').select('*').in('email', emails);
 
       // 3. Junta os dados com o horário de inscrição (formato HH:MM)
-      const alunosMontados = presencas.map(p => {
+      const alunosMontados = presencasFiltradas.map(p => {
+
         const isExp = p.aluno_email?.startsWith('experimental_');
         let horaFormatada = "--:--";
         if (p.created_at) {

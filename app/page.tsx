@@ -304,10 +304,43 @@ export default function Home() {
       const resPresencas = await supabase.from('presencas').select('*');
       const pData = resPresencas.data;
       if (pData && pData.length > 0) {
+        // --- AUTO-LIMPEZA DO DIA ANTERIOR NA VIRADA ---
+        // Calcula a data de corte: se agora passou das 20:30, a lista ativa é a de amanhã (corte hoje 20:30).
+        // Presenças criadas antes do início do ciclo atual são limpas automaticamente.
+        const agoraCheck = new Date();
+        const inicioCiclo = new Date(agoraCheck);
+        if (agoraCheck.getHours() > 20 || (agoraCheck.getHours() === 20 && agoraCheck.getMinutes() >= 30)) {
+          // Virou para o dia seguinte: presenças criadas antes de hoje 20:30 pertencem ao dia anterior
+          inicioCiclo.setHours(20, 30, 0, 0);
+        } else {
+          // Ainda no dia de hoje: presenças criadas antes de ontem 20:30 pertencem ao dia anterior
+          inicioCiclo.setDate(inicioCiclo.getDate() - 1);
+          inicioCiclo.setHours(20, 30, 0, 0);
+        }
+
+        const presencasAntigas = pData.filter((p: any) => {
+          if (!p.created_at) return false;
+          const dataCriacao = new Date(p.created_at);
+          return dataCriacao < inicioCiclo;
+        });
+
+        if (presencasAntigas.length > 0) {
+          // Limpa em background do banco de dados
+          presencasAntigas.forEach((pa: any) => {
+            supabase.from('presencas').delete().eq('id', pa.id).then();
+          });
+        }
+
+        const presencasValidas = pData.filter((p: any) => {
+          if (!p.created_at) return true;
+          return new Date(p.created_at) >= inicioCiclo;
+        });
+
         // Verifica se há e-mails sem nível no cache
-        const emailsSemNivel = pData
+        const emailsSemNivel = presencasValidas
           .map((p: any) => p.aluno_email)
           .filter((email: string) => email && !alunosNiveisCacheRef.current.has(email) && !email.startsWith('experimental_'));
+
 
         if (emailsSemNivel.length > 0) {
           const { data: novosNiveis } = await supabase
@@ -324,12 +357,13 @@ export default function Home() {
           }
         }
 
-        // Aplica o nível em cada presença
-        const presencasComNivel = pData.map((p: any) => ({
+        // Aplica o nível em cada presença válida
+        const presencasComNivel = presencasValidas.map((p: any) => ({
           ...p,
           nivel: p.nivel || alunosNiveisCacheRef.current.get(p.aluno_email) || 'Aprendiz'
         }));
         setPresencasDb(presencasComNivel);
+
       } else {
         setPresencasDb([]);
       }
@@ -1120,8 +1154,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.2.1
+              Versão 2.2.2
             </span>
+
 
 
 
