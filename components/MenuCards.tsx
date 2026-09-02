@@ -39,8 +39,9 @@ export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagen
       ),
       cor: 'text-green-400',
       bg: 'bg-green-400/10',
-      bloqueado: false
+      bloqueado: true
     },
+
     {
       nome: 'Uniformes',
       id: 'uniformes' as const,
