@@ -279,6 +279,8 @@ export default function Home() {
   const arenaLoadingRef = useRef(false);
   const aniversariantesLoadedRef = useRef(false);
   const turmasCacheRef = useRef<any[] | null>(null);
+  const alunosNiveisCacheRef = useRef<Map<string, string>>(new Map());
+
 
   const carregarArena = async () => {
     if (arenaLoadingRef.current) return;
@@ -295,11 +297,36 @@ export default function Home() {
         setTurmas(turmasCacheRef.current);
       }
 
-      // 2. Carrega apenas presenças
+      // 2. Carrega presenças e enriquece com nível
       const resPresencas = await supabase.from('presencas').select('*');
       const pData = resPresencas.data;
       if (pData && pData.length > 0) {
-        setPresencasDb(pData);
+        // Verifica se há e-mails sem nível no cache
+        const emailsSemNivel = pData
+          .map((p: any) => p.aluno_email)
+          .filter((email: string) => email && !alunosNiveisCacheRef.current.has(email) && !email.startsWith('experimental_'));
+
+        if (emailsSemNivel.length > 0) {
+          const { data: novosNiveis } = await supabase
+            .from('alunos')
+            .select('email, nivel')
+            .in('email', Array.from(new Set(emailsSemNivel)));
+
+          if (novosNiveis) {
+            novosNiveis.forEach((a: any) => {
+              if (a.email && a.nivel) {
+                alunosNiveisCacheRef.current.set(a.email, a.nivel);
+              }
+            });
+          }
+        }
+
+        // Aplica o nível em cada presença
+        const presencasComNivel = pData.map((p: any) => ({
+          ...p,
+          nivel: p.nivel || alunosNiveisCacheRef.current.get(p.aluno_email) || 'Aprendiz'
+        }));
+        setPresencasDb(presencasComNivel);
       } else {
         setPresencasDb([]);
       }
@@ -315,6 +342,7 @@ export default function Home() {
       arenaLoadingRef.current = false;
     }
   };
+
 
 
 
@@ -1052,8 +1080,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.5
+              Versão 2.1.6
             </span>
+
 
 
 

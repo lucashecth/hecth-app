@@ -137,15 +137,15 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       </div>
 
 
-      <div className="flex justify-between items-center border-t border-white/5 pt-5">
-        {/* AQUI ESTÁ A MÁGICA: Transformamos a div das fotos em um botão interativo */}
+      <div className="flex justify-between items-center border-t border-white/5 pt-5 relative gap-3">
+        {/* Lista de Avatares com corte inteligente e scroll invisível se passar da largura */}
         <div 
           onClick={() => onVerAlunos && onVerAlunos(turma)}
-          className="flex -space-x-3 items-center cursor-pointer active:scale-95 hover:opacity-80 transition-all"
+          className="flex -space-x-3 items-center cursor-pointer active:scale-95 hover:opacity-80 transition-all flex-1 min-w-0 overflow-hidden py-1"
         >
           {outrasFotos.map((p, idx) => {
             const isExp = p.aluno_email?.startsWith('experimental_');
-            const borderCls = isExp ? 'border-white/20' : obterBorderClass(p.nivel);
+            const borderCls = isExp ? 'border-white/40' : obterBorderClass(p.nivel);
             const nomeExp = isExp ? p.aluno_email.split('_').slice(2).join(' ') : '';
             const inicial = isExp ? nomeExp.charAt(0).toUpperCase() : p.inicial;
 
@@ -153,13 +153,13 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
               <div 
                 key={p.aluno_email} 
                 style={{ zIndex: 20 - idx }} 
-                className={`w-9 h-9 rounded-full border-2 flex items-center justify-center p-[1.5px] bg-[#121212] shadow-xl ${borderCls}`}
+                className={`w-9 h-9 shrink-0 rounded-full border-2 flex items-center justify-center p-[1px] bg-[#121212] shadow-xl ${borderCls}`}
               >
                 <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
                   {p.foto_url && !isExp ? (
                     <img src={p.foto_url} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-white/60 font-black text-[10px]">{inicial}</span>
+                    <span className="text-white/80 font-black text-[10px]">{inicial}</span>
                   )}
                 </div>
               </div>
@@ -169,7 +169,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           {(jaMarcou || sumindo) && (
             <div 
               style={{ zIndex: 25 }} 
-              className={`w-10 h-10 rounded-full border-2 flex items-center justify-center p-[2px] bg-[#121212] shadow-xl ${avatarBorderClass} ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}
+              className={`w-10 h-10 shrink-0 rounded-full border-2 flex items-center justify-center p-[1.5px] bg-[#121212] shadow-xl ${avatarBorderClass} ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}
             >
               <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
                 {alunoDb?.foto_url ? (
@@ -182,20 +182,19 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
           )}
         </div>
 
-
-        <div className="text-right shrink-0 relative z-30 bg-[#121212] pl-3 py-1 rounded-xl">
-          <span className="text-white/20 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>
+        {/* Contador de Vagas sempre visível por cima com fundo sólido */}
+        <div className="text-right shrink-0 relative z-40 bg-[#121212] pl-4 py-1">
+          <span className="text-white/30 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>
           <span className="text-white font-black text-xl tracking-tighter italic">
             <span className={lotou ? 'text-white/40' : 'text-[#ef3340]'}>{vagasOcupadasReais}</span>
-            <span className="text-white/10 mx-0.5">/</span>
-            <span className="text-white/40">{turma.vagas_totais}</span>
+            <span className="text-white/20 mx-0.5">/</span>
+            <span className="text-white/50">{turma.vagas_totais}</span>
           </span>
         </div>
-
       </div>
 
-
       {aulaEncerrada ? (
+
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-white/5 text-white/20 flex items-center justify-center gap-2 border border-white/5 italic">
           Inscrições Encerradas
         </div>
