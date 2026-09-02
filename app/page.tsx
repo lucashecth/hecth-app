@@ -276,48 +276,46 @@ export default function Home() {
 
 
 
+  const arenaLoadingRef = useRef(false);
+  const aniversariantesLoadedRef = useRef(false);
+  const turmasCacheRef = useRef<any[] | null>(null);
+
   const carregarArena = async () => {
+    if (arenaLoadingRef.current) return;
+    arenaLoadingRef.current = true;
     try {
-      const [resTurmas, resPresencas] = await Promise.all([
-        supabase.from('turmas').select('*').order('horario', { ascending: true }),
-        supabase.from('presencas').select('*')
-      ]);
+      // 1. Carrega turmas (usa cache em memória se já tiver)
+      if (!turmasCacheRef.current || turmasCacheRef.current.length === 0) {
+        const resTurmas = await supabase.from('turmas').select('*').order('horario', { ascending: true });
+        if (resTurmas.data) {
+          turmasCacheRef.current = resTurmas.data;
+          setTurmas(resTurmas.data);
+        }
+      } else {
+        setTurmas(turmasCacheRef.current);
+      }
 
-      if (resTurmas.data) setTurmas(resTurmas.data);
-
+      // 2. Carrega apenas presenças
+      const resPresencas = await supabase.from('presencas').select('*');
       const pData = resPresencas.data;
       if (pData && pData.length > 0) {
-        const emails = Array.from(new Set(pData.map(p => p.aluno_email).filter(Boolean)));
-        if (emails.length > 0) {
-          const { data: alunosNiveis } = await supabase
-            .from('alunos')
-            .select('email, nivel')
-            .in('email', emails);
-          
-          if (alunosNiveis) {
-            const nivelMap = new Map(alunosNiveis.map(a => [a.email, a.nivel]));
-            const presencasComNivel = pData.map(p => ({
-              ...p,
-              nivel: nivelMap.get(p.aluno_email) || 'Aprendiz'
-            }));
-            setPresencasDb(presencasComNivel);
-          } else {
-            setPresencasDb(pData);
-          }
-        } else {
-          setPresencasDb(pData);
-        }
+        setPresencasDb(pData);
       } else {
         setPresencasDb([]);
       }
 
-      // Roda notificações e aniversários em background sem travar o carregamento principal
-      carregarNotificacoes();
-      carregarAniversariantes();
+      // 3. Aniversariantes roda apenas UMA vez por sessão
+      if (!aniversariantesLoadedRef.current) {
+        aniversariantesLoadedRef.current = true;
+        carregarAniversariantes();
+      }
     } catch (err) {
       console.error("Erro ao carregar arena:", err);
+    } finally {
+      arenaLoadingRef.current = false;
     }
   };
+
 
 
   const carregarAniversariantes = async () => {
@@ -1047,8 +1045,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.1
+              Versão 2.1.2
             </span>
+
 
 
           </div>
