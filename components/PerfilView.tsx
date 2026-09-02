@@ -312,7 +312,7 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
         <div className="mt-4 bg-[#121212] border border-white/5 rounded-3xl p-6 text-left">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
-              <span>🥋</span> Faixas de Perfil
+              Faixas de Perfil
             </h4>
             <span className="text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
               {faixasDisponiveis.length} {faixasDisponiveis.length === 1 ? 'disponível' : 'disponíveis'}
@@ -321,6 +321,7 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
           <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-4">
             Escolha uma faixa desbloqueada para destacar seu card nas turmas
           </p>
+
 
           {loadingFaixas ? (
             <div className="text-center py-4 text-white/20 text-xs font-black uppercase tracking-widest">

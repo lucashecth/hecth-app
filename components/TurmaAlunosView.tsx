@@ -138,51 +138,52 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                 key={aluno.id} 
                 className={`w-full rounded-2xl p-4 flex items-center justify-between relative overflow-hidden border transition-all ${
                   temFaixa 
-                    ? 'border-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.12)]' 
+                    ? 'border-amber-400/50 shadow-[0_0_20px_rgba(251,191,36,0.15)] bg-black' 
                     : 'bg-[#121212] border-white/5'
                 }`}
               >
-                {/* Banner de Faixa de Fundo com Overlay */}
+                {/* Imagem da Faixa perfeitamente contida e arredondada no retângulo */}
                 {temFaixa && (
                   <>
                     <img 
                       src={aluno.faixa_ativa_url} 
                       alt="" 
-                      className="absolute inset-0 w-full h-full object-cover opacity-35 filter blur-[0.5px]"
+                      className="absolute inset-0 w-full h-full object-cover rounded-2xl select-none pointer-events-none"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/90 pointer-events-none" />
+                    {/* Camada suave para proteger o contraste dos textos sem escurecer a arte */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-black/70 rounded-2xl pointer-events-none" />
                   </>
                 )}
                 
                 <div className="flex items-center gap-3 flex-1 text-left relative z-10">
-                  <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
-                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
+                  <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] shadow-lg ${borderClass}`}>
+                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-black/60">
                       {aluno.foto_url && !aluno.isExperimental ? (
                         <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-xs">👤</span>
+                        <span className="text-xs text-white/80">👤</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight flex items-center gap-1.5 flex-wrap">
+                    <h4 className="font-black text-sm uppercase tracking-tight text-white leading-tight flex items-center gap-1.5 flex-wrap drop-shadow-md">
                       {aluno.nome} {aluno.sobrenome}
                       <TagApelido apelido={aluno.apelido} mode="name" />
                     </h4>
 
                     <div className="flex items-center gap-1.5 flex-wrap mt-1">
                       {aluno.isExperimental ? (
-                        <span className="text-[9px] font-black uppercase px-2 py-0.5 inline-block rounded border border-white/10 text-white/40 bg-white/5 italic">
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 inline-block rounded border border-white/10 text-white/60 bg-black/50 italic backdrop-blur-sm">
                           Aula Experimental
                         </span>
                       ) : (
                         <TagApelido apelido={aluno.apelido} nivel={nivelDoBanco} levelStyle={levelTagStyle} mode="level" />
                       )}
 
-                      {/* Tag da Faixa de Perfil */}
+                      {/* Tag da Faixa de Perfil (Sem emoji de kimono) */}
                       {temFaixa && aluno.faixa_ativa_nome && (
-                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-amber-400/40 bg-amber-500/20 text-amber-300 italic flex items-center gap-1">
-                          <span>🥋</span> {aluno.faixa_ativa_nome}
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-amber-400/40 bg-black/60 text-amber-300 italic backdrop-blur-sm shadow-sm">
+                          {aluno.faixa_ativa_nome}
                         </span>
                       )}
                     </div>
@@ -190,13 +191,14 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                 </div>
 
                 {/* Horário de Inscrição HH:MM */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/10 px-3 py-2 rounded-xl text-center relative z-10 shrink-0 ml-2">
-                  <span className="block text-[8px] font-black uppercase text-white/40 tracking-widest mb-0.5">Inscrito às</span>
-                  <span className="text-xs font-black text-white/90">{aluno.hora_inscricao}</span>
+                <div className="bg-black/60 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl text-center relative z-10 shrink-0 ml-2 shadow-md">
+                  <span className="block text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">Inscrito às</span>
+                  <span className="text-xs font-black text-white">{aluno.hora_inscricao}</span>
                 </div>
                 
               </div>
             );
+
 
           })
         )}

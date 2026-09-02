@@ -1120,8 +1120,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.2.0
+              Versão 2.2.1
             </span>
+
 
 
 
@@ -1812,8 +1813,10 @@ export default function Home() {
           {/* FAIXAS DE PERFIL */}
           {(isAdmin || isAdminEfetivo) && (
             <button onClick={() => setViewAdmin('faixas')} className="bg-[#121212] border border-amber-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-xl font-black">
-                🥋
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
               </div>
               <div>
                 <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Faixas de Perfil</span>
@@ -1821,6 +1824,7 @@ export default function Home() {
               </div>
             </button>
           )}
+
 
           {/* AULAS EXPERIMENTAIS */}
           {(isAdmin || isTeacher) && (

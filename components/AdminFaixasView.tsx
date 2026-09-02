@@ -188,8 +188,9 @@ export function AdminFaixasView({ onVoltar }: AdminFaixasViewProps) {
 
       <div className="bg-[#121212] border border-white/5 rounded-3xl p-6 mb-8 shadow-xl">
         <h3 className="text-sm font-black uppercase tracking-wider text-white mb-4 flex items-center gap-2">
-          <span>🥋</span> Nova Faixa de Perfil
+          Nova Faixa de Perfil
         </h3>
+
 
         <form onSubmit={handleCriarFaixa} className="flex flex-col gap-4">
           <div>
