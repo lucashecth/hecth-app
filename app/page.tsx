@@ -1117,8 +1117,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.8
+              Versão 2.1.9
             </span>
+
 
 
 
@@ -1462,71 +1463,27 @@ export default function Home() {
             )}
 
             {aniversariantesSemana.length > 0 && (
-              <div 
-                className="w-full bg-[#121212] border border-amber-500/20 rounded-3xl p-5 mb-6 shadow-xl relative overflow-hidden animacao-entrada"
+              <button 
+                onClick={() => setShowAniversariantesModal(true)}
+                className="w-full bg-[#121212] border border-amber-500/20 rounded-2xl p-4 mb-4 flex items-center justify-between transition-all active:scale-[0.98] text-left animacao-entrada shadow-lg hover:border-amber-500/40"
               >
-                {/* Cabeçalho do Card */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🎂</span>
-                    <h4 className="text-white font-black text-xs uppercase tracking-wider italic">
-                      Aniversariantes da Semana
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🎂</span>
+                  <div>
+                    <h4 className="text-white text-xs font-black uppercase tracking-wider">
+                      {aniversariantesSemana.length} {aniversariantesSemana.length === 1 ? 'Aniversariante' : 'Aniversariantes'} da Semana!
                     </h4>
+                    <p className="text-white/40 text-[9px] uppercase font-bold tracking-widest mt-0.5">
+                      Clique para ver todos e parabenizar 🎉
+                    </p>
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-amber-400/80 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-                    {aniversariantesSemana.length} {aniversariantesSemana.length === 1 ? 'atleta' : 'atletas'}
-                  </span>
                 </div>
-
-                {/* Grid com as Bolinhas dos Alunos + Chapeuzinho */}
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 pt-2">
-                  {aniversariantesSemana.map((aluno: any) => {
-                    const primeiroNome = aluno.nome?.split(' ')[0] || 'Atleta';
-                    return (
-                      <div 
-                        key={aluno.id}
-                        onClick={() => setShowAniversariantesModal(true)}
-                        className="flex flex-col items-center text-center cursor-pointer group active:scale-95 transition-all"
-                      >
-                        {/* Container do Avatar com Chapeuzinho de Festa */}
-                        <div className="relative mb-1.5">
-                          {/* Chapeuzinho de Festa sobreposto */}
-                          <span 
-                            className="absolute -top-3.5 -right-1 text-base select-none filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-10 transition-transform group-hover:scale-125 group-hover:rotate-12"
-                            title="Feliz Aniversário!"
-                          >
-                            🥳
-                          </span>
-
-                          <div className={`w-12 h-12 rounded-full border-2 p-[1.5px] bg-[#1a1a1a] shadow-lg transition-all group-hover:border-amber-400 ${aluno.isHoje ? 'border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.5)] scale-105' : 'border-amber-500/40'}`}>
-                            <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
-                              {aluno.foto_url ? (
-                                <img src={aluno.foto_url} alt={aluno.nome} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-white/80 font-black text-xs">
-                                  {aluno.nome?.charAt(0)?.toUpperCase()}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Nome e Data Abaixo */}
-                        <span className="text-white font-bold text-[10px] leading-tight truncate w-full group-hover:text-amber-400 transition-colors">
-                          {primeiroNome}
-                        </span>
-                        <span className={`text-[8px] font-black uppercase tracking-tighter mt-0.5 px-1.5 py-0.5 rounded ${aluno.isHoje ? 'bg-amber-400 text-black font-black' : 'text-amber-400/70 bg-amber-500/10'}`}>
-                          {aluno.isHoje ? 'Hoje!' : aluno.dataFormatada}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                <span className="text-amber-400 text-xs font-black">➔</span>
+              </button>
             )}
 
-
             <InstallAppCard />
+
 
             {statusMensalidade.ativo && statusMensalidade.diasRestantes <= 5 && (
               <div className="bg-[#121212] border border-amber-500/30 rounded-2xl p-4 mb-4 flex items-center gap-3">
@@ -1908,64 +1865,85 @@ export default function Home() {
         {showAniversariantesModal && (
           <div 
             onClick={() => setShowAniversariantesModal(false)}
-            className="fixed inset-0 bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-5 animate-fadeIn"
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-fadeIn"
           >
             <div 
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#121212] border border-amber-500/30 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl relative flex flex-col items-center"
+              className="bg-[#121212] border border-amber-500/30 rounded-[2rem] p-6 max-w-md w-full text-center shadow-2xl relative flex flex-col items-center"
             >
               <button 
                 onClick={() => setShowAniversariantesModal(false)} 
-                className="absolute top-4 right-4 text-white/40 hover:text-white font-black text-base p-1 transition-colors"
+                className="absolute top-5 right-5 text-white/40 hover:text-white font-black text-lg p-1 transition-colors"
               >
                 ✕
               </button>
 
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 text-2xl">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-3 text-2xl">
                 🎂
               </div>
 
               <h3 className="font-black text-xl text-white uppercase italic tracking-tight mb-1">
                 Aniversariantes da Semana
               </h3>
-              <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-5">
-                Deseje os parabéns aos atletas! 🎉
+              <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mb-6">
+                Parabéns aos atletas aniversariantes! 🎉
               </p>
 
-              <div className="flex flex-col gap-2.5 w-full max-h-72 overflow-y-auto mb-2 pr-1">
-                {aniversariantesSemana.map((aluno: any) => (
-                  <div key={aluno.id} className={`flex items-center justify-between p-3 rounded-2xl border text-left transition-all ${aluno.isHoje ? 'border-amber-400/50 bg-amber-500/10 shadow-[0_0_15px_rgba(251,191,36,0.15)]' : 'border-white/5 bg-white/5'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <span className="absolute -top-2 -right-1 text-xs select-none">🥳</span>
-                        <div className={`w-10 h-10 rounded-full overflow-hidden border ${aluno.isHoje ? 'border-amber-400' : 'border-white/10'} bg-white/5 flex items-center justify-center shrink-0`}>
-                          {aluno.foto_url ? (
-                            <img src={aluno.foto_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-white/80 font-black text-xs">{aluno.nome?.charAt(0)}</span>
-                          )}
+              {/* Grid com as Bolinhas dos Alunos + Chapeuzinho */}
+              <div className="grid grid-cols-3 gap-4 w-full max-h-80 overflow-y-auto pr-1 pb-2">
+                {aniversariantesSemana.map((aluno: any) => {
+                  const primeiroNome = aluno.nome?.split(' ')[0] || 'Atleta';
+                  const sobrenomeAbrev = aluno.sobrenome ? `${aluno.sobrenome.split(' ')[0]}` : '';
+
+                  return (
+                    <div 
+                      key={aluno.id} 
+                      className={`flex flex-col items-center text-center p-3 rounded-2xl border transition-all ${aluno.isHoje ? 'border-amber-400/60 bg-amber-500/10 shadow-[0_0_15px_rgba(251,191,36,0.15)]' : 'border-white/5 bg-white/5'}`}
+                    >
+                      {/* Avatar com Chapeuzinho */}
+                      <div className="relative mb-2 mt-1">
+                        <span 
+                          className="absolute -top-3.5 -right-1.5 text-base select-none filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-10"
+                          title="Parabéns!"
+                        >
+                          🥳
+                        </span>
+
+                        <div className={`w-14 h-14 rounded-full border-2 p-[1.5px] bg-[#1a1a1a] shadow-lg ${aluno.isHoje ? 'border-amber-400' : 'border-amber-500/40'}`}>
+                          <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
+                            {aluno.foto_url ? (
+                              <img src={aluno.foto_url} alt={aluno.nome} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-white/80 font-black text-sm">
+                                {aluno.nome?.charAt(0)?.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <h4 className="font-black text-xs uppercase text-white leading-tight">
-                          {aluno.nome} {aluno.sobrenome}
-                        </h4>
-                        <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest mt-0.5">
-                          {aluno.diaNome} ({aluno.dataFormatada})
-                        </p>
-                      </div>
-                    </div>
-                    {aluno.isHoje && (
-                      <span className="bg-amber-400 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-md shrink-0">
-                        Hoje!
+
+                      {/* Nome */}
+                      <span className="text-white font-bold text-xs leading-tight truncate w-full">
+                        {primeiroNome}
                       </span>
-                    )}
-                  </div>
-                ))}
+                      {sobrenomeAbrev && (
+                        <span className="text-white/50 text-[10px] leading-none truncate w-full mt-0.5">
+                          {sobrenomeAbrev}
+                        </span>
+                      )}
+
+                      {/* Dia e Data */}
+                      <span className={`text-[8px] font-black uppercase tracking-wider mt-2 px-2 py-0.5 rounded-full ${aluno.isHoje ? 'bg-amber-400 text-black font-black' : 'text-amber-400 bg-amber-500/10 border border-amber-500/20'}`}>
+                        {aluno.isHoje ? 'Hoje!' : `${aluno.diaNome.slice(0, 3)} ${aluno.dataFormatada}`}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
+
 
 
 
