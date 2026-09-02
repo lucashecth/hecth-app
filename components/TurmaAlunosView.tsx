@@ -131,11 +131,30 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
               levelTagStyle = 'animate-gold-shimmer text-black border-yellow-500/20 shadow-[0_0_10px_rgba(255,215,0,0.5)]';
             }
 
-            return (
+            const temFaixa = Boolean(aluno.faixa_ativa_url);
 
-              <div key={aluno.id} className="w-full bg-[#121212] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            return (
+              <div 
+                key={aluno.id} 
+                className={`w-full rounded-2xl p-4 flex items-center justify-between relative overflow-hidden border transition-all ${
+                  temFaixa 
+                    ? 'border-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.12)]' 
+                    : 'bg-[#121212] border-white/5'
+                }`}
+              >
+                {/* Banner de Faixa de Fundo com Overlay */}
+                {temFaixa && (
+                  <>
+                    <img 
+                      src={aluno.faixa_ativa_url} 
+                      alt="" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-35 filter blur-[0.5px]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/90 pointer-events-none" />
+                  </>
+                )}
                 
-                <div className="flex items-center gap-3 flex-1 text-left">
+                <div className="flex items-center gap-3 flex-1 text-left relative z-10">
                   <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
                     <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
                       {aluno.foto_url && !aluno.isExperimental ? (
@@ -151,26 +170,34 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
                       <TagApelido apelido={aluno.apelido} mode="name" />
                     </h4>
 
-                    {aluno.isExperimental ? (
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 mt-1 inline-block rounded border border-white/10 text-white/40 bg-white/5 italic">
-                        Aula Experimental
-                      </span>
-                    ) : (
-                      <TagApelido apelido={aluno.apelido} nivel={nivelDoBanco} levelStyle={levelTagStyle} mode="level" />
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                      {aluno.isExperimental ? (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 inline-block rounded border border-white/10 text-white/40 bg-white/5 italic">
+                          Aula Experimental
+                        </span>
+                      ) : (
+                        <TagApelido apelido={aluno.apelido} nivel={nivelDoBanco} levelStyle={levelTagStyle} mode="level" />
+                      )}
 
-
+                      {/* Tag da Faixa de Perfil */}
+                      {temFaixa && aluno.faixa_ativa_nome && (
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-amber-400/40 bg-amber-500/20 text-amber-300 italic flex items-center gap-1">
+                          <span>🥋</span> {aluno.faixa_ativa_nome}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Horário de Inscrição HH:MM */}
-                <div className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-center">
-                  <span className="block text-[8px] font-black uppercase text-white/30 tracking-widest mb-0.5">Inscrito às</span>
-                  <span className="text-xs font-black text-white/80">{aluno.hora_inscricao}</span>
+                <div className="bg-white/10 backdrop-blur-md border border-white/10 px-3 py-2 rounded-xl text-center relative z-10 shrink-0 ml-2">
+                  <span className="block text-[8px] font-black uppercase text-white/40 tracking-widest mb-0.5">Inscrito às</span>
+                  <span className="text-xs font-black text-white/90">{aluno.hora_inscricao}</span>
                 </div>
                 
               </div>
             );
+
           })
         )}
       </div>

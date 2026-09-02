@@ -31,6 +31,8 @@ import { QrCodeBaixarModal } from '../components/QrCodeBaixarModal';
 import { AdminPrecosView } from '../components/AdminPrecosView';
 import { AvulsoView } from '../components/AvulsoView';
 import { AdminExperimentalView } from '../components/AdminExperimentalView';
+import { AdminFaixasView } from '../components/AdminFaixasView';
+
 
 
 
@@ -1117,8 +1119,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.9
+              Versão 2.2.0
             </span>
+
 
 
 
@@ -1805,6 +1808,19 @@ export default function Home() {
           )}
 
 
+          {/* FAIXAS DE PERFIL */}
+          {(isAdmin || isAdminEfetivo) && (
+            <button onClick={() => setViewAdmin('faixas')} className="bg-[#121212] border border-amber-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-xl font-black">
+                🥋
+              </div>
+              <div>
+                <span className="font-black text-lg uppercase tracking-tighter text-white/90 block">Faixas de Perfil</span>
+                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-0.5">Badges & Banners</p>
+              </div>
+            </button>
+          )}
+
           {/* AULAS EXPERIMENTAIS */}
           {(isAdmin || isTeacher) && (
             <button onClick={() => setViewAdmin('experimental')} className="bg-[#121212] border border-orange-500/20 rounded-3xl p-6 flex items-center gap-4 transition-all active:scale-95 text-left group shadow-lg">
@@ -1841,12 +1857,12 @@ export default function Home() {
       <AdminPrecosView onVoltar={() => setViewAdmin('menu')} />
     ) : viewAdmin === 'experimental' ? (
       <AdminExperimentalView onVoltar={() => setViewAdmin('menu')} alunoDb={alunoDb} />
-
-
+    ) : viewAdmin === 'faixas' ? (
+      <AdminFaixasView onVoltar={() => setViewAdmin('menu')} />
     ) : (
       <AdminAprovarView onVoltar={() => setViewAdmin('menu')} />
-
     )}
+
 
 
   </div>

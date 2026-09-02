@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { fileToBase64 } from '../utils/imagem';
 import Cropper from 'react-easy-crop';
@@ -60,6 +60,57 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dataNascimento, setDataNascimento] = useState(alunoDb?.data_nascimento || '');
+
+  // Faixas de Perfil
+  const [faixasDisponiveis, setFaixasDisponiveis] = useState<any[]>([]);
+  const [faixaAtivaId, setFaixaAtivaId] = useState<string | null>(alunoDb?.faixa_ativa_id || null);
+  const [loadingFaixas, setLoadingFaixas] = useState(true);
+
+  useEffect(() => {
+    carregarFaixasDoAluno();
+  }, [alunoDb?.email]);
+
+  const carregarFaixasDoAluno = async () => {
+    if (!alunoDb?.email) return;
+    setLoadingFaixas(true);
+    try {
+      const { data, error } = await supabase.from('faixas').select('*');
+      if (!error && data) {
+        // Filtra faixas onde o email do aluno está na lista de permitidos
+        const liberadas = data.filter((f: any) => 
+          Array.isArray(f.alunos_permitidos) && f.alunos_permitidos.includes(alunoDb.email)
+        );
+        setFaixasDisponiveis(liberadas);
+      }
+    } catch (e) {
+      console.error('Erro ao carregar faixas do aluno:', e);
+    } finally {
+      setLoadingFaixas(false);
+    }
+  };
+
+  const handleSelecionarFaixa = async (faixa: any | null) => {
+    const novoId = faixa ? faixa.id : null;
+    const novaUrl = faixa ? faixa.imagem_url : null;
+    const novoNome = faixa ? faixa.nome : null;
+
+    setFaixaAtivaId(novoId);
+    try {
+      const { error } = await supabase
+        .from('alunos')
+        .update({
+          faixa_ativa_id: novoId,
+          faixa_ativa_url: novaUrl,
+          faixa_ativa_nome: novoNome
+        })
+        .eq('id', alunoDb.id);
+
+      if (error) throw error;
+    } catch (e: any) {
+      alert('Erro ao atualizar faixa de perfil: ' + e.message);
+    }
+  };
+
 
   const handleSalvarDataNascimento = async (val: string) => {
     setDataNascimento(val);
@@ -256,6 +307,90 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
             Alterar Foto
           </button>
         </div>
+
+        {/* SEÇÃO MINHAS FAIXAS DE PERFIL */}
+        <div className="mt-4 bg-[#121212] border border-white/5 rounded-3xl p-6 text-left">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+              <span>🥋</span> Faixas de Perfil
+            </h4>
+            <span className="text-[9px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+              {faixasDisponiveis.length} {faixasDisponiveis.length === 1 ? 'disponível' : 'disponíveis'}
+            </span>
+          </div>
+          <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-4">
+            Escolha uma faixa desbloqueada para destacar seu card nas turmas
+          </p>
+
+          {loadingFaixas ? (
+            <div className="text-center py-4 text-white/20 text-xs font-black uppercase tracking-widest">
+              Carregando faixas...
+            </div>
+          ) : faixasDisponiveis.length === 0 ? (
+            <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-center">
+              <span className="text-xs text-white/40 font-bold block">
+                Você ainda não possui faixas desbloqueadas.
+              </span>
+              <span className="text-[9px] text-white/20 uppercase font-black tracking-widest mt-1 block">
+                Participe de eventos e desafios para conquistar faixas!
+              </span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Opção Sem Faixa */}
+              <div
+                onClick={() => handleSelecionarFaixa(null)}
+                className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
+                  !faixaAtivaId
+                    ? 'border-amber-400/60 bg-amber-500/10 shadow-[0_0_12px_rgba(251,191,36,0.15)]'
+                    : 'border-white/5 bg-white/5 hover:border-white/10'
+                }`}
+              >
+                <span className="text-xs font-black uppercase text-white/80">
+                  Nenhuma Faixa
+                </span>
+                {!faixaAtivaId && (
+                  <span className="text-xs font-black text-amber-400">✓ Ativa</span>
+                )}
+              </div>
+
+              {/* Lista de Faixas Desbloqueadas */}
+              {faixasDisponiveis.map(faixa => {
+                const isAtiva = faixaAtivaId === faixa.id;
+                return (
+                  <div
+                    key={faixa.id}
+                    onClick={() => handleSelecionarFaixa(faixa)}
+                    className={`rounded-2xl border overflow-hidden cursor-pointer relative group transition-all ${
+                      isAtiva
+                        ? 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.25)] scale-[1.01]'
+                        : 'border-white/10 hover:border-white/20 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="h-16 relative bg-black/60">
+                      <img
+                        src={faixa.imagem_url}
+                        alt={faixa.nome}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end justify-between p-2.5">
+                        <span className="text-white font-black text-xs uppercase italic drop-shadow-md truncate max-w-[150px]">
+                          {faixa.nome}
+                        </span>
+                        {isAtiva && (
+                          <span className="bg-amber-400 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-md">
+                            Equipada
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
 
         {/* INFO ADICIONAL */}
         <div className="mt-4 flex flex-col gap-2">
