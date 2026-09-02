@@ -183,7 +183,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
         </div>
 
 
-        <div className="text-right">
+        <div className="text-right shrink-0 relative z-30 bg-[#121212] pl-3 py-1 rounded-xl">
           <span className="text-white/20 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>
           <span className="text-white font-black text-xl tracking-tighter italic">
             <span className={lotou ? 'text-white/40' : 'text-[#ef3340]'}>{vagasOcupadasReais}</span>
@@ -191,6 +191,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             <span className="text-white/40">{turma.vagas_totais}</span>
           </span>
         </div>
+
       </div>
 
 
