@@ -1045,8 +1045,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.2
+              Versão 2.1.3
             </span>
+
 
 
 
@@ -1248,7 +1249,12 @@ export default function Home() {
       nome: nomeCustomizado
     };
   });
-  const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email);
+
+  // Verifica se o aluno já marcou presença em alguma das turmas DO DIA EXIBIDO
+  const turmasDoDiaIds = new Set(turmasDoDia?.map(t => t.id) || []);
+  const alunoJaMarcouAlguma = presencasDb.some(p => p.aluno_email === session?.user?.email && turmasDoDiaIds.has(p.turma_id));
+
+
   const statusMensalidade = obterStatusMensalidade(alunoDb);
   const nivelNorm = String(alunoDb?.nivel || '').toLowerCase();
   const isAdminEfetivo = Boolean(isAdmin || alunoDb?.is_admin || nivelNorm.includes('gerencia') || session?.user?.email === 'lucas.hecth@gmail.com');
