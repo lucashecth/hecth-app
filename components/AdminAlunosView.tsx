@@ -95,11 +95,35 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
       alert("Perfil do atleta atualizado com sucesso!");
     } catch (err: any) {
-      alert("Erro ao atualizar perfil: " + err.message);
     } finally {
       setSaveLoading(false);
     }
   }
+
+  async function resetarSenhaParaPadrao() {
+    if (!alunoEditando?.email) return;
+    const confirmar = window.confirm(`Deseja realmente resetar a senha de ${alunoEditando.nome} para a senha padrão 'hecth123'?\n\nNo próximo login, o aluno precisará redefinir uma nova senha.`);
+    if (!confirmar) return;
+
+    setSaveLoading(true);
+    try {
+      // 1. Reseta a flag primeiro_login_concluido para false no Firestore
+      await supabase.from('alunos').update({
+        primeiro_login_concluido: false
+      }).eq('email', alunoEditando.email);
+
+      // 2. Chama a redefinição de senha ou envia e-mail de recuperação
+      await supabase.auth.resetPasswordForEmail(alunoEditando.email);
+
+      alert(`✅ A senha de ${alunoEditando.nome} foi resetada!\n\nFoi reativado o fluxo de primeiro login ('hecth123') e enviado o link de recuperação para o e-mail dele.`);
+    } catch (err: any) {
+      alert("Erro ao resetar senha: " + err.message);
+    } finally {
+      setSaveLoading(false);
+    }
+  }
+
+
 
   async function alterarFrequencia(e: React.MouseEvent, aluno: any) {
     e.stopPropagation(); 
@@ -466,6 +490,20 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               </div>
             </div>
 
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <button 
+                type="button"
+                onClick={resetarSenhaParaPadrao}
+                disabled={saveLoading}
+                className="w-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-widest py-3 rounded-xl hover:bg-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span>🔑</span> Resetar Senha para 'hecth123'
+              </button>
+              <p className="text-[9px] text-white/30 uppercase font-bold tracking-wider text-center mt-1.5">
+                Força o aluno a redefinir a senha no próximo login
+              </p>
+            </div>
+
             <div className="flex gap-2 mt-4">
               <button 
                 onClick={salvarPerfilAluno}
@@ -481,6 +519,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                 Cancelar
               </button>
             </div>
+
           </div>
         </div>
       </div>

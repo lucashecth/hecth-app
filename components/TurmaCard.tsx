@@ -152,7 +152,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             return (
               <div 
                 key={p.aluno_email} 
-                style={{ zIndex: 10 + idx }} 
+                style={{ zIndex: 20 - idx }} 
                 className={`w-9 h-9 rounded-full border-2 flex items-center justify-center p-[1.5px] bg-[#121212] shadow-xl ${borderCls}`}
               >
                 <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
@@ -166,10 +166,9 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             );
           })}
 
-
           {(jaMarcou || sumindo) && (
             <div 
-              style={{ zIndex: 30 }} 
+              style={{ zIndex: 25 }} 
               className={`w-10 h-10 rounded-full border-2 flex items-center justify-center p-[2px] bg-[#121212] shadow-xl ${avatarBorderClass} ${sumindo ? 'animacao-saida' : surgindo ? 'animacao-entrada' : ''}`}
             >
               <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-gray-800">
@@ -181,8 +180,8 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
               </div>
             </div>
           )}
-
         </div>
+
 
         <div className="text-right">
           <span className="text-white/20 text-[9px] font-black uppercase block tracking-widest mb-0.5">Vagas</span>

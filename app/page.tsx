@@ -801,12 +801,19 @@ export default function Home() {
       lancarBolasMikasa(e);
 
       
-      const novaPresenca = { turma_id: turmaId, aluno_email: session.user.email, foto_url: alunoDb.foto_url, inicial: alunoDb.nome.charAt(0) };
+      const novaPresenca = { 
+        turma_id: turmaId, 
+        aluno_email: session.user.email, 
+        foto_url: alunoDb.foto_url, 
+        inicial: alunoDb.nome?.charAt(0) || '',
+        nivel: alunoDb.nivel || 'Aprendiz'
+      };
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
       
       const nowIso = new Date().toISOString();
       await supabase.from('presencas').insert([novaPresenca]);
+
       await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais + 1 }).eq('id', turmaId);
       await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
       setAlunoDb((prev: any) => prev ? { ...prev, ultima_inscricao: nowIso } : null);
@@ -1045,8 +1052,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.1.3
+              Versão 2.1.4
             </span>
+
 
 
 
