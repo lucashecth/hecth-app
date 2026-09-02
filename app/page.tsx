@@ -73,7 +73,8 @@ export default function Home() {
 
 
   const { isAdmin } = useAdmin();
-  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes' | 'precos' | 'experimental'>('menu');
+  const [viewAdmin, setViewAdmin] = useState<'menu' | 'alunos'| 'pagamentos' | 'aprovar' | 'criar' | 'mensagens' | 'turmas' | 'deletar_aluno' | 'notificacoes' | 'precos' | 'experimental' | 'faixas'>('menu');
+
 
 
 
