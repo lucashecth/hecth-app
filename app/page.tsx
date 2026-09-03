@@ -1158,8 +1158,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.2.4
+              Versão 2.2.5
             </span>
+
 
 
 
@@ -1626,8 +1627,13 @@ export default function Home() {
 
 
         {abaAtiva === 'turma_alunos' && turmaDetalhe && (
-          <TurmaAlunosView turma={turmaDetalhe} onVoltar={() => setAbaAtiva('arena')} />
+          <TurmaAlunosView 
+            turma={turmaDetalhe} 
+            onVoltar={() => setAbaAtiva('arena')} 
+            isAdmin={isAdminEfetivo || isAdmin || isTeacher} 
+          />
         )}
+
 
         {abaAtiva === 'mensagens' && (
           (isAdminEfetivo || isAdmin) ? (

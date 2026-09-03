@@ -8,11 +8,13 @@ import { TagApelido } from './TagApelido';
 interface TurmaAlunosViewProps {
   turma: any;
   onVoltar: () => void;
+  isAdmin?: boolean;
 }
 
-export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
+export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewProps) {
   const [alunosInscritos, setAlunosInscritos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelandoAula, setCancelandoAula] = useState(false);
 
   useEffect(() => {
     async function carregarInscritos() {
@@ -88,33 +90,93 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
         }
       });
       setAlunosInscritos(alunosMontados);
-
-
       setLoading(false);
     }
     
     carregarInscritos();
   }, [turma.id]);
 
+  const handleCancelarAulaEDevolverCreditos = async () => {
+    if (alunosInscritos.length === 0) {
+      return alert('Não há alunos inscritos nesta turma para reembolsar.');
+    }
+
+    const confirmar = window.confirm(
+      `⚠️ CANCELAMENTO DE AULA\n\nDeseja cancelar esta aula de ${turma.horario} e DEVOLVER 1 CRÉDITO DE AULA a todos os ${alunosInscritos.length} alunos inscritos?\n\nAs presenças desta aula serão limpas e o crédito avulso será adicionado no perfil de cada atleta.`
+    );
+    if (!confirmar) return;
+
+    setCancelandoAula(true);
+    try {
+      // 1. Busca todos os alunos no banco para incrementar créditos
+      const { data: todosAlunos } = await supabase.from('alunos').select('*');
+
+      for (const inscrito of alunosInscritos) {
+        if (!inscrito.isExperimental && inscrito.email) {
+          const alunoAtual = todosAlunos?.find((a: any) => (a.email || '').toLowerCase().trim() === (inscrito.email || '').toLowerCase().trim());
+          const creditosAtuais = alunoAtual?.creditos_avulsos || 0;
+          await supabase.from('alunos').update({
+            creditos_avulsos: creditosAtuais + 1
+          }).eq('email', inscrito.email);
+        }
+      }
+
+      // 2. Limpa todas as presenças desta turma
+      const { data: presencasAtuais } = await supabase.from('presencas').select('id').eq('turma_id', turma.id);
+      if (presencasAtuais && presencasAtuais.length > 0) {
+        for (const p of presencasAtuais) {
+          await supabase.from('presencas').delete().eq('id', p.id);
+        }
+      }
+
+      // 3. Zera vagas ocupadas da turma
+      await supabase.from('turmas').update({ vagas_ocupadas: 0 }).eq('id', turma.id);
+
+      alert(`✅ Aula cancelada com sucesso!\n\n1 crédito de aula foi devolvido para os ${alunosInscritos.length} atletas inscritos.`);
+      setAlunosInscritos([]);
+      onVoltar();
+    } catch (err: any) {
+      alert('Erro ao cancelar aula: ' + err.message);
+    } finally {
+      setCancelandoAula(false);
+    }
+  };
+
   return (
     <div className="animacao-entrada w-full pb-20 pt-4">
       {/* Header com Horário da Turma */}
-      <div className="flex items-center gap-4 mb-8 px-5">
-        <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <div>
-          <h2 className="text-xl font-black uppercase italic tracking-tighter text-white leading-none">
-            {turma.nome}
-          </h2>
-          <span className="text-xs font-black uppercase tracking-widest text-[#ef3340] italic">
-            Horário: {turma.horario}
-          </span>
+      <div className="flex items-center justify-between mb-6 px-5">
+        <div className="flex items-center gap-4">
+          <button onClick={onVoltar} className="p-3 bg-white/5 rounded-full text-white/50 active:scale-95 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div>
+            <h2 className="text-xl font-black uppercase italic tracking-tighter text-white leading-none">
+              {turma.nome}
+            </h2>
+            <span className="text-xs font-black uppercase tracking-widest text-[#ef3340] italic">
+              Horário: {turma.horario}
+            </span>
+          </div>
         </div>
+
+        {/* Botão de Cancelamento e Devolução para Gestores */}
+        {isAdmin && alunosInscritos.length > 0 && (
+          <button
+            onClick={handleCancelarAulaEDevolverCreditos}
+            disabled={cancelandoAula}
+            className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-2.5 rounded-xl active:scale-95 transition-all flex items-center gap-1.5 shadow-lg disabled:opacity-50"
+            title="Cancelar aula por motivo de chuva/força maior e reembolsar crédito aos atletas"
+          >
+            <span>☔</span>
+            <span>{cancelandoAula ? 'Reembolsando...' : 'Cancelar e Devolver Créditos'}</span>
+          </button>
+        )}
       </div>
 
       {/* Lista de Alunos (Estilo Gestão) */}
       <div className="flex flex-col gap-3 px-2">
+
         {loading ? (
           <p className="text-center py-10 text-white/20 text-[10px] font-black uppercase tracking-widest animate-pulse italic">
             Buscando atletas...
