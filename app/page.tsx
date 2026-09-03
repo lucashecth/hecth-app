@@ -888,7 +888,10 @@ export default function Home() {
           return;
         }
       }
-      if (vagasAtuais >= vagasTotais) {
+      const presencasDestaTurma = presencasDb.filter(p => p.turma_id === turmaId);
+      const totalOcupadasReais = presencasDestaTurma.length;
+
+      if (totalOcupadasReais >= vagasTotais) {
         setTurmaIdClicada(null);
         setAcaoClicada(null);
         return alert("Esta turma já está lotada!");
@@ -910,17 +913,18 @@ export default function Home() {
         inicial: alunoDb.nome?.charAt(0) || '',
         nivel: alunoDb.nivel || 'Aprendiz'
       };
-      setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas + 1 } : t));
+      setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: totalOcupadasReais + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
       
       const nowIso = new Date().toISOString();
       await supabase.from('presencas').insert([novaPresenca]);
 
-      await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais + 1 }).eq('id', turmaId);
+      await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais + 1 }).eq('id', turmaId);
       await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
       setAlunoDb((prev: any) => prev ? { ...prev, ultima_inscricao: nowIso } : null);
       
       setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
+
     }
 
   };
@@ -1154,8 +1158,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.2.2
+              Versão 2.2.3
             </span>
+
 
 
 
