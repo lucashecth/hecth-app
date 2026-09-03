@@ -44,13 +44,11 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
         return;
       }
 
-      // 2. Busca os dados completos dos alunos inscritos
-      const emails = presencasFiltradas.map(p => p.aluno_email);
-      const { data: alunosData } = await supabase.from('alunos').select('*').in('email', emails);
+      // 2. Busca os dados completos dos alunos no banco
+      const { data: alunosData } = await supabase.from('alunos').select('*');
 
       // 3. Junta os dados com o horário de inscrição (formato HH:MM)
       const alunosMontados = presencasFiltradas.map(p => {
-
         const isExp = p.aluno_email?.startsWith('experimental_');
         let horaFormatada = "--:--";
         if (p.created_at) {
@@ -74,15 +72,23 @@ export function TurmaAlunosView({ turma, onVoltar }: TurmaAlunosViewProps) {
             isExperimental: true
           };
         } else {
-          const aluno = alunosData?.find(a => a.email === p.aluno_email);
+          const pEmail = (p.aluno_email || '').toLowerCase().trim();
+          const aluno = alunosData?.find(a => (a.email || '').toLowerCase().trim() === pEmail);
           return {
-            ...(aluno || { id: p.id, nome: 'Usuário', sobrenome: 'Removido', foto_url: null, nivel: 'Aprendiz' }),
+            ...(aluno || { 
+              id: p.id, 
+              nome: p.inicial ? `Aluno (${p.inicial})` : 'Aluno', 
+              sobrenome: '', 
+              foto_url: p.foto_url || null, 
+              nivel: p.nivel || 'Aprendiz' 
+            }),
             hora_inscricao: horaFormatada,
             isExperimental: false
           };
         }
       });
       setAlunosInscritos(alunosMontados);
+
 
       setLoading(false);
     }
