@@ -194,11 +194,15 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
       </div>
 
       {aulaEncerrada ? (
-
-        <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-white/5 text-white/20 flex items-center justify-center gap-2 border border-white/5 italic">
-          Inscrições Encerradas
-        </div>
-
+        jaMarcou ? (
+          <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-green-600/20 text-green-400 flex items-center justify-center gap-2 border border-green-500/30 italic shadow-lg">
+            <span>✓</span> Você está confirmado nesta aula (Inscrições Encerradas)
+          </div>
+        ) : (
+          <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-white/5 text-white/20 flex items-center justify-center gap-2 border border-white/5 italic">
+            Inscrições Encerradas
+          </div>
+        )
       ) : !acessoLiberado ? (
         <div className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-6 bg-[#ef3340]/5 text-[#ef3340]/40 flex items-center justify-center gap-3 cursor-not-allowed border border-[#ef3340]/10 italic">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -214,7 +218,7 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             ${jaMarcou ? 'bg-green-600 text-white shadow-[0_5px_15px_rgba(22,163,74,0.3)]' : (lotou || alunoJaMarcouAlguma || limiteAtingido) ? 'bg-white/5 text-white/10' : 'bg-white text-black shadow-lg hover:bg-[#ef3340] hover:text-white'}`}
         >
           {jaMarcou ? (
-            <><span className="group-hover:hidden flex items-center justify-center gap-2">✓ Confirmado</span><span className="hidden group-hover:block">Cancelar</span></>
+            <><span className="group-hover:hidden flex items-center justify-center gap-2">✓ Confirmado</span><span className="hidden group-hover:block">Cancelar Presença</span></>
           ) : lotou ? (
             'Turma Lotada'
           ) : alunoJaMarcouAlguma ? (
@@ -225,8 +229,8 @@ export function TurmaCard({ turma, presencasTurma, session, alunoDb, turmaIdClic
             'Agendar Aula'
           )}
         </button>
-
       )}
+
     </div>
   );
 }

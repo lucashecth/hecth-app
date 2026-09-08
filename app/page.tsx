@@ -849,53 +849,69 @@ export default function Home() {
   const alternarPresenca = async (e: React.MouseEvent<HTMLButtonElement>, turmaId: number, vagasAtuais: number, vagasTotais: number, jaMarcou: boolean) => {
     if (!session || alunoDb?.status !== 'aprovado') return;
     
-    setTurmaIdClicada(turmaId);
-    setAcaoClicada(jaMarcou ? 'desmarcar' : 'marcar');
-
     if (jaMarcou) {
-      setTimeout(async () => {
-        setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: t.vagas_ocupadas - 1 } : t));
-        setPresencasDb(prev => prev.filter(p => !(p.turma_id === turmaId && p.aluno_email === session.user.email)));
-        
-        await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
-        await supabase.from('turmas').update({ vagas_ocupadas: vagasAtuais - 1 }).eq('id', turmaId);
-        
-        // Devolve o crédito avulso se a quantidade marcada for maior que o total do plano
-        if (!isTeacher && !isAdmin && progressoSemanal.marcadas > progressoSemanal.total) {
-          const novosCreditos = (alunoDb.creditos_avulsos || 0) + 1;
-          await supabase.from('alunos').update({ creditos_avulsos: novosCreditos }).eq('email', session.user.email);
-          setAlunoDb((prev: any) => prev ? { ...prev, creditos_avulsos: novosCreditos } : null);
-        }
+      const confirmarCancelamento = window.confirm('Deseja realmente cancelar sua presença nesta aula?');
+      if (!confirmarCancelamento) return;
 
-        setTurmaIdClicada(null); setAcaoClicada(null);
-      }, 400);
+      setTurmaIdClicada(turmaId);
+      setAcaoClicada('desmarcar');
+
+      setTimeout(async () => {
+        try {
+          const presencasDestaTurma = presencasDb.filter(p => p.turma_id === turmaId);
+          const totalOcupadasReais = Math.max(0, presencasDestaTurma.length - 1);
+
+          setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: totalOcupadasReais } : t));
+          setPresencasDb(prev => prev.filter(p => !(p.turma_id === turmaId && p.aluno_email === session.user.email)));
+          
+          await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
+          await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais }).eq('id', turmaId);
+          
+          // RESGUARDO / AUDITORIA: Registra o cancelamento no histórico do banco
+          const logCancelamento = {
+            aluno_email: session.user.email,
+            aluno_nome: `${alunoDb?.nome || ''} ${alunoDb?.sobrenome || ''}`.trim(),
+            turma_id: turmaId,
+            cancelado_em: new Date().toISOString()
+          };
+          await supabase.from('cancelamentos').insert([logCancelamento]);
+
+          // Devolve o crédito avulso se a quantidade marcada for maior que o total do plano
+          if (!isTeacher && !isAdmin && progressoSemanal.marcadas > progressoSemanal.total) {
+            const novosCreditos = (alunoDb.creditos_avulsos || 0) + 1;
+            await supabase.from('alunos').update({ creditos_avulsos: novosCreditos }).eq('email', session.user.email);
+            setAlunoDb((prev: any) => prev ? { ...prev, creditos_avulsos: novosCreditos } : null);
+          }
+        } catch (err: any) {
+          alert('Erro ao cancelar presença: ' + err.message);
+          carregarArena();
+        } finally {
+          setTurmaIdClicada(null); 
+          setAcaoClicada(null);
+        }
+      }, 300);
     } else {
       let usouCredito = false;
       if (!isTeacher && !isAdmin && progressoSemanal.concluido) {
         const creditos = alunoDb.creditos_avulsos || 0;
         if (creditos > 0) {
           const usar = window.confirm(`Você já atingiu seu limite de treinos semanal. Deseja utilizar 1 dos seus ${creditos} crédito(s) avulso(s) para agendar esta aula?`);
-          if (!usar) {
-            setTurmaIdClicada(null);
-            setAcaoClicada(null);
-            return;
-          }
+          if (!usar) return;
           usouCredito = true;
         } else {
-          alert(`Você já atingiu seu limite de treinos semanal (${progressoSemanal.total}/${progressoSemanal.total} aulas agendadas)!`);
-          setTurmaIdClicada(null);
-          setAcaoClicada(null);
-          return;
+          return alert(`Você já atingiu seu limite de treinos semanal (${progressoSemanal.total}/${progressoSemanal.total} aulas agendadas)!`);
         }
       }
+
       const presencasDestaTurma = presencasDb.filter(p => p.turma_id === turmaId);
       const totalOcupadasReais = presencasDestaTurma.length;
 
       if (totalOcupadasReais >= vagasTotais) {
-        setTurmaIdClicada(null);
-        setAcaoClicada(null);
         return alert("Esta turma já está lotada!");
       }
+
+      setTurmaIdClicada(turmaId);
+      setAcaoClicada('marcar');
       
       if (usouCredito) {
         const novosCreditos = (alunoDb.creditos_avulsos || 0) - 1;
@@ -905,31 +921,37 @@ export default function Home() {
 
       lancarBolasMikasa(e);
 
-      
+      const nowIso = new Date().toISOString();
       const novaPresenca = { 
         turma_id: turmaId, 
         aluno_email: session.user.email, 
         foto_url: alunoDb.foto_url, 
         inicial: alunoDb.nome?.charAt(0) || '',
-        nivel: alunoDb.nivel || 'Aprendiz'
+        nivel: alunoDb.nivel || 'Aprendiz',
+        created_at: nowIso
       };
+
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: totalOcupadasReais + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
       
-      const nowIso = new Date().toISOString();
-      await supabase.from('presencas').insert([novaPresenca]);
+      try {
+        const { error: insertError } = await supabase.from('presencas').insert([novaPresenca]);
+        if (insertError) throw insertError;
 
-      await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais + 1 }).eq('id', turmaId);
-      await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
-      setAlunoDb((prev: any) => prev ? { ...prev, ultima_inscricao: nowIso } : null);
-      
-      setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
-
+        await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais + 1 }).eq('id', turmaId);
+        await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
+        setAlunoDb((prev: any) => prev ? { ...prev, ultima_inscricao: nowIso } : null);
+      } catch (err: any) {
+        alert('⚠️ Instabilidade de conexão: Não foi possível registrar sua presença. Verifique sua internet e tente novamente.');
+        carregarArena();
+      } finally {
+        setTimeout(() => { setTurmaIdClicada(null); setAcaoClicada(null); }, 400);
+      }
     }
-
   };
 
   if (!mounted) return null;
+
 
   if (session && !alunoDb) {
     if (perfilNaoEncontrado) {
@@ -1158,8 +1180,9 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.2.5
+              Versão 2.2.6
             </span>
+
 
 
 
