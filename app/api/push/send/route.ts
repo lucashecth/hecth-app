@@ -21,14 +21,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Falta título ou conteúdo' }, { status: 400 });
     }
 
-    // Busca as inscrições
-    let query = supabase.from('push_inscricoes').select('*');
+    // Busca todas as inscrições no banco e filtra os e-mails desejados
+    const { data: todasInscricoes, error: dbError } = await supabase.from('push_inscricoes').select('*');
+    if (dbError) throw dbError;
+
+    let inscricoes = todasInscricoes || [];
     if (emails && Array.isArray(emails) && emails.length > 0) {
-      query = query.in('aluno_email', emails);
+      const emailSet = new Set(emails.map((e: string) => String(e || '').toLowerCase().trim()));
+      inscricoes = inscricoes.filter((ins: any) => emailSet.has(String(ins.aluno_email || '').toLowerCase().trim()));
     }
 
-    const { data: inscricoes, error: dbError } = await query;
-    if (dbError) throw dbError;
 
     if (!inscricoes || inscricoes.length === 0) {
       return NextResponse.json({ 

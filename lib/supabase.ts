@@ -141,16 +141,32 @@ class QueryBuilder {
 
   async insert(items: any[]) {
     try {
-      for (const item of items) {
-        let docId = item.id ? String(item.id) : (item.email ? item.email.trim().toLowerCase() : String(Date.now()));
+      const itemsArray = Array.isArray(items) ? items : [items];
+      const insertedItems: any[] = [];
+      for (const item of itemsArray) {
+        let docId = item.id ? String(item.id) : (item.email ? item.email.trim().toLowerCase() : (Date.now() + '_' + Math.random().toString(36).substring(2, 9)));
         if (this.colName === 'presencas') {
           docId = String(item.turma_id) + '_' + String(item.aluno_email);
         }
-        await setDoc(doc(db, this.colName, docId), { ...item, created_at: item.created_at || new Date().toISOString() });
+        const finalDoc = { ...item, id: item.id || docId, created_at: item.created_at || new Date().toISOString() };
+        await setDoc(doc(db, this.colName, docId), finalDoc);
+        insertedItems.push(finalDoc);
       }
-      return { error: null };
+      return { 
+        data: insertedItems, 
+        error: null,
+        select: () => ({
+          single: async () => ({ data: insertedItems[0] || null, error: null })
+        })
+      };
     } catch (e: any) {
-      return { error: e };
+      return { 
+        data: null, 
+        error: e,
+        select: () => ({
+          single: async () => ({ data: null, error: e })
+        })
+      };
     }
   }
 
@@ -232,6 +248,22 @@ class QueryBuilder {
           return { error: e };
         }
       },
+      in: async (field: string, vals: any[]) => {
+        try {
+          if (!vals || vals.length === 0) return { error: null };
+          const valsSet = new Set(vals.map(v => String(v).toLowerCase().trim()));
+          const snap = await getDocs(collection(db, this.colName));
+          for (const d of snap.docs) {
+            const data = d.data();
+            if (valsSet.has(d.id.toLowerCase().trim()) || valsSet.has(String(data[field] || '').toLowerCase().trim())) {
+              await deleteDoc(doc(db, this.colName, d.id));
+            }
+          }
+          return { error: null };
+        } catch (e: any) {
+          return { error: e };
+        }
+      },
       match: async (filterObj: any) => {
         try {
           if (this.colName === 'presencas' && filterObj.turma_id && filterObj.aluno_email) {
@@ -245,6 +277,7 @@ class QueryBuilder {
       }
     };
   }
+
 
 
 }
