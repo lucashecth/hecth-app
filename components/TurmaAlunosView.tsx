@@ -13,6 +13,7 @@ interface TurmaAlunosViewProps {
 
 export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewProps) {
   const [alunosInscritos, setAlunosInscritos] = useState<any[]>([]);
+  const [alunosCancelados, setAlunosCancelados] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelandoAula, setCancelandoAula] = useState(false);
 
@@ -21,12 +22,7 @@ export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewPro
       // 1. Busca as presenças desta turma
       const { data: presencas } = await supabase.from('presencas').select('*').eq('turma_id', turma.id);
       
-      if (!presencas || presencas.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // Filtra apenas presenças pertencentes ao ciclo de exibição atual (corte 20:30)
+      // Filtra apenas pertencentes ao ciclo de exibição atual (corte 20:30)
       const agoraCheck = new Date();
       const inicioCiclo = new Date(agoraCheck);
       if (agoraCheck.getHours() > 20 || (agoraCheck.getHours() === 20 && agoraCheck.getMinutes() >= 30)) {
@@ -36,21 +32,16 @@ export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewPro
         inicioCiclo.setHours(20, 30, 0, 0);
       }
 
-      const presencasFiltradas = presencas.filter((p: any) => {
+      // 2. Busca os dados completos dos alunos no banco
+      const { data: alunosData } = await supabase.from('alunos').select('*');
+
+      const presencasFiltradas = (presencas || []).filter((p: any) => {
         if (!p.created_at) return true;
         return new Date(p.created_at) >= inicioCiclo;
       });
 
-      if (presencasFiltradas.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      // 2. Busca os dados completos dos alunos no banco
-      const { data: alunosData } = await supabase.from('alunos').select('*');
-
       // 3. Junta os dados com o horário de inscrição (formato HH:MM)
-      const alunosMontados = presencasFiltradas.map(p => {
+      const alunosMontados = presencasFiltradas.map((p: any) => {
         const isExp = p.aluno_email?.startsWith('experimental_');
         let horaFormatada = "--:--";
         if (p.created_at) {
@@ -90,11 +81,51 @@ export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewPro
         }
       });
       setAlunosInscritos(alunosMontados);
+
+      // 4. Busca os cancelamentos auditados desta turma no ciclo atual
+      try {
+        const { data: cancelamentos } = await supabase.from('cancelamentos').select('*').eq('turma_id', turma.id);
+        const canceladosFiltrados = (cancelamentos || []).filter((c: any) => {
+          if (!c.cancelado_em) return true;
+          return new Date(c.cancelado_em) >= inicioCiclo;
+        });
+
+        const canceladosMontados = canceladosFiltrados.map((c: any) => {
+          const cEmail = (c.aluno_email || '').toLowerCase().trim();
+          const aluno = alunosData?.find(a => (a.email || '').toLowerCase().trim() === cEmail);
+          let horaCancelado = "--:--";
+          if (c.cancelado_em) {
+            const dataHora = new Date(c.cancelado_em);
+            horaCancelado = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          }
+
+          return {
+            id: c.id || c.cancelado_em,
+            nome: aluno?.nome || c.aluno_nome || 'Aluno',
+            sobrenome: aluno?.sobrenome || '',
+            apelido: aluno?.apelido || '',
+            foto_url: aluno?.foto_url || null,
+            nivel: aluno?.nivel || 'Aprendiz',
+            hora_cancelamento: horaCancelado,
+            cancelado: true
+          };
+        });
+
+        // Remove duplicados de cancelamento recente do mesmo aluno
+        const unicosCancelados = canceladosMontados.filter((v: any, i: number, a: any[]) => 
+          a.findIndex((t: any) => (t.nome + t.sobrenome) === (v.nome + v.sobrenome)) === i
+        );
+        setAlunosCancelados(unicosCancelados);
+      } catch (e) {
+        console.error("Erro ao carregar cancelamentos:", e);
+      }
+
       setLoading(false);
     }
     
     carregarInscritos();
   }, [turma.id]);
+
 
   const handleCancelarAulaEDevolverCreditos = async () => {
     if (alunosInscritos.length === 0) {
@@ -284,14 +315,56 @@ export function TurmaAlunosView({ turma, onVoltar, isAdmin }: TurmaAlunosViewPro
                   <span className="block text-[8px] font-black uppercase text-white/50 tracking-widest mb-0.5">Inscrito às</span>
                   <span className="text-xs font-black text-white">{aluno.hora_inscricao}</span>
                 </div>
-                
               </div>
             );
-
-
           })
+        )}
+
+
+        {/* LISTA DE ALUNOS CANCELADOS (EM CINZA NO FINAL DA LISTA, NÃO OCUPA VAGA) */}
+        {!loading && alunosCancelados.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
+            <div className="flex items-center gap-2 px-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-white/20"></span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">
+                Inscrições Canceladas ({alunosCancelados.length}) • Não ocupa vaga
+              </span>
+            </div>
+
+            {alunosCancelados.map(aluno => (
+              <div 
+                key={aluno.id} 
+                className="w-full rounded-2xl p-4 flex items-center justify-between bg-white/[0.02] border border-white/5 opacity-50 hover:opacity-75 transition-opacity"
+              >
+                <div className="flex items-center gap-3 flex-1 text-left">
+                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 shrink-0 flex items-center justify-center p-[2px]">
+                    <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white/5">
+                      {aluno.foto_url ? (
+                        <img src={aluno.foto_url} alt="" className="w-full h-full object-cover grayscale" />
+                      ) : (
+                        <span className="text-xs text-white/40">👤</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase tracking-tight text-white/60 leading-tight flex items-center gap-1.5 flex-wrap line-through">
+                      {aluno.nome} {aluno.sobrenome}
+                    </h4>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-red-400/80 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 inline-block mt-1">
+                      Cancelou Presença
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-center shrink-0 ml-2">
+                  <span className="block text-[8px] font-black uppercase text-white/30 tracking-widest mb-0.5">Cancelou às</span>
+                  <span className="text-xs font-black text-white/50">{aluno.hora_cancelamento}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
-}
+}
