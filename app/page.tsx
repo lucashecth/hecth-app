@@ -966,7 +966,15 @@ export default function Home() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-5 text-white">
+        <div className="flex justify-center mb-6">
+          <img src="/hecth-logo.svg" alt="HECTH." className="h-12 w-auto animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
 
   if (session && !alunoDb) {
