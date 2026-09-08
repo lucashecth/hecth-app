@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { supabase } from '../../../../lib/supabase';
 import webpush from 'web-push';
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY!;
-
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY!;
 
 if (vapidPublicKey && vapidPrivateKey) {
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Falta título ou conteúdo' }, { status: 400 });
     }
 
-    // Busca todas as inscrições no banco e filtra os e-mails desejados
+    // 1. Busca todas as inscrições no Firestore
     const { data: todasInscricoes, error: dbError } = await supabase.from('push_inscricoes').select('*');
     if (dbError) throw dbError;
 
@@ -31,12 +30,24 @@ export async function POST(request: Request) {
       inscricoes = inscricoes.filter((ins: any) => emailSet.has(String(ins.aluno_email || '').toLowerCase().trim()));
     }
 
+    // 2. DEDUPLICAÇÃO ESTRITA: Garante que o mesmo endpoint ou mesmo aparelho do aluno nunca receba em duplicidade
+    const seenEndpoints = new Set<string>();
+    const inscricoesUnicas = [];
+    for (const ins of inscricoes) {
+      const endpoint = ins.subscription?.endpoint || ins.endpoint;
+      if (endpoint && !seenEndpoints.has(endpoint)) {
+        seenEndpoints.add(endpoint);
+        inscricoesUnicas.push(ins);
+      }
+    }
 
-    if (!inscricoes || inscricoes.length === 0) {
+    if (!inscricoesUnicas || inscricoesUnicas.length === 0) {
       return NextResponse.json({ 
         success: true, 
         sentCount: 0, 
-        message: 'Nenhum dispositivo inscrito para receber.' 
+        entreguesPara: [],
+        falhasEm: [],
+        message: 'Nenhum dispositivo com push ativo encontrado para estes destinatários.' 
       });
     }
 
@@ -46,16 +57,18 @@ export async function POST(request: Request) {
       url: '/'
     });
 
-    let sucessos = 0;
-    let falhas = 0;
+    const entreguesPara: string[] = [];
+    const falhasEm: string[] = [];
 
-    const promises = inscricoes.map(async (ins: any) => {
+    const promises = inscricoesUnicas.map(async (ins: any) => {
+      const emailAluno = ins.aluno_email || 'desconhecido';
       try {
-        await webpush.sendNotification(ins.subscription, payload);
-        sucessos++;
+        const sub = ins.subscription || ins;
+        await webpush.sendNotification(sub, payload);
+        entreguesPara.push(emailAluno);
       } catch (err: any) {
-        console.error('Falha no disparo para', ins.aluno_email, err);
-        falhas++;
+        console.error('Falha no disparo para', emailAluno, err);
+        falhasEm.push(`${emailAluno} (erro: ${err.statusCode || 'desconhecido'})`);
         if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 400) {
           await supabase.from('push_inscricoes').delete().eq('id', ins.id);
         }
@@ -66,7 +79,7 @@ export async function POST(request: Request) {
 
     // Grava no log de notificação
     if (salvamentoManual && emails && Array.isArray(emails)) {
-      const logs = emails.map(email => ({
+      const logs = emails.map((email: string) => ({
         aluno_email: email,
         tipo: 'manual',
         titulo: titulo,
@@ -79,8 +92,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      sentCount: sucessos,
-      failedCount: falhas
+      sentCount: entreguesPara.length,
+      failedCount: falhasEm.length,
+      entreguesPara: Array.from(new Set(entreguesPara)),
+      falhasEm
     });
   } catch (error: any) {
     console.error('Erro na API de envio push:', error);

@@ -19,6 +19,8 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
   const [conteudo, setConteudo] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<string | null>(null);
+  const [listaEntregues, setListaEntregues] = useState<string[]>([]);
+  const [listaFalhas, setListaFalhas] = useState<string[]>([]);
 
   // Model Manager State
   const [novoModeloTitulo, setNovoModeloTitulo] = useState('');
@@ -226,6 +228,8 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
 
     setEnviando(true);
     setResultado(null);
+    setListaEntregues([]);
+    setListaFalhas([]);
     try {
       const res = await fetch('/api/push/send', {
         method: 'POST',
@@ -242,6 +246,8 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
       if (!res.ok) throw new Error(data.error || 'Erro no envio');
 
       setResultado(`Resultado: ${data.sentCount || 0} entregues com sucesso. ${data.failedCount ? `(${data.failedCount} falhas/chaves expiradas)` : ''} ${data.message ? `• ${data.message}` : ''}`);
+      setListaEntregues(data.entreguesPara || []);
+      setListaFalhas(data.falhasEm || []);
       setTitulo('');
       setConteudo('');
       carregarDados();
@@ -365,9 +371,41 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
             </button>
 
             {resultado && (
-              <p className="text-[10px] text-center text-green-400 font-bold uppercase tracking-wider mt-2 border border-green-500/20 bg-green-500/5 py-2.5 rounded-lg">
-                {resultado}
-              </p>
+              <div className="mt-3 flex flex-col gap-2">
+                <p className="text-[10px] text-center text-green-400 font-bold uppercase tracking-wider border border-green-500/20 bg-green-500/5 py-2.5 rounded-lg">
+                  {resultado}
+                </p>
+
+                {listaEntregues.length > 0 && (
+                  <div className="bg-black/60 border border-green-500/20 rounded-xl p-3 text-left">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-green-400 block mb-1.5">
+                      ✓ Notificação Entregue nos Aparelhos ({listaEntregues.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                      {listaEntregues.map(em => (
+                        <span key={em} className="text-[9px] font-bold text-white/80 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                          {em}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {listaFalhas.length > 0 && (
+                  <div className="bg-black/60 border border-amber-500/20 rounded-xl p-3 text-left">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-amber-400 block mb-1.5">
+                      ⚠️ Falhas / Aparelhos Pendentes ({listaFalhas.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {listaFalhas.map(em => (
+                        <span key={em} className="text-[9px] font-bold text-amber-300/80 bg-amber-500/5 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                          {em}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
