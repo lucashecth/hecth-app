@@ -203,10 +203,9 @@ export default function Home() {
 
   // Sincroniza inscrição de push nativo em background se já houver permissão
   useEffect(() => {
-    if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    if (session?.user?.email && typeof window !== 'undefined' && 'serviceWorker' in navigator && 'Notification' in window) {
       if (pushSyncedRef.current) return;
       pushSyncedRef.current = true;
-
 
       if (Notification.permission === 'granted') {
         navigator.serviceWorker.register('/sw.js').then(async (reg) => {
