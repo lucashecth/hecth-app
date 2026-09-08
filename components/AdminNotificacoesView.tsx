@@ -241,7 +241,7 @@ export function AdminNotificacoesView({ onVoltar }: AdminNotificacoesViewProps) 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro no envio');
 
-      setResultado(`Sucesso: ${data.sentCount || 0} enviados. Falhas: ${data.failedCount || 0}.`);
+      setResultado(`Resultado: ${data.sentCount || 0} entregues com sucesso. ${data.failedCount ? `(${data.failedCount} falhas/chaves expiradas)` : ''} ${data.message ? `• ${data.message}` : ''}`);
       setTitulo('');
       setConteudo('');
       carregarDados();
