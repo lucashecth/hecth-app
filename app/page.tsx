@@ -673,6 +673,23 @@ export default function Home() {
         setAlunoDb(data);
         setPerfilNaoEncontrado(false);
 
+        // Envia a versão atual do app e o status de push do aluno para o banco
+        const versaoAppAtual = 'v2.3.6';
+        let pushAtivoNoAparelho = false;
+        try {
+          if (typeof window !== 'undefined' && 'Notification' in window) {
+            pushAtivoNoAparelho = Notification.permission === 'granted';
+          }
+        } catch (e) {}
+
+        if (data.app_versao !== versaoAppAtual || data.push_ativo !== pushAtivoNoAparelho) {
+          supabase.from('alunos').update({
+            app_versao: versaoAppAtual,
+            push_ativo: pushAtivoNoAparelho,
+            ultimo_acesso: new Date().toISOString()
+          }).eq('id', data.id).then();
+        }
+
         // Se ainda não concluiu o primeiro login (e não é o admin principal), abre o modal de validação de nascimento e troca de senha
         if (!data.primeiro_login_concluido && emailLimpo !== 'lucas.hecth@gmail.com') {
           setModalRedefinirSenha(true);

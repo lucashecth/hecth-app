@@ -382,6 +382,18 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
             <div>
               <h4 className="font-black text-base text-white uppercase">{alunoEditando.nome} {alunoEditando.sobrenome}</h4>
               <p className="text-xs text-white/40">{alunoEditando.email}</p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className="text-[9px] font-black text-white/70 bg-white/5 px-2 py-0.5 rounded-md border border-white/10 font-mono">
+                  App: {alunoEditando.app_versao || 'v2.3.0'}
+                </span>
+                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                  alunoEditando.push_ativo 
+                    ? 'text-green-400 bg-green-500/10 border-green-500/30' 
+                    : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                }`}>
+                  {alunoEditando.push_ativo ? '🔔 Push Ativo' : '🔕 Push Pendente'}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -405,6 +405,22 @@ export function PerfilView({ onVoltar, alunoDb }: PerfilViewProps) {
               {alunoDb?.status === 'aprovado' ? 'Ativo' : alunoDb?.status}
             </span>
           </div>
+          <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Versão do App</span>
+            <span className="text-[10px] font-black text-white/70 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 font-mono">
+              {alunoDb?.app_versao || 'v2.3.6'}
+            </span>
+          </div>
+          <div className="bg-[#1a1a1a] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Notificações Push</span>
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+              alunoDb?.push_ativo 
+                ? 'text-green-400 bg-green-500/10 border-green-500/30' 
+                : 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+            }`}>
+              {alunoDb?.push_ativo ? '✓ Sincronizado' : 'Pendente / Desativado'}
+            </span>
+          </div>
 
           <button
             onClick={() => setModalSenha(true)}
