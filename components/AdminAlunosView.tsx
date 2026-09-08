@@ -112,8 +112,14 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         primeiro_login_concluido: false
       }).eq('email', alunoEditando.email);
 
-      // 2. Chama a redefinição de senha ou envia e-mail de recuperação
-      await supabase.auth.resetPasswordForEmail(alunoEditando.email);
+      // 2. Chama API de reset para garantir envio e sincronização
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: alunoEditando.email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Falha ao resetar');
 
       alert(`✅ A senha de ${alunoEditando.nome} foi resetada!\n\nFoi reativado o fluxo de primeiro login ('hecth123') e enviado o link de recuperação para o e-mail dele.`);
     } catch (err: any) {
@@ -122,6 +128,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       setSaveLoading(false);
     }
   }
+
 
 
 
