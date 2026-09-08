@@ -6,35 +6,51 @@ interface BotaoPushProps {
 }
 
 function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+  try {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (e) {
+    return new Uint8Array();
   }
-  return outputArray;
 }
 
 const PUSH_SYNC_VERSION_KEY = 'hecth_push_sync_v2_3';
 
 export function BotaoPush({ email }: BotaoPushProps) {
+  const [suportado, setSuportado] = useState(false);
   const [permissao, setPermissao] = useState<string>('default');
   const [loading, setLoading] = useState(false);
   const [registrado, setRegistrado] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPermissao(Notification.permission);
-      
-      const jaSincronizouV2 = localStorage.getItem(PUSH_SYNC_VERSION_KEY) === 'true';
-      if (Notification.permission === 'granted' && jaSincronizouV2) {
-        setRegistrado(true);
-      } else if (email) {
-        // Se ainda não sincronizou o novo sistema nesta versão, abre o popup obrigatório na frente
-        setShowPromptModal(true);
+    try {
+      if (typeof window !== "undefined" && "Notification" in window && "serviceWorker" in navigator) {
+        setSuportado(true);
+        setPermissao(Notification.permission);
+        
+        let jaSincronizouV2 = false;
+        try {
+          jaSincronizouV2 = localStorage.getItem(PUSH_SYNC_VERSION_KEY) === 'true';
+        } catch (e) {}
+
+        if (Notification.permission === 'granted' && jaSincronizouV2) {
+          setRegistrado(true);
+        } else if (email) {
+          setShowPromptModal(true);
+        }
+      } else {
+        setSuportado(false);
       }
+    } catch (e) {
+      console.warn("Navegador não suporta notificações nativas:", e);
+      setSuportado(false);
     }
   }, [email]);
 
@@ -42,7 +58,7 @@ export function BotaoPush({ email }: BotaoPushProps) {
     if (!email) return alert('Faça login para ativar as notificações.');
     if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
       setShowPromptModal(false);
-      return alert('Notificações não são suportadas neste navegador/dispositivo.');
+      return alert('Este dispositivo ou versão do iOS não possui suporte a notificações web nativas.');
     }
 
     setLoading(true);
@@ -51,7 +67,6 @@ export function BotaoPush({ email }: BotaoPushProps) {
       setPermissao(permission);
 
       if (permission === 'granted') {
-        // Registra o Service Worker nativo
         const reg = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
 
@@ -62,7 +77,6 @@ export function BotaoPush({ email }: BotaoPushProps) {
           throw new Error('Chave VAPID pública não encontrada.');
         }
 
-        // Limpa inscrição prévia se houver para renovar com a chave nova
         let existingSub = await reg.pushManager.getSubscription();
         if (existingSub) {
           try { await existingSub.unsubscribe(); } catch (e) {}
@@ -73,7 +87,6 @@ export function BotaoPush({ email }: BotaoPushProps) {
           applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
 
-        // Envia as credenciais para nossa rota de registro local
         const res = await fetch('/api/push/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -82,7 +95,10 @@ export function BotaoPush({ email }: BotaoPushProps) {
 
         if (!res.ok) throw new Error('Falha ao registrar inscrição no servidor');
         
-        localStorage.setItem(PUSH_SYNC_VERSION_KEY, 'true');
+        try {
+          localStorage.setItem(PUSH_SYNC_VERSION_KEY, 'true');
+        } catch (e) {}
+
         setRegistrado(true);
         setShowPromptModal(false);
         alert('🔔 Notificações ativadas e atualizadas com sucesso no seu aparelho!');
@@ -97,6 +113,11 @@ export function BotaoPush({ email }: BotaoPushProps) {
       setLoading(false);
     }
   };
+
+  // Se o navegador/iOS não suportar notificações (ex: iOS 16.2 ou navegador sem push), não renderiza nada e não trava a página
+  if (!suportado) {
+    return null;
+  }
 
   return (
     <>
