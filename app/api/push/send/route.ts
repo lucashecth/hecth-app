@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       } catch (err: any) {
         console.error('Falha no disparo para', ins.aluno_email, err);
         falhas++;
-        if (err.statusCode === 410 || err.statusCode === 404) {
+        if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 400) {
           await supabase.from('push_inscricoes').delete().eq('id', ins.id);
         }
       }
