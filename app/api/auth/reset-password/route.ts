@@ -1,47 +1,54 @@
-import { NextResponse } from 'next/server';
-import { db } from '../../../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+ï»¿import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyCuicJZFBMWJYj5UHPCvuI5tXoqPP_u-eE';
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyCuicJZFBMWJYj5UHPCvuI5tXoqPP_u-eE';
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { email } = await request.json();
+    const body = await req.json();
+    const { email } = body;
+
     if (!email) {
-      return NextResponse.json({ error: 'E-mail não informado' }, { status: 400 });
+      return NextResponse.json({ error: 'Email obrigatorio' }, { status: 400 });
     }
 
-    const emailLimpo = email.trim().toLowerCase();
+    const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Reseta no Firestore a flag de primeiro login
-    try {
-      await updateDoc(doc(db, 'alunos', emailLimpo), {
-        primeiro_login_concluido: false
-      });
-    } catch (e) {
-      console.warn('Aviso updateDoc primeiro_login_concluido:', e);
-    }
+    // 1. Atualizar primeiro_login_concluido = false no Firestore via supabase wrapper
+    await supabase
+      .from('alunos')
+      .update({ primeiro_login_concluido: false })
+      .eq('email', cleanEmail);
 
-    // 2. Dispara e-mail de redefinição pelo Firebase Auth
-    try {
-      await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=' + apiKey, {
+    // 2. Disparar email de recuperacao oficial do Firebase Auth REST API
+    const authRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_API_KEY}`,
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requestType: 'PASSWORD_RESET',
-          email: emailLimpo
-        })
-      });
-    } catch (err) {
-      console.warn('Aviso envio reset e-mail:', err);
+          email: cleanEmail,
+        }),
+      }
+    );
+
+    const authData = await authRes.json();
+
+    if (!authRes.ok) {
+      console.error('Erro ao enviar email pelo Firebase Auth:', authData);
+      return NextResponse.json(
+        { error: authData.error?.message || 'Falha ao enviar email pelo Firebase Auth' },
+        { status: authRes.status }
+      );
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'A senha de ' + emailLimpo + ' foi resetada com sucesso!'
+    return NextResponse.json({
+      success: true,
+      message: 'Senha resetada e email enviado com sucesso.',
     });
   } catch (error: any) {
-    console.error('Erro na API de reset de senha:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Erro na rota reset-password:', error);
+    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 });
   }
 }
