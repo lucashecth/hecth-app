@@ -111,6 +111,7 @@ export default function Home() {
 
   const [turmas, setTurmas] = useState<any[]>([]);
   const [presencasDb, setPresencasDb] = useState<any[]>([]);
+  const [checkinsDb, setCheckinsDb] = useState<any[]>([]);
   const [turmaIdClicada, setTurmaIdClicada] = useState<number | null>(null);
   const [acaoClicada, setAcaoClicada] = useState<'marcar' | 'desmarcar' | null>(null);
 
@@ -178,10 +179,13 @@ export default function Home() {
 
     carregarArena();
 
-    // 3. Listener Realtime para a Arena (Presenças e Turmas)
+    // 3. Listener Realtime para a Arena (Presenças, Checkins e Turmas)
     const arenaChannel = supabase
       .channel('realtime-arena')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'presencas' }, () => {
+        carregarArena();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'checkins' }, () => {
         carregarArena();
       })
       .subscribe();
@@ -365,6 +369,12 @@ export default function Home() {
 
       } else {
         setPresencasDb([]);
+      }
+
+      // 2.1 Carrega checkins persistentes da semana
+      const resCheckins = await supabase.from('checkins').select('*');
+      if (resCheckins.data) {
+        setCheckinsDb(resCheckins.data);
       }
 
       // 3. Aniversariantes roda apenas UMA vez por sessão
@@ -883,6 +893,16 @@ export default function Home() {
           await supabase.from('presencas').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
           await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais }).eq('id', turmaId);
           
+          // Remove o checkin persistente correspondente a esta turma e aluno no ciclo recente
+          const checkinParaRemover = checkinsDb.find(c => c.turma_id === turmaId && c.aluno_email === session.user.email);
+          if (checkinParaRemover?.id) {
+            await supabase.from('checkins').delete().eq('id', checkinParaRemover.id);
+            setCheckinsDb(prev => prev.filter(c => c.id !== checkinParaRemover.id));
+          } else {
+            await supabase.from('checkins').delete().match({ turma_id: turmaId, aluno_email: session.user.email });
+            setCheckinsDb(prev => prev.filter(c => !(c.turma_id === turmaId && c.aluno_email === session.user.email)));
+          }
+
           // RESGUARDO / AUDITORIA: Registra o cancelamento no histórico do banco
           const logCancelamento = {
             aluno_email: session.user.email,
@@ -938,21 +958,35 @@ export default function Home() {
       lancarBolasMikasa(e);
 
       const nowIso = new Date().toISOString();
+      const checkinId = `${session.user.email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
       const novaPresenca = { 
         turma_id: turmaId, 
         aluno_email: session.user.email, 
         foto_url: alunoDb.foto_url, 
         inicial: alunoDb.nome?.charAt(0) || '',
         nivel: alunoDb.nivel || 'Aprendiz',
+        created_at: nowIso,
+        checkin_id: checkinId
+      };
+
+      const novoCheckin = {
+        id: checkinId,
+        turma_id: turmaId,
+        aluno_email: session.user.email,
+        aluno_nome: `${alunoDb?.nome || ''} ${alunoDb?.sobrenome || ''}`.trim(),
         created_at: nowIso
       };
 
       setTurmas(turmas.map(t => t.id === turmaId ? { ...t, vagas_ocupadas: totalOcupadasReais + 1 } : t));
       setPresencasDb(prev => [...prev, novaPresenca]);
+      setCheckinsDb(prev => [...prev, novoCheckin]);
       
       try {
         const { error: insertError } = await supabase.from('presencas').insert([novaPresenca]);
         if (insertError) throw insertError;
+
+        // Grava no histórico semanal permanente que não é apagado na virada
+        await supabase.from('checkins').insert([novoCheckin]);
 
         await supabase.from('turmas').update({ vagas_ocupadas: totalOcupadasReais + 1 }).eq('id', turmaId);
         await supabase.from('alunos').update({ ultima_inscricao: nowIso }).eq('email', session.user.email);
@@ -1439,6 +1473,7 @@ export default function Home() {
   // Obtém presenças da semana atual (Segunda a Domingo)
   const obterContagemSemanal = () => {
     if (!session?.user?.email) return { total: 2, marcadas: 0, restantes: 2, concluido: false };
+    const emailUsuario = session.user.email.toLowerCase().trim();
     const hoje = new Date();
     
     // Segunda-feira da semana corrente
@@ -1453,14 +1488,33 @@ export default function Home() {
     domingo.setDate(segunda.getDate() + 6);
     domingo.setHours(23, 59, 59, 999);
 
+    // 1. Coleta checkins persistentes da semana deste aluno
+    const checkinsDaSemana = checkinsDb.filter(c => {
+      if (String(c.aluno_email || '').toLowerCase().trim() !== emailUsuario) return false;
+      const data = new Date(c.created_at || new Date());
+      return data >= segunda && data <= domingo;
+    });
+
+    // 2. Coleta presenças ativas nas turmas deste aluno
     const presencasDaSemana = presencasDb.filter(p => {
-      if (p.aluno_email !== session.user.email) return false;
-      const dataPresenca = new Date(p.created_at || new Date());
-      return dataPresenca >= segunda && dataPresenca <= domingo;
+      if (String(p.aluno_email || '').toLowerCase().trim() !== emailUsuario) return false;
+      const data = new Date(p.created_at || new Date());
+      return data >= segunda && data <= domingo;
+    });
+
+    // 3. Agrupa e deduplica por turma_id ou data/id para evitar duplicidade entre checkins e presenças ativas
+    const chavesUnicas = new Set<string>();
+    checkinsDaSemana.forEach(c => {
+      const dataStr = c.created_at ? new Date(c.created_at).toISOString().split('T')[0] : 'hoje';
+      chavesUnicas.add(`${c.turma_id || 'turma'}_${dataStr}`);
+    });
+    presencasDaSemana.forEach(p => {
+      const dataStr = p.created_at ? new Date(p.created_at).toISOString().split('T')[0] : 'hoje';
+      chavesUnicas.add(`${p.turma_id || 'turma'}_${dataStr}`);
     });
 
     const total = alunoDb?.frequencia_semanal || 2;
-    const marcadas = presencasDaSemana.length;
+    const marcadas = Math.max(chavesUnicas.size, checkinsDaSemana.length, presencasDaSemana.length);
     const restantes = Math.max(0, total - marcadas);
     const concluido = marcadas >= total;
 
