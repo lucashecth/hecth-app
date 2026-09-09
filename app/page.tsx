@@ -674,7 +674,7 @@ export default function Home() {
         setPerfilNaoEncontrado(false);
 
         // Envia a versão atual do app e o status de push do aluno para o banco
-        const versaoAppAtual = 'v2.3.6';
+        const versaoAppAtual = 'v2.3.8';
         let pushAtivoNoAparelho = false;
         try {
           if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -1487,6 +1487,7 @@ export default function Home() {
               totalPagamentosPendentes={totalPagamentosPendentes}
               totalCadastrosPendentes={totalCadastrosPendentes}
               limiteAtingido={progressoSemanal.concluido}
+              alunoDb={alunoDb}
             />
 
 

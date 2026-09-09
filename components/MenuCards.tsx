@@ -9,9 +9,10 @@ interface MenuCardsProps {
   totalPagamentosPendentes?: number;
   totalCadastrosPendentes?: number;
   limiteAtingido?: boolean;
+  alunoDb?: any;
 }
 
-export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0, limiteAtingido = false }: MenuCardsProps) {
+export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagensNaoLidas = 0, totalPagamentosPendentes = 0, totalCadastrosPendentes = 0, limiteAtingido = false, alunoDb }: MenuCardsProps) {
 
   
   // Função para forçar a atualização do PWA e limpar cache
@@ -28,6 +29,8 @@ export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagen
     }
   };
 
+  const mensalidadeLiberada = Boolean(isAdmin || alunoDb?.liberar_pagamento || alunoDb?.liberar_view_pagamento);
+
   const acoes = [
     {
       nome: 'Mensalidade',
@@ -39,7 +42,7 @@ export function MenuCards({ onNavegar, isAdmin, isTeacher = false, totalMensagen
       ),
       cor: 'text-green-400',
       bg: 'bg-green-400/10',
-      bloqueado: true
+      bloqueado: !mensalidadeLiberada
     },
 
     {

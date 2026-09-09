@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { TagApelido } from './TagApelido';
-
-import { obterNovoMesPago } from '../utils/mensalidade';
+import { obterNovoMesPago, obterStatusMensalidade } from '../utils/mensalidade';
 
 
 interface AdminAlunosViewProps {
@@ -29,6 +28,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const [editIsAdmin, setEditIsAdmin] = useState<boolean>(false);
   const [editApelido, setEditApelido] = useState<string>('');
   const [editUsarPrecoReajustado, setEditUsarPrecoReajustado] = useState<boolean>(false);
+  const [editLiberarPagamento, setEditLiberarPagamento] = useState<boolean>(false);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
 
@@ -65,6 +65,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     setEditIsAdmin(!!aluno.is_admin);
     setEditApelido(aluno.apelido || '');
     setEditUsarPrecoReajustado(!!aluno.usar_preco_reajustado);
+    setEditLiberarPagamento(Boolean(aluno.liberar_pagamento || aluno.liberar_view_pagamento));
   }
 
 
@@ -79,7 +80,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         personal: editPersonal,
         is_admin: editIsAdmin,
         apelido: editApelido,
-        usar_preco_reajustado: editUsarPrecoReajustado
+        usar_preco_reajustado: editUsarPrecoReajustado,
+        liberar_pagamento: editLiberarPagamento
       };
 
 
@@ -264,6 +266,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
           <div>
             <h4 className="font-black text-sm uppercase tracking-tight text-white/90 leading-tight flex items-center gap-1.5 flex-wrap">
+              {aluno.push_ativo ? (
+                <span title="Notificações Push Ativas" className="text-xs text-green-400">🔔</span>
+              ) : (
+                <span title="Notificações Push Pendentes" className="text-xs text-white/20">🔕</span>
+              )}
               {aluno.nome} {aluno.sobrenome}
               <TagApelido apelido={aluno.apelido} mode="name" />
             </h4>
@@ -399,6 +406,35 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
 
           <div className="flex flex-col gap-4">
+            {/* Próximo Vencimento Calculado */}
+            {(() => {
+              const statusVenc = obterStatusMensalidade(alunoEditando);
+              const dataFormatada = statusVenc.dataVencimento ? statusVenc.dataVencimento.toLocaleDateString('pt-BR') : 'N/D';
+              return (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40 block">
+                      Próximo Vencimento
+                    </span>
+                    <span className="text-sm font-black text-white">
+                      📅 {dataFormatada}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border inline-block ${
+                      statusVenc.ativo 
+                        ? 'text-green-400 bg-green-500/10 border-green-500/30' 
+                        : 'text-[#ef3340] bg-[#ef3340]/10 border-[#ef3340]/30'
+                    }`}>
+                      {statusVenc.ativo 
+                        ? (statusVenc.diasRestantes === 999 ? 'Acesso Livre' : `${statusVenc.diasRestantes} dias restantes`) 
+                        : 'Mensalidade Vencida'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 block">Nível</label>
               <select 
@@ -427,6 +463,18 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
               />
             </div>
 
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <input 
+                type="checkbox" 
+                id="checkbox-liberar-pagamento"
+                checked={editLiberarPagamento}
+                onChange={(e) => setEditLiberarPagamento(e.target.checked)}
+                className="w-5 h-5 rounded border-white/20 bg-[#1a1a1a] text-[#ef3340] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              />
+              <label htmlFor="checkbox-liberar-pagamento" className="text-xs font-black uppercase tracking-wider text-green-400 cursor-pointer select-none">
+                💳 Liberar Aba de Pagamento / Mensalidade no App
+              </label>
+            </div>
 
             <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
               <input 
