@@ -152,10 +152,11 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
   async function confirmarPagamento(e: React.MouseEvent, aluno: any) {
     e.stopPropagation();
-    const acao = aluno.mensalidade_paga ? "ESTORNAR" : "CONFIRMAR";
+    const statusAtual = obterStatusMensalidade(aluno).ativo;
+    const acao = statusAtual ? "ESTORNAR" : "CONFIRMAR";
     const confirmar = window.confirm(`${acao} pagamento de ${aluno.nome} (${aluno.frequencia_semanal || 2}x)?`);
     if (confirmar) {
-      const novoStatus = !aluno.mensalidade_paga;
+      const novoStatus = !statusAtual;
       
       let ultimoMes = '';
       if (novoStatus) {
@@ -164,7 +165,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
       } else {
         // Se está estornando, volta para o anterior
         const hoje = new Date();
-        const anteriorDate = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        const anteriorDate = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
         ultimoMes = `${anteriorDate.getFullYear()}-${String(anteriorDate.getMonth() + 1).padStart(2, '0')}`;
       }
 
@@ -190,9 +191,9 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     return `Treinou há ${diffDays} dias`;
   };
 
-  // Get active (paying) vs total counters
+  // Get active (paying) vs total counters based on real-time expiration date
   const totalAlunos = alunos.length;
-  const ativosAlunos = alunos.filter(a => a.mensalidade_paga).length;
+  const ativosAlunos = alunos.filter(a => obterStatusMensalidade(a).ativo).length;
 
   const getAlunosFiltrados = () => {
     const termo = busca.toLowerCase().trim();
@@ -203,7 +204,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     });
 
     if (filtro === 'ativos') {
-      list = list.filter(a => a.mensalidade_paga);
+      list = list.filter(a => obterStatusMensalidade(a).ativo);
     }
 
     if (filtro === 'evasoes') {
@@ -226,6 +227,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
   const alunosFiltrados = getAlunosFiltrados();
 
   function CardAluno({ aluno, mostrarDia, mostrarUltimaInscricao }: { aluno: any, mostrarDia?: boolean, mostrarUltimaInscricao?: boolean }) {
+    const status = obterStatusMensalidade(aluno);
+    const estaAtivo = status.ativo;
     const nivelDoBanco = aluno.nivel ? String(aluno.nivel).toUpperCase() : 'INICIANTE';
     
     const normNivel = String(aluno.nivel || 'Aprendiz').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -250,7 +253,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     return (
       <div 
         onClick={() => abrirModalAluno(aluno)}
-        className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${aluno.mensalidade_paga ? 'border-green-500/30' : 'border-white/5'}`}
+        className={`w-full bg-[#121212] border rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${estaAtivo ? 'border-green-500/30' : 'border-white/5'}`}
       >
         <div className="flex items-center gap-3 flex-1 text-left">
           <div className={`w-12 h-12 rounded-full border-2 shrink-0 flex items-center justify-center p-[2px] ${borderClass}`}>
@@ -278,7 +281,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
             <div className="flex flex-wrap gap-1 mt-1">
               {mostrarDia ? (
-                <span className={`text-[10px] font-black uppercase italic ${aluno.mensalidade_paga ? 'text-green-400' : 'text-[#ef3340]'}`}>
+                <span className={`text-[10px] font-black uppercase italic ${estaAtivo ? 'text-green-400' : 'text-[#ef3340]'}`}>
                   Vencimento dia {aluno.dia_vencimento || 10}
                 </span>
               ) : mostrarUltimaInscricao ? (
@@ -286,8 +289,8 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                   <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded border border-[#ef3340]/25 text-[#ef3340] bg-[#ef3340]/5 italic">
                     {formatarUltimaInscricao(aluno.ultima_inscricao)}
                   </span>
-                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${aluno.mensalidade_paga ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-white/10 text-white/40 bg-white/5'}`}>
-                    {aluno.mensalidade_paga ? 'Ativo' : 'Inativo'}
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border italic ${estaAtivo ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-white/10 text-white/40 bg-white/5'}`}>
+                    {estaAtivo ? 'Ativo' : 'Inativo'}
                   </span>
                 </div>
 
@@ -334,15 +337,15 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <div 
             onClick={(e) => alterarFrequencia(e, aluno)} 
-            className={`px-3 py-2 rounded-xl border flex items-center justify-center cursor-pointer hover:bg-white/10 ${aluno.mensalidade_paga ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
+            className={`px-3 py-2 rounded-xl border flex items-center justify-center cursor-pointer hover:bg-white/10 ${estaAtivo ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
           >
-            <span className={`text-xs font-black ${aluno.mensalidade_paga ? 'text-green-400' : 'text-white/40'}`}>
+            <span className={`text-xs font-black ${estaAtivo ? 'text-green-400' : 'text-white/40'}`}>
               {aluno.frequencia_semanal || 2}x
             </span>
           </div>
           <div 
             onClick={(e) => confirmarPagamento(e, aluno)} 
-            className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 ${aluno.mensalidade_paga ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:scale-105 ${estaAtivo ? 'bg-green-500 text-black' : 'bg-[#1a1a1a] text-white/10 border border-white/5'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
