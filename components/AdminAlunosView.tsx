@@ -359,13 +359,13 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
     const modalContent = (
       <div 
         onClick={() => setAlunoEditando(null)}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4 overflow-y-auto overscroll-contain"
       >
         <div 
           onClick={(e) => e.stopPropagation()}
-          className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative"
+          className="bg-[#121212] border border-white/10 rounded-3xl p-6 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto my-auto overscroll-contain"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 sticky top-0 bg-[#121212] z-10 pb-2 border-b border-white/5">
             <h3 className="font-black text-lg text-white uppercase italic">Perfil do Atleta</h3>
             <button 
               onClick={() => setAlunoEditando(null)} 
