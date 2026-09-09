@@ -134,6 +134,37 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
 
 
 
+  async function revogarMesExtra() {
+    if (!alunoEditando) return;
+    const confirmar = window.confirm(`Deseja revogar o mês extra e trazer o vencimento de ${alunoEditando.nome} para o mês atual?`);
+    if (!confirmar) return;
+
+    setSaveLoading(true);
+    try {
+      const hoje = new Date();
+      // O mês anterior ao atual faz com que o próximo vencimento caia exatamente no mês atual
+      const anteriorDate = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      const novoUltimoMes = `${anteriorDate.getFullYear()}-${String(anteriorDate.getMonth() + 1).padStart(2, '0')}`;
+
+      const { error } = await supabase
+        .from('alunos')
+        .update({ ultimo_mes_pago: novoUltimoMes })
+        .eq('id', alunoEditando.id);
+
+      if (error) throw error;
+
+      const alunoAtualizado = { ...alunoEditando, ultimo_mes_pago: novoUltimoMes };
+      setAlunoEditando(alunoAtualizado);
+      setAlunos(prev => prev.map(a => a.id === alunoEditando.id ? alunoAtualizado : a));
+
+      alert("Mês extra revogado com sucesso! O vencimento agora é no mês atual.");
+    } catch (err: any) {
+      alert("Erro ao revogar mês extra: " + err.message);
+    } finally {
+      setSaveLoading(false);
+    }
+  }
+
   async function alterarFrequencia(e: React.MouseEvent, aluno: any) {
     e.stopPropagation(); 
     const frequencias = [2, 3, 5];
@@ -423,7 +454,7 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                       📅 {dataFormatada}
                     </span>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-1.5">
                     <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border inline-block ${
                       statusVenc.ativo 
                         ? 'text-green-400 bg-green-500/10 border-green-500/30' 
@@ -433,6 +464,17 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
                         ? (statusVenc.diasRestantes === 999 ? 'Acesso Livre' : `${statusVenc.diasRestantes} dias restantes`) 
                         : 'Mensalidade Vencida'}
                     </span>
+                    {statusVenc.ativo && statusVenc.diasRestantes > 25 && statusVenc.diasRestantes !== 999 && (
+                      <button
+                        type="button"
+                        onClick={revogarMesExtra}
+                        disabled={saveLoading}
+                        title="Revogar mês extra e trazer vencimento para o mês atual"
+                        className="w-7 h-7 rounded-lg bg-[#ef3340]/15 hover:bg-[#ef3340]/30 border border-[#ef3340]/30 text-[#ef3340] flex items-center justify-center text-xs font-black transition-all active:scale-90"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
               );

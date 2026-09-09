@@ -674,7 +674,7 @@ export default function Home() {
         setPerfilNaoEncontrado(false);
 
         // Envia a versão atual do app e o status de push do aluno para o banco
-        const versaoAppAtual = 'v2.3.9';
+        const versaoAppAtual = 'v2.4.0';
         let pushAtivoNoAparelho = false;
         try {
           if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -1204,7 +1204,7 @@ export default function Home() {
           
           <div className="mt-6 text-center">
             <span className="text-[10px] font-black uppercase tracking-widest text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-              Versão 2.3.1
+              Versão 2.4.0
             </span>
 
 
