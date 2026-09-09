@@ -365,10 +365,27 @@ export function AdminAlunosView({ onVoltar }: AdminAlunosViewProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className={`px-2.5 py-2 rounded-xl border flex items-center justify-center ${
+              estaAtivo 
+                ? (status.diasRestantes <= 5 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-green-500/10 border-green-500/30') 
+                : 'bg-[#ef3340]/10 border-[#ef3340]/30'
+            }`}
+            title={`Próximo Vencimento: ${status.dataVencimento ? status.dataVencimento.toLocaleDateString('pt-BR') : 'N/D'}`}
+          >
+            <span className={`text-[11px] font-black ${
+              estaAtivo 
+                ? (status.diasRestantes <= 5 ? 'text-amber-400' : 'text-green-400') 
+                : 'text-[#ef3340]'
+            }`}>
+              {status.diasRestantes === 999 ? '∞' : `${status.diasRestantes}d`}
+            </span>
+          </div>
+
           <div 
             onClick={(e) => alterarFrequencia(e, aluno)} 
-            className={`px-3 py-2 rounded-xl border flex items-center justify-center cursor-pointer hover:bg-white/10 ${estaAtivo ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
+            className={`px-2.5 py-2 rounded-xl border flex items-center justify-center cursor-pointer hover:bg-white/10 ${estaAtivo ? 'bg-green-500/10 border-green-400/50' : 'bg-white/5 border-white/10'}`}
           >
             <span className={`text-xs font-black ${estaAtivo ? 'text-green-400' : 'text-white/40'}`}>
               {aluno.frequencia_semanal || 2}x
