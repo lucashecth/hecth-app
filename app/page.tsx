@@ -1513,8 +1513,17 @@ export default function Home() {
       chavesUnicas.add(`${p.turma_id || 'turma'}_${dataStr}`);
     });
 
+    // 4. RECUPERAÇÃO RETROATIVA: Se o aluno marcou presença nesta semana (gravada em ultima_inscricao), garante a contagem
+    if (alunoDb?.ultima_inscricao) {
+      const dataUltima = new Date(alunoDb.ultima_inscricao);
+      if (dataUltima >= segunda && dataUltima <= domingo) {
+        const dataStr = dataUltima.toISOString().split('T')[0];
+        chavesUnicas.add(`historico_${dataStr}`);
+      }
+    }
+
     const total = alunoDb?.frequencia_semanal || 2;
-    const marcadas = Math.max(chavesUnicas.size, checkinsDaSemana.length, presencasDaSemana.length);
+    const marcadas = chavesUnicas.size;
     const restantes = Math.max(0, total - marcadas);
     const concluido = marcadas >= total;
 
